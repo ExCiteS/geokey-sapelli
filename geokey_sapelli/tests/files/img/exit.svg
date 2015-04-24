@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.1" width="256" height="248.25807">
+	<g transform="matrix(0.48387097,0,0,0.48387097,8,-7.483871)">
+		<polygon points="352,320 352,416 496,272 352,128 352,224 160,224 160,320"/>
+		<path d="M 416,96 V 64 C 416,46.4 401.6,32 384,32 H 32 C 14.4,32 0,46.4 0,64 v 416 c 0,17.6 14.399,32 32,32 h 352 c 17.6,0 32,-14.4 32,-32 V 448 H 64 V 96 h 352 z"/>
+	</g>
+</svg>

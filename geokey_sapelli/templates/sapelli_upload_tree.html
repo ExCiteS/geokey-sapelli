@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %} | Extension: Sapelli{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <h1 class="smaller"><a href="{% url 'geokey_sapelli:index' %}">Sapelli</a></h1>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="container">
+    {% include 'snippets/messages.html' %}
+
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h6 class="item-info">Extension</h6>
+                    <h3>Sapelli</h3>
+                </div>
+                <div class="list-group">
+                    <a href="{% url 'geokey_sapelli:index' %}" class="list-group-item">
+                        Sapelli projects
+                    </a>
+                    <a href="{% url 'geokey_sapelli:project_upload' %}" class="list-group-item active">
+                        Upload new decision tree
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-8">
+            <h3 class="header">Upload new decision tree</h3>
+
+            <form role="form" method="POST" action="{% url 'geokey_sapelli:project_upload' %}" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="project" class="control-label">Sapelli file</label>
+                    <input type="file" name="project" id="project">
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block libraries %}
+        <link rel="stylesheet" href="/static/lib/file-upload/css/fileinput.min.css">
+        <script src="/static/lib/file-upload/js/fileinput.min.js"></script>
+        <script>
+            $('input#project').fileinput({
+                'showUpload': false
+            });
+        </script>
+{% endblock %}
