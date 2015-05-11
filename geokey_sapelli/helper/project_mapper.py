@@ -63,7 +63,7 @@ def create_project(project, user, tmp_path):
 
         create_implicit_fields(category)
 
-        for choice_root in form.get('choice_roots'):
+        for choice_root in form.get('fields'):
             field = Field.create(
                 choice_root.get('sapelli_id'),
                 slugify(choice_root.get('sapelli_id')),

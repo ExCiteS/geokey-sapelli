@@ -35,9 +35,9 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('choice_roots')), 1)
+        self.assertEqual(len(form.get('fields')), 1)
         self.assertEqual(
-            form.get('choice_roots')[0].get('sapelli_id'),
+            form.get('fields')[0].get('sapelli_id'),
             'Garden Feature'
         )
 
@@ -69,8 +69,9 @@ class TestCreateProject(TestCase):
             'sapelli_id': 1111,
             'forms': [{
                 'sapelli_id': 'Horniman Gardens',
-                'choice_roots': [{
+                'fields': [{
                     'sapelli_id': 'Garden Feature',
+                    'geokey_type': 'LookupField',
                     'choices': [{
                         'value': 'Red Flowers',
                         'img': 'red flowers.png'

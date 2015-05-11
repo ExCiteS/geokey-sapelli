@@ -77,16 +77,17 @@ def parse_form(form_xml):
     form = dict()
     form['sapelli_id'] = form_xml.attrib.get('id')
 
-    choice_roots = []
+    fields = []
 
     for child in form_xml:
         if child.tag == 'Choice' and child.attrib.get('noColumn') != 'true':
-            choice_roots.append({
+            fields.append({
                 'sapelli_id': child.attrib.get('id'),
+                'geokey_type': 'LookupField',
                 'choices': parse_choice(child)
             })
 
-    form['choice_roots'] = choice_roots
+    form['fields'] = fields
 
     return form
 
