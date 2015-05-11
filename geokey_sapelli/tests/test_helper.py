@@ -6,11 +6,13 @@ from django.core.files import File
 from django.conf import settings
 
 from geokey.users.tests.model_factories import UserF
+from geokey.categories.tests.model_factories import CategoryFactory
+from geokey.categories.models import Category, NumericField, DateTimeField
 
 from ..helper.xml_parsers import (
     extract_sapelli, parse_decision_tree, parse_choice, parse_form
 )
-from ..helper.project_mapper import create_project
+from ..helper.project_mapper import create_project, create_implicit_fields
 
 
 class TestParsers(TestCase):
@@ -47,6 +49,20 @@ class TestParsers(TestCase):
 
 
 class TestCreateProject(TestCase):
+    def test_create_implicit_fields(self):
+        category = CategoryFactory.create()
+        create_implicit_fields(category)
+
+        ref_cat = Category.objects.get(pk=category.id)
+        self.assertEqual(ref_cat.fields.count(), 2)
+        for field in ref_cat.fields.select_subclasses():
+            self.assertIn(field.name, ['Device Id', 'Start Time'])
+
+            if field.name == 'Device Id':
+                self.assertTrue(isinstance(field, NumericField))
+            elif field.name == 'Start Time':
+                self.assertTrue(isinstance(field, DateTimeField))
+
     def test_create_project(self):
         project = {
             'name': 'Mapping Cultures',
@@ -110,7 +126,7 @@ class TestCreateProject(TestCase):
 
         category = geokey_project.categories.all()[0]
         self.assertEqual(category.name, 'Horniman Gardens')
-        self.assertEqual(category.fields.count(), 1)
+        self.assertEqual(category.fields.count(), 3)
 
-        field = category.fields.all()[0]
+        field = category.fields.get(key='garden-feature')
         self.assertEqual(field.lookupvalues.count(), 14)

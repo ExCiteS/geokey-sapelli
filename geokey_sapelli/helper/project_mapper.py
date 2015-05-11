@@ -9,6 +9,29 @@ from ..models import (
 )
 
 
+implicit_fields = [{
+    'name': 'Device Id',
+    'key': 'DeviceId',
+    'type': 'NumericField'
+}, {
+    'name': 'Start Time',
+    'key': 'StartTime',
+    'type': 'DateTimeField'
+}]
+
+
+def create_implicit_fields(category):
+    for field in implicit_fields:
+        Field.create(
+            field.get('name'),
+            field.get('key'),
+            '',
+            False,
+            category,
+            field.get('type')
+        )
+
+
 def create_project(project, user, tmp_path):
     geokey_project = Project.create(
         project.get('name'),
@@ -37,6 +60,8 @@ def create_project(project, user, tmp_path):
             sapelli_project=sapelli_project,
             sapelli_id=form.get('sapelli_id')
         )
+
+        create_implicit_fields(category)
 
         for choice_root in form.get('choice_roots'):
             field = Field.create(
