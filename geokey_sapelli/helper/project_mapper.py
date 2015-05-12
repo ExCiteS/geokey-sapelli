@@ -63,34 +63,36 @@ def create_project(project, user, tmp_path):
 
         create_implicit_fields(category)
 
-        for choice_root in form.get('fields'):
-            field = Field.create(
-                choice_root.get('sapelli_id'),
-                slugify(choice_root.get('sapelli_id')),
-                '',
+        for field in form.get('fields'):
+            field_type = field.get('geokey_type')
+            geokey_field = Field.create(
+                field.get('sapelli_id'),
+                slugify(field.get('sapelli_id')),
+                field.get('description'),
                 False,
                 category,
-                'LookupField'
+                field_type
             )
 
-            sapelli_choice_root = SapelliField.objects.create(
+            sapelli_field = SapelliField.objects.create(
                 sapelli_form=sapelli_form,
-                sapelli_id=choice_root.get('sapelli_id'),
-                field=field
+                sapelli_id=field.get('sapelli_id'),
+                field=geokey_field
             )
 
-            for idx, choice in enumerate(choice_root.get('choices')):
-                path = tmp_path + '/img/' + choice.get('img')
-                img_file = File(open(path, 'rb'))
-                value = LookupValue.objects.create(
-                    name=choice.get('value'),
-                    field=field
-                )
-                SapelliItem.objects.create(
-                    lookup_value=value,
-                    sapelli_choice_root=sapelli_choice_root,
-                    number=idx,
-                    image=img_file
-                )
+            if field_type == 'LookupField':
+                for idx, choice in enumerate(field.get('choices')):
+                    path = tmp_path + '/img/' + choice.get('img')
+                    img_file = File(open(path, 'rb'))
+                    value = LookupValue.objects.create(
+                        name=choice.get('value'),
+                        field=geokey_field
+                    )
+                    SapelliItem.objects.create(
+                        lookup_value=value,
+                        sapelli_choice_root=sapelli_field,
+                        number=idx,
+                        image=img_file
+                    )
 
     return geokey_project

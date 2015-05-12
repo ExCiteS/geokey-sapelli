@@ -60,6 +60,23 @@ def parse_choice(choice_xml):
     return choices
 
 
+def parse_text_element(element):
+    number_cnt = ['UnsignedInt', 'SignedInt', 'UnsignedFloat', 'SignedFloat']
+    # TODO: Parse description
+    # TODO: Refractor into general parser
+    field = {
+        'sapelli_id': element.attrib.get('id'),
+        'caption': element.attrib.get('caption'),
+        'geokey_type': 'TextField',
+        'required': element.attrib.get('optional') != 'true'
+    }
+
+    if element.attrib.get('content') in number_cnt:
+        field['geokey_type'] = 'NumericField'
+
+    return field
+
+
 def parse_form(form_xml):
     """
     Parses a form element
@@ -80,6 +97,8 @@ def parse_form(form_xml):
     fields = []
 
     for child in form_xml:
+        if child.tag == 'Text':
+            fields.append(parse_text_element(child))
         if child.tag == 'Choice' and child.attrib.get('noColumn') != 'true':
             fields.append({
                 'sapelli_id': child.attrib.get('id'),

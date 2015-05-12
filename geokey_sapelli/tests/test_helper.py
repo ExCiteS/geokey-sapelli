@@ -10,7 +10,8 @@ from geokey.categories.tests.model_factories import CategoryFactory
 from geokey.categories.models import Category, NumericField, DateTimeField
 
 from ..helper.xml_parsers import (
-    extract_sapelli, parse_decision_tree, parse_choice, parse_form
+    extract_sapelli, parse_decision_tree, parse_choice, parse_form,
+    parse_text_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
 
@@ -43,6 +44,93 @@ class TestParsers(TestCase):
         choice = parse_choice(choice)
         self.assertEqual(len(choice), 14)
 
+    def test_parse_text_element(self):
+        element = ET.XML('<Text caption="Text no-caps:" content="text" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'TextField')
+        self.assertEqual(result.get('required'), False)
+
+    def test_parse_optional_text_element(self):
+        element = ET.XML('<Text caption="Text no-caps:" content="text" '
+                         'autoCaps="none" optional="false" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'TextField')
+        self.assertEqual(result.get('required'), True)
+
+        element = ET.XML('<Text caption="Text no-caps:" content="text" '
+                         'autoCaps="none" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'TextField')
+        self.assertEqual(result.get('required'), True)
+
+    def test_parse_password_element(self):
+        element = ET.XML('<Text caption="Text no-caps:" content="Password" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'TextField')
+        self.assertEqual(result.get('required'), False)
+
+    def test_parse_email_element(self):
+        element = ET.XML('<Text caption="Text no-caps:" content="Email" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'TextField')
+        self.assertEqual(result.get('required'), False)
+
+    def test_parse_phone_element(self):
+        element = ET.XML('<Text caption="Text no-caps:" content="PhoneNumber" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'TextField')
+        self.assertEqual(result.get('required'), False)
+
+    def test_parse_number_element(self):
+        element = ET.XML('<Text caption="Text no-caps:" content="UnsignedInt" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'NumericField')
+        self.assertEqual(result.get('required'), False)
+
+        element = ET.XML('<Text caption="Text no-caps:" content="SignedInt" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'NumericField')
+        self.assertEqual(result.get('required'), False)
+
+        element = ET.XML('<Text caption="Text no-caps:" '
+                         'content="UnsignedFloat" autoCaps="none" '
+                         'optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'NumericField')
+        self.assertEqual(result.get('required'), False)
+
+        element = ET.XML('<Text caption="Text no-caps:" content="SignedFloat" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_text_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('geokey_type'), 'NumericField')
+        self.assertEqual(result.get('required'), False)
+
 
 class TestCreateProject(TestCase):
     def test_create_implicit_fields(self):
@@ -66,51 +154,56 @@ class TestCreateProject(TestCase):
             'forms': [{
                 'sapelli_id': 'Horniman Gardens',
                 'fields': [{
+                    'sapelli_id': 'Text',
+                    'geokey_type': 'TextField',
+                }, {
                     'sapelli_id': 'Garden Feature',
                     'geokey_type': 'LookupField',
-                    'choices': [{
-                        'value': 'Red Flowers',
-                        'img': 'red flowers.png'
-                    }, {
-                        'value': 'Blue Flowers',
-                        'img': 'blue flowers.png'
-                    }, {
-                        'value': 'Yellow Flowers',
-                        'img': 'yellow flowers.png'
-                    }, {
-                        'value': 'Edible Plants',
-                        'img': 'BeenTold.png'
-                    }, {
-                        'value': 'Medicinal Plants',
-                        'img': 'Medicine.png'
-                    }, {
-                        'value': 'Two Legged Animal',
-                        'img': 'Chicken.png'
-                    }, {
-                        'value': 'Four Legged Animal',
-                        'img': 'Sheep.png'
-                    }, {
-                        'value': 'Old Bench With Memorial',
-                        'img': 'memorial.png'
-                    }, {
-                        'value': 'Old Bench with No Memorial',
-                        'img': 'no memorial.png'
-                    }, {
-                        'value': 'New Bench With Memorial',
-                        'img': 'memorial.png'
-                    }, {
-                        'value': 'New Bench with No Memorial',
-                        'img': 'no memorial.png'
-                    }, {
-                        'value': 'Covered Bin',
-                        'img': 'covered bin.png'
-                    }, {
-                        'value': 'Uncovered Bin',
-                        'img': 'uncovered bin.png'
-                    }, {
-                        'value': 'Dog Bin',
-                        'img': 'dog bin.png'
-                    }]
+                    'choices': [
+                        {
+                            'value': 'Red Flowers',
+                            'img': 'red flowers.png'
+                        }, {
+                            'value': 'Blue Flowers',
+                            'img': 'blue flowers.png'
+                        }, {
+                            'value': 'Yellow Flowers',
+                            'img': 'yellow flowers.png'
+                        }, {
+                            'value': 'Edible Plants',
+                            'img': 'BeenTold.png'
+                        }, {
+                            'value': 'Medicinal Plants',
+                            'img': 'Medicine.png'
+                        }, {
+                            'value': 'Two Legged Animal',
+                            'img': 'Chicken.png'
+                        }, {
+                            'value': 'Four Legged Animal',
+                            'img': 'Sheep.png'
+                        }, {
+                            'value': 'Old Bench With Memorial',
+                            'img': 'memorial.png'
+                        }, {
+                            'value': 'Old Bench with No Memorial',
+                            'img': 'no memorial.png'
+                        }, {
+                            'value': 'New Bench With Memorial',
+                            'img': 'memorial.png'
+                        }, {
+                            'value': 'New Bench with No Memorial',
+                            'img': 'no memorial.png'
+                        }, {
+                            'value': 'Covered Bin',
+                            'img': 'covered bin.png'
+                        }, {
+                            'value': 'Uncovered Bin',
+                            'img': 'uncovered bin.png'
+                        }, {
+                            'value': 'Dog Bin',
+                            'img': 'dog bin.png'
+                        }
+                    ]
                 }]
             }]
         }
@@ -123,7 +216,7 @@ class TestCreateProject(TestCase):
 
         category = geokey_project.categories.all()[0]
         self.assertEqual(category.name, 'Horniman Gardens')
-        self.assertEqual(category.fields.count(), 3)
+        self.assertEqual(category.fields.count(), 4)
 
         field = category.fields.get(key='garden-feature')
         self.assertEqual(field.lookupvalues.count(), 14)

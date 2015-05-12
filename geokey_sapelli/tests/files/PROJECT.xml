@@ -4,6 +4,7 @@
     <!-- data transmission settings go here -->
   </Configuration>
   <Form id="Horniman Gardens">
+    <Text caption="Text" content="text" autoCaps="none" optional="true"/>
     <Choice id="Garden Feature" rows="2" cols="2">
 		<Choice value="Flowers" img="flowers.png" rows="3" cols="2">
 			<Choice value="Red Flowers" img="red flowers.png"/>
