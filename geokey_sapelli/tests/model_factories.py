@@ -7,6 +7,7 @@ from django.core.files.base import ContentFile
 from geokey.projects.tests.model_factories import ProjectF
 from geokey.categories.tests.model_factories import (
     CategoryFactory,
+    FieldFactory,
     LookupFieldFactory,
     LookupValueFactory
 )
@@ -14,8 +15,8 @@ from geokey.categories.tests.model_factories import (
 from ..models import (
     SapelliProject,
     SapelliForm,
-    SapelliChoiceRoot,
-    SapelliChoice
+    SapelliField,
+    SapelliItem
 )
 
 
@@ -48,23 +49,23 @@ class SapelliFormFactory(factory.django.DjangoModelFactory):
     sapelli_id = factory.Sequence(lambda n: 'Form %s' % n)
 
 
-class SapelliChoiceRootFactory(factory.django.DjangoModelFactory):
+class SapelliFieldFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = SapelliChoiceRoot
+        model = SapelliField
 
     sapelli_form = factory.SubFactory(SapelliFormFactory)
-    select_field = factory.SubFactory(LookupFieldFactory)
+    field = factory.SubFactory(FieldFactory)
     sapelli_id = factory.Sequence(lambda n: 'ChoiceRoot %s' % n)
 
 
 class SapelliChoiceFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = SapelliChoice
+        model = SapelliItem
 
     lookup_value = factory.SubFactory(LookupValueFactory)
     image = get_image()
     number = factory.Sequence(lambda n: n)
-    sapelli_choice_root = factory.SubFactory(SapelliChoiceRootFactory)
+    sapelli_choice_root = factory.SubFactory(SapelliFieldFactory)
 
 
 def create_full_project(user):
@@ -144,9 +145,9 @@ def create_full_project(user):
         'sapelli_project': project,
         'sapelli_id': 'Horniman Gardens'
     })
-    choice_root = SapelliChoiceRootFactory.create(**{
+    choice_root = SapelliFieldFactory.create(**{
         'sapelli_form': form,
-        'select_field': select_field,
+        'field': select_field,
         'sapelli_id': 'Garden Feature'
     })
 

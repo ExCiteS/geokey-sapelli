@@ -35,11 +35,7 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('fields')), 1)
-        self.assertEqual(
-            form.get('fields')[0].get('sapelli_id'),
-            'Garden Feature'
-        )
+        self.assertEqual(len(form.get('fields')), 2)
 
     def test_parse_choice(self):
         file = normpath(join(dirname(abspath(__file__)), 'files/PROJECT.xml'))

@@ -5,7 +5,7 @@ from geokey.projects.models import Project
 from geokey.categories.models import Category, Field, LookupValue
 
 from ..models import (
-    SapelliProject, SapelliForm, SapelliChoiceRoot, SapelliChoice
+    SapelliProject, SapelliForm, SapelliField, SapelliItem
 )
 
 
@@ -73,10 +73,10 @@ def create_project(project, user, tmp_path):
                 'LookupField'
             )
 
-            sapelli_choice_root = SapelliChoiceRoot.objects.create(
+            sapelli_choice_root = SapelliField.objects.create(
                 sapelli_form=sapelli_form,
                 sapelli_id=choice_root.get('sapelli_id'),
-                select_field=field
+                field=field
             )
 
             for idx, choice in enumerate(choice_root.get('choices')):
@@ -86,7 +86,7 @@ def create_project(project, user, tmp_path):
                     name=choice.get('value'),
                     field=field
                 )
-                SapelliChoice.objects.create(
+                SapelliItem.objects.create(
                     lookup_value=value,
                     sapelli_choice_root=sapelli_choice_root,
                     number=idx,

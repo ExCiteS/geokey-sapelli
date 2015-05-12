@@ -64,12 +64,12 @@ class SapelliProject(Model):
                 }
             }
 
-            for choice in form.choices.all():
-                key = choice.select_field.key
+            for choice in form.fields.all():
+                key = choice.field.key
                 sapelli_id = choice.sapelli_id.replace(' ', '_')
 
                 value = row[sapelli_id]
-                leaf = choice.choices_leafs.get(number=value)
+                leaf = choice.items.get(number=value)
 
                 feature['properties'][key] = leaf.lookup_value.id
 
@@ -103,23 +103,23 @@ class SapelliForm(Model):
     sapelli_id = CharField(max_length=255)
 
 
-class SapelliChoiceRoot(Model):
+class SapelliField(Model):
     """
-    Represents a Sapelli Choice element that has no Choice elements as parents.
-    Is usually created by parsing a Sapelli decision tree.
+    Represents a Sapelli input option, can be a Text input, a list or a choice
+    root element.
     """
     sapelli_form = ForeignKey(
         'SapelliForm',
-        related_name='choices'
+        related_name='fields'
     )
-    select_field = ForeignKey(
-        'categories.LookupField',
-        related_name='sapelli_choice_root'
+    field = ForeignKey(
+        'categories.Field',
+        related_name='sapelli_field'
     )
     sapelli_id = CharField(max_length=255)
 
 
-class SapelliChoice(Model):
+class SapelliItem(Model):
     """
     Represents a Sapelli Choice element that has no Choice elements as childs.
     Is usually created by parsing a Sapelli decision tree.
@@ -127,11 +127,11 @@ class SapelliChoice(Model):
     lookup_value = OneToOneField(
         'categories.LookupValue',
         primary_key=True,
-        related_name='sapelli_choice'
+        related_name='sapelli_item'
     )
-    image = ImageField(upload_to='sapelli/choice')
+    image = ImageField(upload_to='sapelli/item', null=True)
     number = IntegerField()
     sapelli_choice_root = ForeignKey(
-        'SapelliChoiceRoot',
-        related_name='choices_leafs'
+        'SapelliField',
+        related_name='items'
     )
