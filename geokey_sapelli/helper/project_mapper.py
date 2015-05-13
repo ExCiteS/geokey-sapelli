@@ -65,9 +65,14 @@ def create_project(project, user, tmp_path):
 
         for field in form.get('fields'):
             field_type = field.get('geokey_type')
+
+            name = field.get('caption')
+            if not name:
+                name = field.get('sapelli_id')
+
             geokey_field = Field.create(
-                field.get('sapelli_id'),
-                slugify(field.get('sapelli_id')),
+                name,
+                slugify(name),
                 field.get('description'),
                 False,
                 category,
