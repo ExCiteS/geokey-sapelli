@@ -4,6 +4,10 @@
     <!-- data transmission settings go here -->
   </Configuration>
   <Form id="Horniman Gardens">
+    <Page>
+        <Text caption="Text 2" content="text" autoCaps="none" optional="true"/>
+        <Text caption="Text" content="text" autoCaps="none" optional="true"/>
+    </Page>
     <Text caption="Text" content="text" autoCaps="none" optional="true"/>
     <List id="Community" captions="Community:" optional="false" editable="false" preSelectDefault="false">
         <Item value="Community P1.1"/>

@@ -124,7 +124,11 @@ def parse_form(form_xml):
     fields = []
 
     for child in form_xml:
-        if child.attrib.get('noColumn') != 'true':
+        if child.tag == 'Page':
+            page_fields = parse_form(child).get('fields')
+            for f in page_fields:
+                fields.append(f)
+        elif child.attrib.get('noColumn') != 'true':
             if child.tag == 'Text':
                 fields.append(parse_text_element(child))
             elif child.tag in ['List', 'MultiList']:

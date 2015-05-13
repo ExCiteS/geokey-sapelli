@@ -36,7 +36,7 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('fields')), 6)
+        self.assertEqual(len(form.get('fields')), 8)
 
     def test_parse_choice(self):
         element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'
