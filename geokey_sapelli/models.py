@@ -64,14 +64,17 @@ class SapelliProject(Model):
                 }
             }
 
-            for choice in form.fields.all():
-                key = choice.field.key
-                sapelli_id = choice.sapelli_id.replace(' ', '_')
+            for sapelli_field in form.fields.all():
+                key = sapelli_field.field.key
+                sapelli_id = sapelli_field.sapelli_id.replace(' ', '_')
 
                 value = row[sapelli_id]
-                leaf = choice.items.get(number=value)
 
-                feature['properties'][key] = leaf.lookup_value.id
+                if sapelli_field.items:
+                    leaf = sapelli_field.items.get(number=value)
+                    value = leaf.lookup_value.id
+
+                feature['properties'][key] = value
 
             from geokey.contributions.serializers import ContributionSerializer
             serializer = ContributionSerializer(
