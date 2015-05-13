@@ -79,6 +79,31 @@ def parse_text_element(element):
     return field
 
 
+def parse_orientation_element(element):
+    fields = []
+
+    if element.attrib.get('storeAzimuth') != 'false':
+        fields.append({
+            'sapelli_id': 'Orientation.Azimuth',
+            'caption': 'Azimuth',
+            'geokey_type': 'NumericField'
+        })
+    if element.attrib.get('storePitch') != 'false':
+        fields.append({
+            'sapelli_id': 'Orientation.Pitch',
+            'caption': 'Pitch',
+            'geokey_type': 'NumericField'
+        })
+    if element.attrib.get('storeRoll') != 'false':
+        fields.append({
+            'sapelli_id': 'Orientation.Roll',
+            'caption': 'Roll',
+            'geokey_type': 'NumericField'
+        })
+
+    return fields
+
+
 def parse_form(form_xml):
     """
     Parses a form element
@@ -114,6 +139,10 @@ def parse_form(form_xml):
                     'geokey_type': 'LookupField',
                     'items': parse_list_items(child, 'Choice')
                 })
+            elif child.tag == 'Orientation':
+                orientation_fields = parse_orientation_element(child)
+                for f in orientation_fields:
+                    fields.append(f)
 
     form['fields'] = fields
 

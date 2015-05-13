@@ -11,7 +11,7 @@ from geokey.categories.models import Category, NumericField, DateTimeField
 
 from ..helper.xml_parsers import (
     extract_sapelli, parse_decision_tree, parse_list_items, parse_form,
-    parse_text_element
+    parse_text_element, parse_orientation_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
 
@@ -36,7 +36,7 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('fields')), 4)
+        self.assertEqual(len(form.get('fields')), 6)
 
     def test_parse_choice(self):
         element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'
@@ -160,6 +160,42 @@ class TestParsers(TestCase):
         self.assertEqual(result.get('caption'), 'Text no-caps:')
         self.assertEqual(result.get('geokey_type'), 'NumericField')
         self.assertEqual(result.get('required'), False)
+
+    def test_parse_orientation_element(self):
+        element = ET.XML('<Orientation id="orientationField" optional="false" '
+                         'storeAzimuth="true" storePitch="true" '
+                         'storeRoll="true" />')
+        fields = parse_orientation_element(element)
+        self.assertEqual(len(fields), 3)
+        for field in fields:
+            self.assertIn(field.get('caption'), ['Azimuth', 'Pitch', 'Roll'])
+            self.assertEqual(field.get('geokey_type'), 'NumericField')
+
+        element = ET.XML('<Orientation id="orientationField" '
+                         'optional="false" />')
+        fields = parse_orientation_element(element)
+        self.assertEqual(len(fields), 3)
+        for field in fields:
+            self.assertIn(field.get('caption'), ['Azimuth', 'Pitch', 'Roll'])
+            self.assertEqual(field.get('geokey_type'), 'NumericField')
+
+        element = ET.XML('<Orientation id="orientationField" optional="false" '
+                         'storeAzimuth="false" storePitch="true" '
+                         'storeRoll="true" />')
+        fields = parse_orientation_element(element)
+        self.assertEqual(len(fields), 2)
+        for field in fields:
+            self.assertIn(field.get('caption'), ['Pitch', 'Roll'])
+            self.assertEqual(field.get('geokey_type'), 'NumericField')
+
+        element = ET.XML('<Orientation id="orientationField" optional="false" '
+                         'storeAzimuth="false" storePitch="false" '
+                         'storeRoll="true" />')
+        fields = parse_orientation_element(element)
+        self.assertEqual(len(fields), 1)
+        for field in fields:
+            self.assertIn(field.get('caption'), ['Roll'])
+            self.assertEqual(field.get('geokey_type'), 'NumericField')
 
 
 class TestCreateProject(TestCase):

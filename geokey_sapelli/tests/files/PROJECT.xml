@@ -24,6 +24,7 @@
       </Item>
       <Item value="Province 3"/>
     </MultiList>
+    <Orientation id="orientationField" optional="false" storeAzimuth="true" storePitch="false" storeRoll="true" />
     <Choice id="Garden Feature" rows="2" cols="2">
 		<Choice value="Flowers" img="flowers.png" rows="3" cols="2">
 			<Choice value="Red Flowers" img="red flowers.png"/>
