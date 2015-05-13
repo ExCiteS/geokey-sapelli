@@ -81,11 +81,15 @@ def create_project(project, user, tmp_path):
             )
 
             if field_type == 'LookupField':
-                for idx, choice in enumerate(field.get('choices')):
-                    path = tmp_path + '/img/' + choice.get('img')
-                    img_file = File(open(path, 'rb'))
+                for idx, item in enumerate(field.get('items')):
+                    img = item.get('img')
+                    img_file = None
+                    if img:
+                        path = tmp_path + '/img/' + item.get('img')
+                        img_file = File(open(path, 'rb'))
+
                     value = LookupValue.objects.create(
-                        name=choice.get('value'),
+                        name=item.get('value'),
                         field=geokey_field
                     )
                     SapelliItem.objects.create(

@@ -30,34 +30,36 @@ def extract_sapelli(file):
     return outpath
 
 
-def parse_choice(choice_xml):
+def parse_list_items(list_element, leaf_tag):
     """
     Traverses through the child elements of a choice an returns all leaf
     elements.
 
     Parameter
     ---------
-    choice_xml : xml.etree.ElementTree.Element
+    list_element : xml.etree.ElementTree.Element
         Choice element that is traversed
+    leaf_tag : string
+        Tag name of elements that is looked for
 
     Returns
     -------
     List
         List of all leaf elements
     """
-    choices = []
-    child_choices = choice_xml.findall('Choice')
+    items = []
+    child_items = list_element.findall(leaf_tag)
 
-    if len(child_choices) > 0:
-        for child in child_choices:
-            choices = choices + parse_choice(child)
+    if len(child_items) > 0:
+        for child in child_items:
+            items = items + parse_list_items(child, leaf_tag)
     else:
-        choices.append({
-            'value': choice_xml.attrib.get('value'),
-            'img': choice_xml.attrib.get('img')
+        items.append({
+            'value': list_element.attrib.get('value'),
+            'img': list_element.attrib.get('img')
         })
 
-    return choices
+    return items
 
 
 def parse_text_element(element):
@@ -97,14 +99,21 @@ def parse_form(form_xml):
     fields = []
 
     for child in form_xml:
-        if child.tag == 'Text':
-            fields.append(parse_text_element(child))
-        if child.tag == 'Choice' and child.attrib.get('noColumn') != 'true':
-            fields.append({
-                'sapelli_id': child.attrib.get('id'),
-                'geokey_type': 'LookupField',
-                'choices': parse_choice(child)
-            })
+        if child.attrib.get('noColumn') != 'true':
+            if child.tag == 'Text':
+                fields.append(parse_text_element(child))
+            elif child.tag in ['List', 'MultiList']:
+                fields.append({
+                    'sapelli_id': child.attrib.get('id'),
+                    'geokey_type': 'LookupField',
+                    'items': parse_list_items(child, 'Item')
+                })
+            elif child.tag == 'Choice':
+                fields.append({
+                    'sapelli_id': child.attrib.get('id'),
+                    'geokey_type': 'LookupField',
+                    'items': parse_list_items(child, 'Choice')
+                })
 
     form['fields'] = fields
 

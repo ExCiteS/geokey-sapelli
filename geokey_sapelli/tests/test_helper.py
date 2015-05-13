@@ -10,7 +10,7 @@ from geokey.categories.tests.model_factories import CategoryFactory
 from geokey.categories.models import Category, NumericField, DateTimeField
 
 from ..helper.xml_parsers import (
-    extract_sapelli, parse_decision_tree, parse_choice, parse_form,
+    extract_sapelli, parse_decision_tree, parse_list_items, parse_form,
     parse_text_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
@@ -36,13 +36,43 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('fields')), 2)
+        self.assertEqual(len(form.get('fields')), 4)
 
     def test_parse_choice(self):
-        file = normpath(join(dirname(abspath(__file__)), 'files/PROJECT.xml'))
-        choice = ET.parse(file).getroot().find('Form').find('Choice')
-        choice = parse_choice(choice)
-        self.assertEqual(len(choice), 14)
+        element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'
+                         '<Choice value="Flowers" img="flowers.png" rows="3" '
+                         'cols="2"><Choice value="Red Flowers" '
+                         'img="red flowers.png"/><Choice value="Blue Flowers" '
+                         'img="blue flowers.png"/><Choice value="Yellow '
+                         'Flowers" img="yellow flowers.png"/></Choice><Choice '
+                         'value="Animals" img="Sheep.png" rows="2" cols="1">'
+                         '<Choice value="Two Legged Animal" '
+                         'img="Chicken.png"/><Choice value="Four Legged '
+                         'Animal" img="Sheep.png"/></Choice></Choice>')
+        items = parse_list_items(element, 'Choice')
+        self.assertEqual(len(items), 5)
+
+    def test_parse_multilist(self):
+        element = ET.XML('<MultiList id="Community" captions="Province:;'
+                         'Community:" optional="false" editable="false" '
+                         'preSelectDefault="false"><Item value="Province 1">'
+                         '<Item value="Community P1.1"/><Item value="'
+                         'Community P1.2"/></Item><Item value="Province 2">'
+                         '<Item value="Community P2.1"/><Item value="Community'
+                         ' P2.2"/><Item value="Community P2.3"/></Item><Item '
+                         'value="Province 3"/></MultiList>')
+        items = parse_list_items(element, 'Item')
+        self.assertEqual(len(items), 6)
+
+    def test_parse_list(self):
+        element = ET.XML('<List id="Community" captions="Province:;Community:"'
+                         ' optional="false" editable="false" preSelectDefault='
+                         '"false"><Item value="Community P1.1"/><Item value='
+                         '"Community P1.2"/><Item value="Community P2.1"/>'
+                         '<Item value="Community P2.2"/><Item value="Community'
+                         ' P2.3"/></List>')
+        items = parse_list_items(element, 'Item')
+        self.assertEqual(len(items), 5)
 
     def test_parse_text_element(self):
         element = ET.XML('<Text caption="Text no-caps:" content="text" '
@@ -157,9 +187,19 @@ class TestCreateProject(TestCase):
                     'sapelli_id': 'Text',
                     'geokey_type': 'TextField',
                 }, {
+                    'sapelli_id': 'list',
+                    'geokey_type': 'LookupField',
+                    'items': [
+                        {'value': 'value 1'},
+                        {'value': 'value 2'},
+                        {'value': 'value 3'},
+                        {'value': 'value 4'},
+                        {'value': 'value 5'}
+                    ]
+                }, {
                     'sapelli_id': 'Garden Feature',
                     'geokey_type': 'LookupField',
-                    'choices': [
+                    'items': [
                         {
                             'value': 'Red Flowers',
                             'img': 'red flowers.png'
@@ -216,7 +256,10 @@ class TestCreateProject(TestCase):
 
         category = geokey_project.categories.all()[0]
         self.assertEqual(category.name, 'Horniman Gardens')
-        self.assertEqual(category.fields.count(), 4)
+        self.assertEqual(category.fields.count(), 5)
+
+        field = category.fields.get(key='list')
+        self.assertEqual(field.lookupvalues.count(), 5)
 
         field = category.fields.get(key='garden-feature')
         self.assertEqual(field.lookupvalues.count(), 14)
