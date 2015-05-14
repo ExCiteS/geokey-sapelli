@@ -9,6 +9,8 @@
         <Text caption="Text" content="text" autoCaps="none" optional="true"/>
     </Page>
     <Text caption="Text" content="text" autoCaps="none" optional="true"/>
+    <Button id="trainTimes" caption="Train" column="none" optional="false" />
+    <Button id="trainTimes" caption="Train" column="datetime" optional="false" />
     <List id="Community" captions="Community:" optional="false" editable="false" preSelectDefault="false">
         <Item value="Community P1.1"/>
         <Item value="Community P1.2"/>

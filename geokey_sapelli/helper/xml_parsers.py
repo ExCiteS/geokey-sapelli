@@ -119,6 +119,30 @@ def parse_checkbox_element(element):
     return field
 
 
+def parse_button_element(element):
+    column = element.attrib.get('column')
+
+    if column == 'none':
+        return None
+
+    field = {
+        'sapelli_id': element.attrib.get('id'),
+        'caption': element.attrib.get('caption'),
+        'required': element.attrib.get('optional') != 'true',
+    }
+
+    if column == 'datetime':
+        field['geokey_type'] = 'DateTimeField'
+    elif column == 'boolean':
+        field['geokey_type'] = 'LookupField'
+        field['items'] = [
+            {'value': 'false'},
+            {'value': 'true'}
+        ]
+
+    return field
+
+
 def parse_form(form_xml):
     """
     Parses a form element
@@ -164,6 +188,10 @@ def parse_form(form_xml):
                     fields.append(f)
             elif child.tag == 'Check':
                 fields.append(parse_checkbox_element(child))
+            elif child.tag == 'Button':
+                field = parse_button_element(child)
+                if field:
+                    fields.append(field)
 
     form['fields'] = fields
 

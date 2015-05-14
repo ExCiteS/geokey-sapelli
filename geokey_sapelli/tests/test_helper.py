@@ -11,7 +11,8 @@ from geokey.categories.models import Category, NumericField, DateTimeField
 
 from ..helper.xml_parsers import (
     extract_sapelli, parse_decision_tree, parse_list_items, parse_form,
-    parse_text_element, parse_orientation_element, parse_checkbox_element
+    parse_text_element, parse_orientation_element, parse_checkbox_element,
+    parse_button_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
 
@@ -36,7 +37,7 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('fields')), 9)
+        self.assertEqual(len(form.get('fields')), 10)
 
     def test_parse_choice(self):
         element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'
@@ -204,9 +205,33 @@ class TestParsers(TestCase):
         result = parse_checkbox_element(element)
         self.assertEqual(result.get('sapelli_id'), 'eatsPork')
         self.assertEqual(result.get('caption'), 'Do you eat pork?')
+        self.assertEqual(result.get('geokey_type'), 'LookupField')
         self.assertEqual(len(result.get('items')), 2)
         for item in result.get('items'):
             self.assertIn(item.get('value'), ['false', 'true'])
+
+    def test_parse_button_element(self):
+        element = ET.XML('<Button id="trainTimes" caption="Train" '
+                         'column="datetime" optional="false" />')
+        result = parse_button_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'trainTimes')
+        self.assertEqual(result.get('caption'), 'Train')
+        self.assertEqual(result.get('geokey_type'), 'DateTimeField')
+
+        element = ET.XML('<Button id="trainTimes" caption="Train" '
+                         'column="boolean" optional="false" />')
+        result = parse_button_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'trainTimes')
+        self.assertEqual(result.get('caption'), 'Train')
+        self.assertEqual(result.get('geokey_type'), 'LookupField')
+        self.assertEqual(len(result.get('items')), 2)
+        for item in result.get('items'):
+            self.assertIn(item.get('value'), ['false', 'true'])
+
+        element = ET.XML('<Button id="trainTimes" caption="Train" '
+                         'column="none" optional="false" />')
+        result = parse_button_element(element)
+        self.assertIsNone(result)
 
 
 class TestCreateProject(TestCase):
