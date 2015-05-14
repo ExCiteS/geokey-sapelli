@@ -104,6 +104,21 @@ def parse_orientation_element(element):
     return fields
 
 
+def parse_checkbox_element(element):
+    field = {
+        'sapelli_id': element.attrib.get('id'),
+        'caption': element.attrib.get('caption'),
+        'geokey_type': 'LookupField',
+        'required': element.attrib.get('optional') != 'true',
+        'items': [
+            {'value': 'false'},
+            {'value': 'true'}
+        ]
+    }
+
+    return field
+
+
 def parse_form(form_xml):
     """
     Parses a form element
@@ -147,6 +162,8 @@ def parse_form(form_xml):
                 orientation_fields = parse_orientation_element(child)
                 for f in orientation_fields:
                     fields.append(f)
+            elif child.tag == 'Check':
+                fields.append(parse_checkbox_element(child))
 
     form['fields'] = fields
 

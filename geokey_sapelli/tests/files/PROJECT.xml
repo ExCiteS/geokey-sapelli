@@ -16,6 +16,7 @@
         <Item value="Community P2.2"/>
         <Item value="Community P2.3"/>
     </List>
+    <Check id="eatsPork" caption="Do you eat pork?" optional="false" defaultValue="false" />
     <MultiList id="Provinces" captions="Province:" optional="false" editable="false" preSelectDefault="false">
       <Item value="Province 1">
         <Item value="Community P1.1"/>

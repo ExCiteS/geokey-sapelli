@@ -11,7 +11,7 @@ from geokey.categories.models import Category, NumericField, DateTimeField
 
 from ..helper.xml_parsers import (
     extract_sapelli, parse_decision_tree, parse_list_items, parse_form,
-    parse_text_element, parse_orientation_element
+    parse_text_element, parse_orientation_element, parse_checkbox_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
 
@@ -36,7 +36,7 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('fields')), 8)
+        self.assertEqual(len(form.get('fields')), 9)
 
     def test_parse_choice(self):
         element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'
@@ -196,6 +196,17 @@ class TestParsers(TestCase):
         for field in fields:
             self.assertIn(field.get('caption'), ['Roll'])
             self.assertEqual(field.get('geokey_type'), 'NumericField')
+
+    def test_parse_checkbox_element(self):
+        element = ET.XML('<Check id="eatsPork" caption="Do you eat pork?" '
+                         'optional="false" defaultValue="false" />')
+
+        result = parse_checkbox_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'eatsPork')
+        self.assertEqual(result.get('caption'), 'Do you eat pork?')
+        self.assertEqual(len(result.get('items')), 2)
+        for item in result.get('items'):
+            self.assertIn(item.get('value'), ['false', 'true'])
 
 
 class TestCreateProject(TestCase):
