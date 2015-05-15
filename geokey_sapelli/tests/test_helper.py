@@ -12,7 +12,7 @@ from geokey.categories.models import Category, NumericField, DateTimeField
 from ..helper.xml_parsers import (
     extract_sapelli, parse_decision_tree, parse_list_items, parse_form,
     parse_text_element, parse_orientation_element, parse_checkbox_element,
-    parse_button_element
+    parse_button_element, parse_base_field, parse_list
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
 
@@ -53,6 +53,46 @@ class TestParsers(TestCase):
         items = parse_list_items(element, 'Choice')
         self.assertEqual(len(items), 5)
 
+    def test_parse_base_field(self):
+        element = ET.XML('<Text caption="Text no-caps:" '
+                         'description="Text no-caps:" content="text" '
+                         'autoCaps="none" optional="true" id="text"/>')
+        result = parse_base_field(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('description'), 'Text no-caps:')
+        self.assertEqual(result.get('required'), False)
+
+        element = ET.XML('<Text caption="Text no-caps:" '
+                         'description="Text no-caps:" content="text" '
+                         'autoCaps="none" optional="false" id="text"/>')
+        result = parse_base_field(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('description'), 'Text no-caps:')
+        self.assertEqual(result.get('required'), True)
+
+        element = ET.XML('<Text caption="Text no-caps:" '
+                         'description="Text no-caps:" content="text" '
+                         'autoCaps="none" id="text"/>')
+        result = parse_base_field(element)
+        self.assertEqual(result.get('sapelli_id'), 'text')
+        self.assertEqual(result.get('caption'), 'Text no-caps:')
+        self.assertEqual(result.get('description'), 'Text no-caps:')
+        self.assertEqual(result.get('required'), True)
+
+    def test_parse_list(self):
+        element = ET.XML('<List id="Community" captions="Province:;Community:"'
+                         ' optional="false" editable="false" preSelectDefault='
+                         '"false"><Item value="Community P1.1"/><Item value='
+                         '"Community P1.2"/><Item value="Community P2.1"/>'
+                         '<Item value="Community P2.2"/><Item value="Community'
+                         ' P2.3"/></List>')
+        field = parse_list(element)
+        self.assertEqual(field.get('sapelli_id'), 'Community')
+        self.assertEqual(field.get('geokey_type'), 'LookupField')
+        self.assertEqual(len(field.get('items')), 5)
+
     def test_parse_multilist(self):
         element = ET.XML('<MultiList id="Community" captions="Province:;'
                          'Community:" optional="false" editable="false" '
@@ -65,7 +105,7 @@ class TestParsers(TestCase):
         items = parse_list_items(element, 'Item')
         self.assertEqual(len(items), 6)
 
-    def test_parse_list(self):
+    def test_parse_list_items(self):
         element = ET.XML('<List id="Community" captions="Province:;Community:"'
                          ' optional="false" editable="false" preSelectDefault='
                          '"false"><Item value="Community P1.1"/><Item value='

@@ -62,19 +62,24 @@ def parse_list_items(list_element, leaf_tag):
     return items
 
 
-def parse_text_element(element):
-    number_cnt = ['UnsignedInt', 'SignedInt', 'UnsignedFloat', 'SignedFloat']
-    # TODO: Parse description
-    # TODO: Refractor into general parser
+def parse_base_field(element):
     field = {
         'sapelli_id': element.attrib.get('id'),
         'caption': element.attrib.get('caption'),
-        'geokey_type': 'TextField',
+        'description': element.attrib.get('description'),
         'required': element.attrib.get('optional') != 'true'
     }
+    return field
+
+
+def parse_text_element(element):
+    number_cnt = ['UnsignedInt', 'SignedInt', 'UnsignedFloat', 'SignedFloat']
+    field = parse_base_field(element)
 
     if element.attrib.get('content') in number_cnt:
         field['geokey_type'] = 'NumericField'
+    else:
+        field['geokey_type'] = 'TextField'
 
     return field
 
@@ -105,16 +110,12 @@ def parse_orientation_element(element):
 
 
 def parse_checkbox_element(element):
-    field = {
-        'sapelli_id': element.attrib.get('id'),
-        'caption': element.attrib.get('caption'),
-        'geokey_type': 'LookupField',
-        'required': element.attrib.get('optional') != 'true',
-        'items': [
-            {'value': 'false'},
-            {'value': 'true'}
-        ]
-    }
+    field = parse_base_field(element)
+    field['geokey_type'] = 'LookupField'
+    field['items'] = [
+        {'value': 'false'},
+        {'value': 'true'}
+    ]
 
     return field
 
@@ -125,11 +126,7 @@ def parse_button_element(element):
     if column == 'none':
         return None
 
-    field = {
-        'sapelli_id': element.attrib.get('id'),
-        'caption': element.attrib.get('caption'),
-        'required': element.attrib.get('optional') != 'true',
-    }
+    field = parse_base_field(element)
 
     if column == 'datetime':
         field['geokey_type'] = 'DateTimeField'
@@ -139,6 +136,19 @@ def parse_button_element(element):
             {'value': 'false'},
             {'value': 'true'}
         ]
+
+    return field
+
+
+def parse_list(element):
+    target_items = dict(
+        List='Item',
+        MultiList='Item',
+        Choice='Choice'
+    )
+    field = parse_base_field(element)
+    field['geokey_type'] = 'LookupField'
+    field['items'] = parse_list_items(element, target_items[element.tag])
 
     return field
 
@@ -167,27 +177,22 @@ def parse_form(form_xml):
             page_fields = parse_form(child).get('fields')
             for f in page_fields:
                 fields.append(f)
+
         elif child.attrib.get('noColumn') != 'true':
             if child.tag == 'Text':
                 fields.append(parse_text_element(child))
-            elif child.tag in ['List', 'MultiList']:
-                fields.append({
-                    'sapelli_id': child.attrib.get('id'),
-                    'geokey_type': 'LookupField',
-                    'items': parse_list_items(child, 'Item')
-                })
-            elif child.tag == 'Choice':
-                fields.append({
-                    'sapelli_id': child.attrib.get('id'),
-                    'geokey_type': 'LookupField',
-                    'items': parse_list_items(child, 'Choice')
-                })
+
+            elif child.tag in ['List', 'MultiList', 'Choice']:
+                fields.append(parse_list(child))
+
             elif child.tag == 'Orientation':
                 orientation_fields = parse_orientation_element(child)
                 for f in orientation_fields:
                     fields.append(f)
+
             elif child.tag == 'Check':
                 fields.append(parse_checkbox_element(child))
+
             elif child.tag == 'Button':
                 field = parse_button_element(child)
                 if field:
