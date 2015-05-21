@@ -49,42 +49,46 @@ class SapelliProject(Model):
         imported_features = 0
 
         for row in reader:
-            feature = {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [
-                        float(row['Position.Latitude']),
-                        float(row['Position.Latitude'])
-                    ]
-                },
-                "properties": {},
-                "meta": {
-                    "category": form.category.id
+            # catch invalid locations
+            try:
+                feature = {
+                    "location": {
+                        "geometry": '{ "type": "Point", "coordinates": '
+                                    '[%s, %s] }' % (
+                                        float(row['Position.Longitude']),
+                                        float(row['Position.Latitude'])
+                                    )
+                    },
+                    "properties": {},
+                    "meta": {
+                        "category": form.category.id
+                    }
                 }
-            }
 
-            for sapelli_field in form.fields.all():
-                key = sapelli_field.field.key
-                sapelli_id = sapelli_field.sapelli_id.replace(' ', '_')
+                for sapelli_field in form.fields.all():
+                    key = sapelli_field.field.key
+                    sapelli_id = sapelli_field.sapelli_id.replace(' ', '_')
 
-                value = row[sapelli_id]
+                    value = row[sapelli_id]
 
-                if sapelli_field.items:
-                    leaf = sapelli_field.items.get(number=value)
-                    value = leaf.lookup_value.id
+                    if sapelli_field.items:
+                        leaf = sapelli_field.items.get(number=value)
+                        value = leaf.lookup_value.id
 
-                feature['properties'][key] = value
+                    feature['properties'][key] = value
 
-            from geokey.contributions.serializers import ContributionSerializer
-            serializer = ContributionSerializer(
-                data=feature,
-                context={'user': user, 'project': self.project}
-            )
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
+                from geokey.contributions.serializers import (
+                    ContributionSerializer)
+                serializer = ContributionSerializer(
+                    data=feature,
+                    context={'user': user, 'project': self.project}
+                )
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
 
-            imported_features += 1
+                imported_features += 1
+            except ValueError:
+                pass
 
         return imported_features
 
