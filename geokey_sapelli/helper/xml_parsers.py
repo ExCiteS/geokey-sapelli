@@ -153,6 +153,11 @@ def parse_list(element):
     return field
 
 
+def parse_location_element(element):
+    field = parse_base_field(element)
+    return field
+
+
 def parse_form(form_xml):
     """
     Parses a form element
@@ -173,12 +178,16 @@ def parse_form(form_xml):
         form['sapelli_id'] = form_xml.attrib.get('id')
 
     fields = []
+    locations = []
 
     for child in form_xml:
         if child.tag == 'Page':
             page_fields = parse_form(child).get('fields')
             for f in page_fields:
                 fields.append(f)
+
+        elif child.tag == 'Location':
+            locations.append(parse_location_element(child))
 
         elif child.attrib.get('noColumn') != 'true':
             if child.tag == 'Text':
@@ -201,6 +210,7 @@ def parse_form(form_xml):
                     fields.append(field)
 
     form['fields'] = fields
+    form['locations'] = locations
 
     return form
 

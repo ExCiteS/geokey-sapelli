@@ -45,6 +45,7 @@ class SapelliProject(Model):
             The number of contributions created
         """
         form = self.forms.get(pk=form_id)
+        location = form.location_fields.all()[0].sapelli_id
         reader = csv.DictReader(csvfile)
         imported_features = 0
 
@@ -55,8 +56,8 @@ class SapelliProject(Model):
                     "location": {
                         "geometry": '{ "type": "Point", "coordinates": '
                                     '[%s, %s] }' % (
-                                        float(row['Position.Longitude']),
-                                        float(row['Position.Latitude'])
+                                        float(row['%s.Longitude' % location]),
+                                        float(row['%s.Latitude' % location])
                                     )
                     },
                     "properties": {},
@@ -106,6 +107,17 @@ class SapelliForm(Model):
     sapelli_project = ForeignKey(
         'SapelliProject',
         related_name='forms'
+    )
+    sapelli_id = CharField(max_length=255)
+
+
+class LocationField(Model):
+    """
+    Represents a Location field.
+    """
+    sapelli_form = ForeignKey(
+        'SapelliForm',
+        related_name='location_fields'
     )
     sapelli_id = CharField(max_length=255)
 

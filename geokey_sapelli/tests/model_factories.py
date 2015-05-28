@@ -16,7 +16,8 @@ from ..models import (
     SapelliProject,
     SapelliForm,
     SapelliField,
-    SapelliItem
+    SapelliItem,
+    LocationField
 )
 
 
@@ -47,6 +48,14 @@ class SapelliFormFactory(factory.django.DjangoModelFactory):
     category = factory.SubFactory(CategoryFactory)
     sapelli_project = factory.SubFactory(SapelliProjectFactory)
     sapelli_id = factory.Sequence(lambda n: 'Form %s' % n)
+
+
+class SapelliLocationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = LocationField
+
+    sapelli_form = factory.SubFactory(SapelliFormFactory)
+    sapelli_id = 'Location'
 
 
 class SapelliFieldFactory(factory.django.DjangoModelFactory):
@@ -144,6 +153,10 @@ def create_full_project(user):
         'category': geokey_cat,
         'sapelli_project': project,
         'sapelli_id': 'Horniman Gardens'
+    })
+    SapelliLocationFactory.create(**{
+        'sapelli_form': form,
+        'sapelli_id': 'Position'
     })
     choice_root = SapelliFieldFactory.create(**{
         'sapelli_form': form,

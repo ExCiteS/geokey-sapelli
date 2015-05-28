@@ -12,7 +12,7 @@ from geokey.categories.models import Category, NumericField, DateTimeField
 from ..helper.xml_parsers import (
     extract_sapelli, parse_decision_tree, parse_list_items, parse_form,
     parse_text_element, parse_orientation_element, parse_checkbox_element,
-    parse_button_element, parse_base_field, parse_list
+    parse_button_element, parse_base_field, parse_list, parse_location_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
 
@@ -37,6 +37,7 @@ class TestParsers(TestCase):
         choice = ET.parse(file).getroot().find('Form')
         form = parse_form(choice)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
+        self.assertEqual(len(form.get('locations')), 1)
         self.assertEqual(len(form.get('fields')), 10)
 
     def test_parse_form_without_id(self):
@@ -278,6 +279,14 @@ class TestParsers(TestCase):
         result = parse_button_element(element)
         self.assertIsNone(result)
 
+    def test_parse_location_field(self):
+        element = ET.XML('<Location id="Location" maxAccuracyRadius="40.0" '
+                         'useBestKnownLocationOnTimeout="false" '
+                         'storeAltitude="false" jump="Confirmation" '
+                         'skipOnBack="true" />')
+        result = parse_location_element(element)
+        self.assertEqual(result.get('sapelli_id'), 'Location')
+
 
 class TestCreateProject(TestCase):
     def test_create_implicit_fields(self):
@@ -300,6 +309,9 @@ class TestCreateProject(TestCase):
             'sapelli_id': 1111,
             'forms': [{
                 'sapelli_id': 'Horniman Gardens',
+                'locations': [{
+                    'sapelli_id': 'Position'
+                }],
                 'fields': [{
                     'sapelli_id': 'Text',
                     'geokey_type': 'TextField',
@@ -373,6 +385,7 @@ class TestCreateProject(TestCase):
 
         category = geokey_project.categories.all()[0]
         self.assertEqual(category.name, 'Horniman Gardens')
+        self.assertEqual(category.sapelli_form.location_fields.count(), 1)
         self.assertEqual(category.fields.count(), 5)
 
         field = category.fields.get(key='list')

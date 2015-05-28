@@ -5,7 +5,7 @@ from geokey.projects.models import Project
 from geokey.categories.models import Category, Field, LookupValue
 
 from ..models import (
-    SapelliProject, SapelliForm, SapelliField, SapelliItem
+    SapelliProject, SapelliForm, SapelliField, SapelliItem, LocationField
 )
 
 
@@ -62,6 +62,12 @@ def create_project(project, user, tmp_path):
         )
 
         create_implicit_fields(category)
+
+        for location in form.get('locations'):
+            LocationField.objects.create(
+                sapelli_form=sapelli_form,
+                sapelli_id=location.get('sapelli_id'),
+            )
 
         for field in form.get('fields'):
             field_type = field.get('geokey_type')
