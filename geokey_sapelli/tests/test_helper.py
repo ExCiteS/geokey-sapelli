@@ -39,6 +39,11 @@ class TestParsers(TestCase):
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
         self.assertEqual(len(form.get('fields')), 10)
 
+    def test_parse_form_without_id(self):
+        element = ET.XML('<Form name="Lefini" startField="Situation" end="_LOOP" shortcut="true" endVibrate="true" shortcutImage="Elephant.png" storeEndTime="true" audioFeedback="NONE"></Form>')
+        form = parse_form(element)
+        self.assertEqual(form.get('sapelli_id'), 'Lefini')
+
     def test_parse_choice(self):
         element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'
                          '<Choice value="Flowers" img="flowers.png" rows="3" '

@@ -168,7 +168,9 @@ def parse_form(form_xml):
         Parse form containing the id and choices of the form
     """
     form = dict()
-    form['sapelli_id'] = form_xml.attrib.get('id')
+    form['sapelli_id'] = form_xml.attrib.get('name')
+    if not form['sapelli_id']:
+        form['sapelli_id'] = form_xml.attrib.get('id')
 
     fields = []
 
