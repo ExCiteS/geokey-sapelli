@@ -42,9 +42,9 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="form_id" class="control-label">Select form for data upload</label>
-                    <select name="form_id" id="form_id" class="form-control">
+                    <select name="form_id" id="form_id" class="form-control" required>
                         {% for form in sapelli_project.forms.all %}
-                        <option value="-1"></option>
+                        <option value=""></option>
                         <option value="{{ form.category_id }}">{{ form.sapelli_id }}</option>
                         {% endfor %}
                     </select>
@@ -53,7 +53,7 @@
 
                 <div class="form-group">
                     <label for="data" class="control-label">CSV file</label>
-                    <input type="file" name="data" id="data">
+                    <input type="file" name="data" id="data" required>
                 </div>
 
                 <div class="form-group">
@@ -66,6 +66,7 @@
 {% endblock %}
 
 {% block libraries %}
+        <script src="/static/js/admin.ui.forms.validate.js"></script>
         <link rel="stylesheet" href="/static/lib/file-upload/css/fileinput.min.css">
         <script src="/static/lib/file-upload/js/fileinput.min.js"></script>
         <script>

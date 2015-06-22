@@ -41,7 +41,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="project" class="control-label">Sapelli file</label>
-                    <input type="file" name="project" id="project">
+                    <input type="file" name="project" id="project" required>
                 </div>
 
                 <div class="form-group">
@@ -54,6 +54,7 @@
 {% endblock %}
 
 {% block libraries %}
+        <script src="/static/js/admin.ui.forms.validate.js"></script>
         <link rel="stylesheet" href="/static/lib/file-upload/css/fileinput.min.css">
         <script src="/static/lib/file-upload/js/fileinput.min.js"></script>
         <script>

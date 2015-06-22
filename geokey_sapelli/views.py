@@ -1,3 +1,5 @@
+from zipfile import BadZipfile
+
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -51,16 +53,23 @@ class ProjectUpload(LoginRequiredMixin, TemplateView):
             Redirecting to the data upload form
         """
         file = request.FILES.get('project')
-        tmp_dir = extract_sapelli(file)
-        project = parse_decision_tree(tmp_dir + '/PROJECT.xml')
-        geokey_project = create_project(project, request.user, tmp_dir)
+        try:
+            tmp_dir = extract_sapelli(file)
+            project = parse_decision_tree(tmp_dir + '/PROJECT.xml')
+            geokey_project = create_project(project, request.user, tmp_dir)
 
-        messages.success(self.request, "The project has been created.")
+            messages.success(self.request, "The project has been created.")
 
-        return redirect(
-            'geokey_sapelli:data_upload',
-            project_id=geokey_project.id
-        )
+            return redirect(
+                'geokey_sapelli:data_upload',
+                project_id=geokey_project.id
+            )
+        except BadZipfile:
+            messages.error(
+                self.request,
+                "The uploaded file is not a Sapelli project file."
+            )
+            return self.render_to_response({})
 
 
 class DataUpload(LoginRequiredMixin, TemplateView):
@@ -107,8 +116,8 @@ class DataUpload(LoginRequiredMixin, TemplateView):
         project = context.get('sapelli_project')
 
         if project is not None:
-            form_id = request.POST.get('form_id')
             file = request.FILES.get('data')
+            form_id = request.POST.get('form_id')
 
             num_records = project.import_from_csv(request.user, form_id, file)
 
