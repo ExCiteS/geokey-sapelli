@@ -1,126 +1,242 @@
 from os.path import dirname, normpath, abspath, join
 
-from django.test import TestCase, Client
-from django.core.urlresolvers import reverse
+from django.test import TestCase
+from django.core.urlresolvers import reverse, resolve
 from django.core.files import File
+from django.http import HttpRequest
+from django.template.loader import render_to_string
+from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages import get_messages
 
 from geokey.users.tests.model_factories import UserF
 from geokey.projects.models import Project
 
 from .model_factories import SapelliProjectFactory, create_full_project
 
+from ..views import ProjectList, ProjectUpload, DataUpload
+
 
 class ProjectListTest(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.url = reverse('geokey_sapelli:index')
+    def test_url(self):
+        self.assertEqual(reverse('geokey_sapelli:index'), '/admin/sapelli/')
+
+        resolved = resolve('/admin/sapelli/')
+        self.assertEqual(resolved.func.func_name, ProjectList.__name__)
 
     def test_get_with_user(self):
         project = SapelliProjectFactory.create()
-        user = project.project.creator
-        user.set_password('123456')
-        user.save()
+        view = ProjectList.as_view()
 
-        self.client.login(username=user.email, password='123456')
-        response = self.client.get(self.url)
+        request = HttpRequest()
+        request.method = 'GET'
+        request.user = project.project.creator
+
+        response = view(request).render()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['projects']), 1)
+
+        rendered = render_to_string(
+            'sapelli_project_list.html',
+            {
+                'projects': [project],
+                'user': project.project.creator,
+                'PLATFORM_NAME': get_current_site(request).name
+            }
+        )
+        self.assertEqual(unicode(response.content), rendered)
 
     def test_get_with_anonymous(self):
-        response = self.client.get(self.url)
-        self.assertRedirects(
-            response, '/admin/account/login/?next=%s' % self.url)
+        view = ProjectList.as_view()
+        request = HttpRequest()
+        request.method = 'GET'
+        request.user = AnonymousUser()
+        response = view(request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/admin/account/login/?next=')
 
 
 class ProjectUploadTest(TestCase):
     def setUp(self):
-        self.client = Client()
+        self.view = ProjectUpload.as_view()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.request.user = AnonymousUser()
+
+        from django.contrib.messages.storage.fallback import FallbackStorage
+        setattr(self.request, 'session', 'session')
+        messages = FallbackStorage(self.request)
+        setattr(self.request, '_messages', messages)
+
+    def test_url(self):
+        self.assertEqual(
+            reverse('geokey_sapelli:project_upload'),
+            '/admin/sapelli/projects/new'
+        )
+
+        resolved = resolve('/admin/sapelli/projects/new')
+        self.assertEqual(resolved.func.func_name, ProjectUpload.__name__)
 
     def test_get_with_anonymous(self):
-        url = reverse('geokey_sapelli:project_upload')
-        response = self.client.get(url)
-        self.assertRedirects(response, '/admin/account/login/?next=%s' % url)
+        response = self.view(self.request)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/admin/account/login/?next=')
 
     def test_get_with_user(self):
-        user = UserF.create(**{'password': '123456'})
-        url = reverse('geokey_sapelli:project_upload')
-        self.client.login(username=user.email, password='123456')
-        response = self.client.get(url)
+        user = UserF.create()
+        self.request.user = user
+
+        response = self.view(self.request).render()
         self.assertEqual(response.status_code, 200)
+
+        rendered = render_to_string(
+            'sapelli_upload_tree.html',
+            {
+                'user': user,
+                'PLATFORM_NAME': get_current_site(self.request).name
+            }
+        )
+        self.assertEqual(unicode(response.content), rendered)
 
     def test_post_with_anonymous(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))
-        data = {
+
+        self.request.method = 'POST'
+        self.request.FILES = {
             'project': file
         }
-        url = reverse('geokey_sapelli:project_upload')
-        response = self.client.post(url, data)
-        self.assertRedirects(response, '/admin/account/login/?next=%s' % url)
+
+        response = self.view(self.request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/admin/account/login/?next=')
 
     def test_post_with_user(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))
-        data = {
+        user = UserF.create()
+
+        self.request.user = user
+        self.request.method = 'POST'
+        self.request.FILES = {
             'project': file
         }
 
-        user = UserF.create(**{'password': '123456'})
-        url = reverse('geokey_sapelli:project_upload')
-        self.client.login(username=user.email, password='123456')
-        response = self.client.post(url, data)
-        self.assertEqual(Project.objects.count(), 1)
-        project = Project.objects.all()[0]
+        response = self.view(self.request)
 
-        self.assertRedirects(
-            response, 'admin/sapelli/projects/%s/upload/' % project.id)
+        self.assertEqual(Project.objects.count(), 1)
+        project = Project.objects.first()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response['location'], reverse(
+                'geokey_sapelli:data_upload',
+                kwargs={'project_id': project.id}
+            )
+        )
 
 
 class DataUploadTest(TestCase):
     def setUp(self):
-        self.client = Client()
-
         self.user = UserF.create()
-        self.user.set_password('123456')
-        self.user.save()
+        self.view = DataUpload.as_view()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.request.user = AnonymousUser()
 
-        self.project = create_full_project(self.user)
-        self.url = reverse(
-            'geokey_sapelli:data_upload',
-            kwargs={'project_id': self.project.project.id}
+        from django.contrib.messages.storage.fallback import FallbackStorage
+        setattr(self.request, 'session', 'session')
+        messages = FallbackStorage(self.request)
+        setattr(self.request, '_messages', messages)
+
+    def test_url(self):
+        self.assertEqual(
+            reverse(
+                'geokey_sapelli:data_upload',
+                kwargs={'project_id': 1}
+            ),
+            '/admin/sapelli/projects/1/upload/'
         )
 
+        resolved = resolve('/admin/sapelli/projects/1/upload/')
+        self.assertEqual(resolved.kwargs['project_id'], '1')
+        self.assertEqual(resolved.func.func_name, DataUpload.__name__)
+
     def test_get_with_anonymous(self):
-        response = self.client.get(self.url)
-        self.assertRedirects(
-            response, '/admin/account/login/?next=%s' % self.url)
+        project = create_full_project(self.user)
+        response = self.view(self.request, project_id=project.project_id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/admin/account/login/?next=')
 
     def test_get_with_user(self):
-        self.client.login(username=self.user.email, password='123456')
-        response = self.client.get(self.url)
+        project = create_full_project(self.user)
+        self.request.user = self.user
+
+        response = self.view(
+            self.request,
+            project_id=project.project_id).render()
+
         self.assertEqual(response.status_code, 200)
+
+        rendered = render_to_string(
+            'sapelli_upload_data.html',
+            {
+                'sapelli_project': project,
+                'user': self.user,
+                'PLATFORM_NAME': get_current_site(self.request).name
+            }
+        )
+        self.assertEqual(unicode(response.content), rendered)
 
     def test_post_with_anonymous(self):
+        project = create_full_project(self.user)
+
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.csv'))
         file = File(open(path, 'rb'))
-        data = {
+
+        self.request.method = 'POST'
+        self.request.FILES = {
             'data': file
         }
-        response = self.client.post(self.url, data)
-        self.assertRedirects(
-            response, '/admin/account/login/?next=%s' % self.url)
 
-        self.assertEqual(self.project.project.observations.count(), 0)
+        response = self.view(self.request, project_id=project.project_id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/admin/account/login/?next=')
+        self.assertEqual(project.project.observations.count(), 0)
 
     def test_post_with_user(self):
+        project = create_full_project(self.user)
+
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.csv'))
         file = File(open(path, 'rb'))
-        data = {
-            'data': file,
-            'form_id': self.project.forms.all()[0].category_id
-        }
-        self.client.login(username=self.user.email, password='123456')
-        response = self.client.post(self.url, data)
+
+        self.request.method = 'POST'
+        self.request.FILES = {'data': file}
+        self.request.POST = {'form_id': project.forms.first().category_id}
+        self.request.user = self.user
+
+        response = self.view(
+            self.request,
+            project_id=project.project_id).render()
+
         self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(self.project.project.observations.count(), 4)
+        rendered = render_to_string(
+            'sapelli_upload_data.html',
+            {
+                'sapelli_project': project,
+                'user': self.user,
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'messages': get_messages(self.request)
+            }
+        )
+
+        self.assertContains(
+            response.content,
+            '4 records have been added to the project'
+        )
+        self.assertEqual(unicode(response.content), rendered)
+        self.assertEqual(project.project.observations.count(), 4)

@@ -50,7 +50,6 @@ class SapelliProject(Model):
         imported_features = 0
 
         for row in reader:
-            # catch invalid locations
             try:
                 feature = {
                     "location": {
