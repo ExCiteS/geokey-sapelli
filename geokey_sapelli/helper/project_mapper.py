@@ -52,8 +52,7 @@ def create_project(project, user, tmp_path):
             creator=user,
             name=form.get('sapelli_id'),
             description='',
-            default_status='active',
-            create_grouping=True
+            default_status='active'
         )
         sapelli_form = SapelliForm.objects.create(
             category=category,
