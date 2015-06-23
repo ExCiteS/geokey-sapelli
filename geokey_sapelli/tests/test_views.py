@@ -235,7 +235,7 @@ class DataUploadTest(TestCase):
         )
 
         self.assertContains(
-            response.content,
+            response,
             '4 records have been added to the project'
         )
         self.assertEqual(unicode(response.content), rendered)

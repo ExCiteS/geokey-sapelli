@@ -59,7 +59,10 @@ class SapelliProject(Model):
                                         float(row['%s.Latitude' % location])
                                     )
                     },
-                    "properties": {},
+                    "properties": {
+                        "DeviceId": row['DeviceID'],
+                        "StartTime": row['StartTime']
+                    },
                     "meta": {
                         "category": form.category.id
                     }
