@@ -67,7 +67,8 @@ def parse_base_field(element):
         'sapelli_id': element.attrib.get('id'),
         'caption': element.attrib.get('caption'),
         'description': element.attrib.get('description'),
-        'required': element.attrib.get('optional') != 'true'
+        'required': element.attrib.get('optional') != 'true',
+        'truefalse': False
     }
     return field
 
@@ -112,6 +113,7 @@ def parse_orientation_element(element):
 def parse_checkbox_element(element):
     field = parse_base_field(element)
     field['geokey_type'] = 'LookupField'
+    field['truefalse'] = True
     field['items'] = [
         {'value': 'false'},
         {'value': 'true'}
@@ -123,7 +125,7 @@ def parse_checkbox_element(element):
 def parse_button_element(element):
     column = element.attrib.get('column')
 
-    if column == 'none':
+    if column in ['none', None]:
         return None
 
     field = parse_base_field(element)
@@ -132,6 +134,7 @@ def parse_button_element(element):
         field['geokey_type'] = 'DateTimeField'
     elif column == 'boolean':
         field['geokey_type'] = 'LookupField'
+        field['truefalse'] = True
         field['items'] = [
             {'value': 'false'},
             {'value': 'true'}

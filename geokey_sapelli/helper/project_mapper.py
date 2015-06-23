@@ -87,7 +87,8 @@ def create_project(project, user, tmp_path):
             sapelli_field = SapelliField.objects.create(
                 sapelli_form=sapelli_form,
                 sapelli_id=field.get('sapelli_id'),
-                field=geokey_field
+                field=geokey_field,
+                truefalse=field.get('truefalse')
             )
 
             if field_type == 'LookupField':

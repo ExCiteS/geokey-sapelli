@@ -5,7 +5,8 @@ from django.db.models import (
     IntegerField,
     ImageField,
     ForeignKey,
-    CharField
+    CharField,
+    BooleanField
 )
 
 from .manager import SapelliProjectManager
@@ -50,48 +51,48 @@ class SapelliProject(Model):
         imported_features = 0
 
         for row in reader:
-            try:
-                feature = {
-                    "location": {
-                        "geometry": '{ "type": "Point", "coordinates": '
-                                    '[%s, %s] }' % (
-                                        float(row['%s.Longitude' % location]),
-                                        float(row['%s.Latitude' % location])
-                                    )
-                    },
-                    "properties": {
-                        "DeviceId": row['DeviceID'],
-                        "StartTime": row['StartTime']
-                    },
-                    "meta": {
-                        "category": form.category.id
-                    }
+            feature = {
+                "location": {
+                    "geometry": '{ "type": "Point", "coordinates": '
+                                '[%s, %s] }' % (
+                                    float(row['%s.Longitude' % location]),
+                                    float(row['%s.Latitude' % location])
+                                )
+                },
+                "properties": {
+                    "DeviceId": row['DeviceID'],
+                    "StartTime": row['StartTime']
+                },
+                "meta": {
+                    "category": form.category.id
                 }
+            }
 
-                for sapelli_field in form.fields.all():
-                    key = sapelli_field.field.key
-                    sapelli_id = sapelli_field.sapelli_id.replace(' ', '_')
+            for sapelli_field in form.fields.all():
+                key = sapelli_field.field.key
+                sapelli_id = sapelli_field.sapelli_id.replace(' ', '_')
 
-                    value = row[sapelli_id]
+                value = row[sapelli_id]
 
-                    if sapelli_field.items:
-                        leaf = sapelli_field.items.get(number=value)
-                        value = leaf.lookup_value.id
+                if sapelli_field.truefalse:
+                    value = 0 if value == 'false' else 1
 
-                    feature['properties'][key] = value
+                if sapelli_field.items.count() > 0:
+                    leaf = sapelli_field.items.get(number=value)
+                    value = leaf.lookup_value.id
 
-                from geokey.contributions.serializers import (
-                    ContributionSerializer)
-                serializer = ContributionSerializer(
-                    data=feature,
-                    context={'user': user, 'project': self.project}
-                )
-                if serializer.is_valid(raise_exception=True):
-                    serializer.save()
+                feature['properties'][key] = value
 
-                imported_features += 1
-            except ValueError:
-                pass
+            from geokey.contributions.serializers import (
+                ContributionSerializer)
+            serializer = ContributionSerializer(
+                data=feature,
+                context={'user': user, 'project': self.project}
+            )
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+
+            imported_features += 1
 
         return imported_features
 
@@ -138,6 +139,7 @@ class SapelliField(Model):
         related_name='sapelli_field'
     )
     sapelli_id = CharField(max_length=255)
+    truefalse = BooleanField(default=False)
 
 
 class SapelliItem(Model):
