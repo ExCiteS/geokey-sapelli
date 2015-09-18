@@ -98,6 +98,10 @@ def create_project(project, user, tmp_path):
                     if img:
                         path = tmp_path + '/img/' + item.get('img')
                         img_file = File(open(path, 'rb'))
+                        # try:
+                        #     img_file = File(open(path, 'rb'))
+                        # except IOError:
+                        #     pass
 
                     value = LookupValue.objects.create(
                         name=item.get('value'),

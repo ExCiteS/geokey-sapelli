@@ -11,6 +11,7 @@ from django.contrib.messages import get_messages
 
 from geokey.users.tests.model_factories import UserF
 from geokey.projects.models import Project
+from geokey import version
 
 from .model_factories import SapelliProjectFactory, create_full_project
 
@@ -40,7 +41,8 @@ class ProjectListTest(TestCase):
             {
                 'projects': [project],
                 'user': project.project.creator,
-                'PLATFORM_NAME': get_current_site(request).name
+                'PLATFORM_NAME': get_current_site(request).name,
+                'GEOKEY_VERSION': version.get_version()
             }
         )
         self.assertEqual(unicode(response.content), rendered)
@@ -94,7 +96,8 @@ class ProjectUploadTest(TestCase):
             'sapelli_upload_tree.html',
             {
                 'user': user,
-                'PLATFORM_NAME': get_current_site(self.request).name
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'GEOKEY_VERSION': version.get_version()
             }
         )
         self.assertEqual(unicode(response.content), rendered)
@@ -124,7 +127,6 @@ class ProjectUploadTest(TestCase):
         }
 
         response = self.view(self.request)
-
         self.assertEqual(Project.objects.count(), 1)
         project = Project.objects.first()
 
@@ -185,7 +187,8 @@ class DataUploadTest(TestCase):
             {
                 'sapelli_project': project,
                 'user': self.user,
-                'PLATFORM_NAME': get_current_site(self.request).name
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'GEOKEY_VERSION': version.get_version()
             }
         )
         self.assertEqual(unicode(response.content), rendered)
@@ -230,7 +233,8 @@ class DataUploadTest(TestCase):
                 'sapelli_project': project,
                 'user': self.user,
                 'PLATFORM_NAME': get_current_site(self.request).name,
-                'messages': get_messages(self.request)
+                'messages': get_messages(self.request),
+                'GEOKEY_VERSION': version.get_version()
             }
         )
 

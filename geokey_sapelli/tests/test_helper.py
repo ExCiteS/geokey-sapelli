@@ -314,9 +314,11 @@ class TestCreateProject(TestCase):
                 }],
                 'fields': [{
                     'sapelli_id': 'Text',
+                    'truefalse': False,
                     'geokey_type': 'TextField',
                 }, {
                     'sapelli_id': 'list',
+                    'truefalse': False,
                     'geokey_type': 'LookupField',
                     'items': [
                         {'value': 'value 1'},
@@ -327,6 +329,7 @@ class TestCreateProject(TestCase):
                     ]
                 }, {
                     'sapelli_id': 'Garden Feature',
+                    'truefalse': False,
                     'geokey_type': 'LookupField',
                     'items': [
                         {
