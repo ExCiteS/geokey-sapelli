@@ -1,0 +1,15 @@
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h6 class="item-info">Extension</h6>
+                    <h3>Sapelli</h3>
+                </div>
+                <div class="list-group">
+                    {% for entry in menu_entries %}
+                    <a href="{% url entry.url %}" class="list-group-item{% if entry.active %} active{% endif %}">
+                        {{ entry.label }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>

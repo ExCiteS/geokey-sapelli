@@ -11,14 +11,37 @@ from .models import SapelliProject
 from helper.xml_parsers import parse_decision_tree, extract_sapelli
 from helper.project_mapper import create_project
 
+from collections import namedtuple
 
-class ProjectList(LoginRequiredMixin, TemplateView):
+class AbstractSapelliView(LoginRequiredMixin, TemplateView):
+    @staticmethod
+    def get_menu_label():
+        raise NotImplementedError
+    
+    @staticmethod
+    def get_menu_url():
+        raise NotImplementedError
+    
+    def add_menu(self,context):
+        Entry = namedtuple("Entry", ["label", "url", "active"])
+        context['menu_entries'] = [Entry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)) for subclass in AbstractSapelliView.__subclasses__()]
+        return context
+
+class ProjectList(AbstractSapelliView):
     """
     Presents a list of all projects the user can access. Is also the starting
     page for the Sapelli extension.
     """
     template_name = 'sapelli_project_list.html'
-
+    
+    @staticmethod
+    def get_menu_label():
+        return 'Project list'
+    
+    @staticmethod
+    def get_menu_url():
+        return 'geokey_sapelli:index'
+    
     def get_context_data(self):
         """
         Returns the context to render the view. Contains a list of Sapelli
@@ -29,15 +52,26 @@ class ProjectList(LoginRequiredMixin, TemplateView):
         dict
         """
         projects = SapelliProject.objects.get_list(self.request.user)
-        return {'projects': projects}
+        context = {'projects': projects}
+        return self.add_menu(context)
 
-
-class ProjectUpload(LoginRequiredMixin, TemplateView):
+class ProjectUpload(AbstractSapelliView):
     """
     Presents a form to upload a .sap file to create a new project.
     """
-    template_name = 'sapelli_upload_tree.html'
-
+    template_name = 'sapelli_upload_project.html'
+    
+    @staticmethod
+    def get_menu_label():
+        return 'Upload new Sapelli project'
+    
+    @staticmethod
+    def get_menu_url():
+        return 'geokey_sapelli:project_upload'
+    
+    def get_context_data(self):
+        return self.add_menu({})
+        
     def post(self, request):
         """
         Handles the POST request.

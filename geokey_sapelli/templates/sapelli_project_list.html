@@ -18,22 +18,7 @@
     {% include 'snippets/messages.html' %}
 
     <div class="row">
-        <div class="col-sm-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h6 class="item-info">Extension</h6>
-                    <h3>Sapelli</h3>
-                </div>
-                <div class="list-group">
-                    <a href="{% url 'geokey_sapelli:index' %}" class="list-group-item active">
-                        Sapelli projects
-                    </a>
-                    <a href="{% url 'geokey_sapelli:project_upload' %}" class="list-group-item">
-                        Upload new decision tree
-                    </a>
-                </div>
-            </div>
-        </div>
+        {% include 'snippets/sapelli_menu.html' %}
 
         <div class="col-sm-8">
             <h3 class="header">Sapelli projects</h3>
