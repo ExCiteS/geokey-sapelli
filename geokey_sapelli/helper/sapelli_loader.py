@@ -1,9 +1,28 @@
 import zipfile
+from zipfile import BadZipfile
 from os.path import basename
 import xml.etree.ElementTree as ET
 
 from django.conf import settings
 
+from ..models import SapelliProject
+from .project_mapper import create_project
+from .sapelli_exceptions import SapelliSAPException, SapelliXMLException, SapelliDuplicateException
+
+class SapelliLoaderMixin(object):
+    """
+    TODO
+    """
+    def load(self,file,user):
+        try:
+            tmp_dir = extract_sap(file)
+            sapelli_project_info = parse_project(tmp_dir + '/PROJECT.xml')
+            geokey_project = create_project(sapelli_project_info, user, tmp_dir)
+            # when successful return the SapelliProject object:
+            return geokey_project.sapelli_project
+        # TODO other exceptions
+        except BadZipfile:
+            raise SapelliSAPException('Not a valid ZIP file.')
 
 def extract_sap(file):
     """
@@ -233,8 +252,12 @@ def parse_project(project_xml_file):
         Contains all essential information about the parsed Sapelli project
     """
     sapelli_project_info = dict()
-
-    tree = ET.parse(project_xml_file)
+    
+    try:
+        tree = ET.parse(project_xml_file)
+    except IOError:
+        raise SapelliSAPException('SAP file does not contain a PROJECT.xml file')
+    
     root = tree.getroot()
 
     sapelli_project_info['name'] = root.attrib.get('name')

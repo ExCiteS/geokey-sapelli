@@ -1,5 +1,3 @@
-from zipfile import BadZipfile
-
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -8,8 +6,8 @@ from braces.views import LoginRequiredMixin
 from geokey.core.decorators import handle_exceptions_for_admin
 
 from .models import SapelliProject
-from helper.sapelli_loader import parse_project, extract_sap
-from helper.project_mapper import create_project
+from helper.sapelli_loader import SapelliLoaderMixin
+from helper.sapelli_exceptions import SapelliException, SapelliSAPException, SapelliXMLException, SapelliDuplicateException
 
 from collections import namedtuple
 
@@ -55,7 +53,7 @@ class ProjectList(AbstractSapelliView):
         context = {'projects': projects}
         return self.add_menu(context)
 
-class ProjectUpload(AbstractSapelliView):
+class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
     """
     Presents a form to upload a .sap file to create a new project.
     """
@@ -86,25 +84,31 @@ class ProjectUpload(AbstractSapelliView):
         django.http.HttpResponseRedirect
             Redirecting to the data upload form
         """
-        file = request.FILES.get('project')
         try:
-            tmp_dir = extract_sap(file)
-            sapelli_project_info = parse_project(tmp_dir + '/PROJECT.xml')
-            geokey_project = create_project(sapelli_project_info, request.user, tmp_dir)
+            sapelli_project = self.load(request.FILES.get('project'), request.user)
 
             messages.success(self.request, "The project has been created.")
 
             return redirect(
                 'geokey_sapelli:data_upload',
-                project_id=geokey_project.id
+                project_id=sapelli_project.project.id
             )
-        except BadZipfile:
+        except SapelliSAPException, e:
             messages.error(
                 self.request,
-                "The uploaded file is not a Sapelli project file."
+                'The uploaded file is not a valid Sapelli project file (*.sap) [' + str(e) + ']'
             )
-            return self.render_to_response({})
-
+        except SapelliXMLException, e:
+            messages.error(
+                self.request,
+                'Failed to parse PROJECT.xml file [' + str(e) + ']'
+            )
+        except SapelliDuplicateException:
+            messages.error(
+                self.request,
+                'You already have a matching Sapelli project.'
+            )
+        return self.render_to_response({})
 
 class DataUpload(LoginRequiredMixin, TemplateView):
     """
