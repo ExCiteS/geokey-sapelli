@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from views import ProjectUpload, DataUpload, ProjectList
+from views import ProjectUpload, DataUpload, ProjectList, ProjectDescriptionAPI, ProjectUploadAPI
 
 urlpatterns = patterns(
     '',
@@ -15,5 +15,13 @@ urlpatterns = patterns(
     url(
         r'^admin/sapelli/projects/(?P<project_id>[0-9]+)/upload/$',
         DataUpload.as_view(),
-        name='data_upload')
+        name='data_upload'),
+    url(
+        r'^admin/sapelli/projects/description/(?P<sapelli_project_id>[0-9]+)/(?P<sapelli_project_fingerprint>[0-9]+)/$',
+        ProjectDescriptionAPI.as_view(),
+        name='project_description_api'),
+    url(
+        r'^admin/api/projects/new/$',
+        ProjectUploadAPI.as_view(),
+        name='project_upload_api')
 )

@@ -3,13 +3,26 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from braces.views import LoginRequiredMixin
 
-from geokey.core.decorators import handle_exceptions_for_admin
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+from geokey.core.decorators import (
+    handle_exceptions_for_ajax,
+    handle_exceptions_for_admin
+)
 
 from .models import SapelliProject
 from helper.sapelli_loader import SapelliLoaderMixin
 from helper.sapelli_exceptions import SapelliException, SapelliSAPException, SapelliXMLException, SapelliDuplicateException
 
 from collections import namedtuple
+
+# ############################################################################
+#
+# Views
+#
+# ############################################################################
 
 class AbstractSapelliView(LoginRequiredMixin, TemplateView):
     @staticmethod
@@ -165,3 +178,79 @@ class DataUpload(LoginRequiredMixin, TemplateView):
             )
 
         return self.render_to_response(context)
+
+# ############################################################################
+#
+# Public API views
+#
+# ############################################################################
+
+class ProjectDescriptionAPI(APIView):
+    """
+    API Endpoint for consulting the mapping of Sapelli projects
+    (identified by id and fingerprint) to corresponding GeoKey projects
+    sapelli/api/projects/description/xxxx/yyyyyyy
+    """
+    @handle_exceptions_for_ajax
+    def post(self, request, sapelli_project_id, sapelli_project_fingerprint):
+        """
+        TODO
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+        TODO
+
+        Returns
+        -------
+        TODO
+
+        Raises
+        ------
+        TODO
+        """
+        if request.user.is_anonymous():
+            raise PermissionDenied('API access not authorised, please login.')
+        try:
+            sapelli_project = SapelliProject.objects.get_single_by_sapelli_info(request.user, sapelli_project_id, sapelli_project_fingerprint)
+        except SapelliProject.DoesNotExist:
+            return Response({'error': 'No such project'})
+        else:
+            # return project description (as json):
+            return Response(sapelli_project.get_description())
+
+
+class ProjectUploadAPI(APIView, SapelliLoaderMixin):
+    """
+    API Endpoint for uploading a new Sapelli project.
+    sapelli/api/projects/new/
+    """
+    @handle_exceptions_for_ajax
+    def post(self, request):
+        """
+        TODO
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+        TODO
+
+        Returns
+        -------
+        TODO
+
+        Raises
+        ------
+        TODO
+        """
+        if request.user.is_anonymous():
+            raise PermissionDenied('API access not authorised, please login.')
+        try:
+            sapelli_project = self.load(request.FILES.get('project'), request.user)
+        except SapelliException, e:
+            return Response({'error': str(e)})
+        else:
+            # return project description (as json) to signal successful upload:
+            Response(sapelli_project.get_description())

@@ -26,6 +26,23 @@ class SapelliProject(Model):
     sapelli_fingerprint = IntegerField()
 
     objects = SapelliProjectManager()
+    
+    def get_description(self):
+        """
+        TODO
+        """
+        description = {}
+        # GeoKey project id:
+        description['geokey_project_id'] = self.project.id
+        # Sapelli project id:
+        description['sapelli_project_id'] = self.sapelli_id
+        # Sapelli project fingerprint:
+        description['sapelli_project_fingerprint'] = self.sapelli_fingerprint
+        # Mapping of Sapelli Form ids to GeoKey category ids:
+        description['form_category_mappings'] = ()
+        for form in self.forms:
+            description['form_category_mappings'].append({'sapelli_form_id': form.sapelli_id, 'geokey_category_id': form.category.id})
+        return description
 
     def import_from_csv(self, user, form_id, csvfile):
         """
