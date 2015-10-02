@@ -23,6 +23,7 @@ class SapelliProject(Model):
         related_name='sapelli_project'
     )
     sapelli_id = IntegerField()
+    sapelli_fingerprint = IntegerField()
 
     objects = SapelliProjectManager()
 

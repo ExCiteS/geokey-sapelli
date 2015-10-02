@@ -262,7 +262,7 @@ def parse_project(project_xml_file):
 
     sapelli_project_info['name'] = root.attrib.get('name')
     sapelli_project_info['sapelli_id'] = int(root.attrib.get('id'))
-    sapelli_project_info['forms'] = []
+    sapelli_project_info['sapelli_fingerprint'] = get_project_fingerprint(project_xml_file)
     sapelli_project_info['forms'] = []
 
     for child in root:
@@ -270,3 +270,10 @@ def parse_project(project_xml_file):
             sapelli_project_info['forms'].append(parse_form(child))
 
     return sapelli_project_info
+
+
+def get_project_fingerprint(project_xml_file):
+    """
+    TODO
+    """
+    return -1 #todo use Sapelli jar to get fingerprint

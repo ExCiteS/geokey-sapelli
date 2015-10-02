@@ -307,6 +307,7 @@ class TestCreateProject(TestCase):
         project = {
             'name': 'Mapping Cultures',
             'sapelli_id': 1111,
+            'sapelli_fingerprint': -1001003931,
             'forms': [{
                 'sapelli_id': 'Horniman Gardens',
                 'locations': [{

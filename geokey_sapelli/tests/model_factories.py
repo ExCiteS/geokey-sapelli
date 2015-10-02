@@ -39,6 +39,7 @@ class SapelliProjectFactory(factory.django.DjangoModelFactory):
 
     project = factory.SubFactory(ProjectF)
     sapelli_id = factory.Sequence(lambda n: n)
+    sapelli_fingerprint = factory.Sequence(lambda n: n)
 
 
 class SapelliFormFactory(factory.django.DjangoModelFactory):
