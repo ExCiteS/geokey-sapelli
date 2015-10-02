@@ -17,6 +17,8 @@ class SapelliLoaderMixin(object):
         try:
             tmp_dir = extract_sap(file)
             sapelli_project_info = parse_project(tmp_dir + '/PROJECT.xml')
+            if SapelliProject.objects.exists_by_sapelli_info(user, sapelli_project_info['sapelli_id'], sapelli_project_info['sapelli_fingerprint']):
+                raise SapelliDuplicateException
             geokey_project = create_project(sapelli_project_info, user, tmp_dir)
             # when successful return the SapelliProject object:
             return geokey_project.sapelli_project
