@@ -9,24 +9,24 @@ from geokey.users.tests.model_factories import UserF
 from geokey.categories.tests.model_factories import CategoryFactory
 from geokey.categories.models import Category, NumericField, DateTimeField
 
-from ..helper.xml_parsers import (
-    extract_sapelli, parse_decision_tree, parse_list_items, parse_form,
-    parse_text_element, parse_orientation_element, parse_checkbox_element,
-    parse_button_element, parse_base_field, parse_list, parse_location_element
+from ..helper.sapelli_loader import (
+    extract_sap, parse_project, parse_form, parse_base_field,
+    parse_orientation_element, parse_checkbox_element, parse_button_element,
+    parse_list, parse_list_items, parse_text_element, parse_location_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
 
 
-class TestParsers(TestCase):
-    def test_extract_file(self):
+class TestSapelliLoader(TestCase):	
+    def test_extract_sap(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))
-        directory = extract_sapelli(file)
+        directory = extract_sap(file)
         self.assertEqual(directory, settings.MEDIA_ROOT + '/tmp/Horniman.sap')
 
-    def test_parse_decision_tree(self):
+    def test_parse_project(self):
         file = normpath(join(dirname(abspath(__file__)), 'files/PROJECT.xml'))
-        project = parse_decision_tree(file)
+        project = parse_project(file)
 
         self.assertEqual(project.get('name'), 'Mapping Cultures')
         self.assertEqual(project.get('sapelli_id'), 1111)

@@ -8,7 +8,7 @@ from braces.views import LoginRequiredMixin
 from geokey.core.decorators import handle_exceptions_for_admin
 
 from .models import SapelliProject
-from helper.xml_parsers import parse_decision_tree, extract_sapelli
+from helper.sapelli_loader import parse_project, extract_sap
 from helper.project_mapper import create_project
 
 from collections import namedtuple
@@ -88,9 +88,9 @@ class ProjectUpload(AbstractSapelliView):
         """
         file = request.FILES.get('project')
         try:
-            tmp_dir = extract_sapelli(file)
-            project = parse_decision_tree(tmp_dir + '/PROJECT.xml')
-            geokey_project = create_project(project, request.user, tmp_dir)
+            tmp_dir = extract_sap(file)
+            sapelli_project_info = parse_project(tmp_dir + '/PROJECT.xml')
+            geokey_project = create_project(sapelli_project_info, request.user, tmp_dir)
 
             messages.success(self.request, "The project has been created.")
 

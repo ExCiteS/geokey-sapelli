@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from django.conf import settings
 
 
-def extract_sapelli(file):
+def extract_sap(file):
     """
     Extracts a Sapelli project zip file and returns the path to the directory
     that stores the files.
@@ -218,9 +218,9 @@ def parse_form(form_xml):
     return form
 
 
-def parse_decision_tree(file):
+def parse_project(project_xml_file):
     """
-    Parses a complete descision tree into a native representation.
+    Parses a Sapelli XML project description into a native representation.
 
     Parameters
     ----------
@@ -230,19 +230,20 @@ def parse_decision_tree(file):
     Returns
     -------
     dict
-        The parsed project
+        Contains all essential information about the parsed Sapelli project
     """
-    project = dict()
+    sapelli_project_info = dict()
 
-    tree = ET.parse(file)
+    tree = ET.parse(project_xml_file)
     root = tree.getroot()
 
-    project['name'] = root.attrib.get('name')
-    project['sapelli_id'] = int(root.attrib.get('id'))
-    project['forms'] = []
+    sapelli_project_info['name'] = root.attrib.get('name')
+    sapelli_project_info['sapelli_id'] = int(root.attrib.get('id'))
+    sapelli_project_info['forms'] = []
+    sapelli_project_info['forms'] = []
 
     for child in root:
         if child.tag == 'Form':
-            project['forms'].append(parse_form(child))
+            sapelli_project_info['forms'].append(parse_form(child))
 
-    return project
+    return sapelli_project_info

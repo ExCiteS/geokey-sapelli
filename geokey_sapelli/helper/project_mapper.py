@@ -32,9 +32,9 @@ def create_implicit_fields(category):
         )
 
 
-def create_project(project, user, tmp_path):
+def create_project(sapelli_project_info, user, tmp_path):
     geokey_project = Project.create(
-        project.get('name'),
+        sapelli_project_info.get('name'),
         '',
         True,
         False,
@@ -42,11 +42,11 @@ def create_project(project, user, tmp_path):
     )
 
     sapelli_project = SapelliProject.objects.create(
-        project=geokey_project,
-        sapelli_id=project.get('sapelli_id')
+        project = geokey_project,
+        sapelli_id = sapelli_project_info.get('sapelli_id'),
     )
 
-    for form in project.get('forms'):
+    for form in sapelli_project_info.get('forms'):
         category = Category.objects.create(
             project=geokey_project,
             creator=user,
