@@ -93,7 +93,7 @@ class ProjectUploadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_upload_tree.html',
+            'sapelli_upload_project.html',
             {
                 'user': user,
                 'PLATFORM_NAME': get_current_site(self.request).name,
