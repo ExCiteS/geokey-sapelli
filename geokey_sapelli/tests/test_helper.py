@@ -304,7 +304,7 @@ class TestCreateProject(TestCase):
                 self.assertTrue(isinstance(field, DateTimeField))
 
     def test_create_project(self):
-        project = {
+        sapelli_project_info = {
             'name': 'Mapping Cultures',
             'sapelli_id': 1111,
             'sapelli_fingerprint': -1001003931,
@@ -382,7 +382,7 @@ class TestCreateProject(TestCase):
         }
         directory = normpath(join(dirname(abspath(__file__)), 'files'))
 
-        geokey_project = create_project(project, UserF.create(), directory)
+        geokey_project = create_project(sapelli_project_info, UserF.create(), directory)
         self.assertEqual(geokey_project.name, 'Mapping Cultures')
         self.assertEqual(geokey_project.sapelli_project.sapelli_id, 1111)
         self.assertEqual(geokey_project.sapelli_project.sapelli_fingerprint, -1001003931)
