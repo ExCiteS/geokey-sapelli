@@ -11,7 +11,7 @@ from .models import SapelliProject
 from helper.xml_parsers import parse_decision_tree, extract_sapelli
 from helper.project_mapper import create_project
 
-from collections import namedtuple
+from helper.dynamic_menu import MenuEntry
 
 class AbstractSapelliView(LoginRequiredMixin, TemplateView):
     @staticmethod
@@ -23,8 +23,7 @@ class AbstractSapelliView(LoginRequiredMixin, TemplateView):
         raise NotImplementedError
     
     def add_menu(self,context):
-        Entry = namedtuple("Entry", ["label", "url", "active"])
-        context['menu_entries'] = [Entry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)) for subclass in AbstractSapelliView.__subclasses__()]
+        context['menu_entries'] = [MenuEntry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)) for subclass in AbstractSapelliView.__subclasses__()]
         return context
 
 class ProjectList(AbstractSapelliView):
