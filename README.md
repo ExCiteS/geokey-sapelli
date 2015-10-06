@@ -18,7 +18,10 @@ Sapelli support in Geokey. This extension enables user to upload decision trees 
     pip install -e .
     ```
 
-3. Go to your GeoKey installation and edit `settings.py` file (usually in `local_settings\`), and add `'geokey_sapelli',` to the `INSTALLED_APPS` list.
+3. Go to your GeoKey installation and edit `settings.py` file (usually in `local_settings\`):
+
+    - Add `'geokey_sapelli',` to the `INSTALLED_APPS` list.
+    - Add the absolute path to the Sapelli jar file: `SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-2.0.0-SNAPSHOT-jar-with-dependencies.jar'`
 
 4. Restart the server.
 
@@ -28,4 +31,3 @@ Sapelli support in Geokey. This extension enables user to upload decision trees 
     ```
     python manage.py test geokey_sapelli
     ```
-

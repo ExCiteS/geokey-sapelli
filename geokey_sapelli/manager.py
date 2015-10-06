@@ -47,7 +47,7 @@ class SapelliProjectManager(Manager):
             return False
         else:
             return True
-    
+
     def get_single_by_sapelli_info(self, user, sapelli_project_id, sapelli_project_fingerprint):
         """
         Returns a single Sapelli project, identified by the given
@@ -67,7 +67,7 @@ class SapelliProjectManager(Manager):
         geokey_sapelli.SapelliProject
         """
         return self.get_list(user).get(sapelli_id=sapelli_project_id, sapelli_fingerprint=sapelli_project_fingerprint)
-    
+
     def get_single(self, user, project_id):
         """
         Returns a single Sapelli project the user can access and contribute to.

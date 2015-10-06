@@ -1,30 +1,59 @@
-import zipfile
-from zipfile import BadZipfile
-from os.path import basename
+import commands
+import json
+import os
 import xml.etree.ElementTree as ET
 
+from zipfile import ZipFile, BadZipfile
+from os.path import basename
+
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from django.conf import settings
 
 from ..models import SapelliProject
 from .project_mapper import create_project
-from .sapelli_exceptions import SapelliSAPException, SapelliXMLException, SapelliDuplicateException
+from .sapelli_exceptions import (
+    SapelliSAPException,
+    SapelliXMLException,
+    SapelliDuplicateException
+)
+
 
 class SapelliLoaderMixin(object):
     """
     TODO
     """
-    def load(self,file,user):
+    def store_file(self, sap_file):
+        filename, extension = os.path.splitext(sap_file.name)
+        path = default_storage.save(
+            'tmp/' + filename + extension,
+            ContentFile(sap_file.read())
+        )
+        return os.path.join(settings.MEDIA_ROOT, path)
+
+    def load(self, sap_file, user):
         try:
-            tmp_dir = extract_sap(file)
+            tmp_file = self.store_file(sap_file)
+            tmp_dir = extract_sap(sap_file)
             sapelli_project_info = parse_project(tmp_dir + '/PROJECT.xml')
-            if SapelliProject.objects.exists_by_sapelli_info(user, sapelli_project_info['sapelli_id'], sapelli_project_info['sapelli_fingerprint']):
+
+            fingerprint = get_project_fingerprint(tmp_file, tmp_dir)
+            sapelli_project_info['sapelli_fingerprint'] = fingerprint
+
+            if SapelliProject.objects.exists_by_sapelli_info(
+                    user,
+                    sapelli_project_info['sapelli_id'],
+                    sapelli_project_info['sapelli_fingerprint']):
                 raise SapelliDuplicateException
+
             geokey_project = create_project(sapelli_project_info, user, tmp_dir)
+
             # when successful return the SapelliProject object:
             return geokey_project.sapelli_project
         # TODO other exceptions
         except BadZipfile:
             raise SapelliSAPException('Not a valid ZIP file.')
+
 
 def extract_sap(file):
     """
@@ -43,7 +72,7 @@ def extract_sap(file):
     """
     outpath = settings.MEDIA_ROOT + '/tmp/' + basename(file.name)
 
-    z = zipfile.ZipFile(file)
+    z = ZipFile(file)
     for name in z.namelist():
         z.extract(name, outpath)
     file.close()
@@ -254,17 +283,16 @@ def parse_project(project_xml_file):
         Contains all essential information about the parsed Sapelli project
     """
     sapelli_project_info = dict()
-    
+
     try:
         tree = ET.parse(project_xml_file)
     except IOError:
         raise SapelliSAPException('SAP file does not contain a PROJECT.xml file')
-    
+
     root = tree.getroot()
 
     sapelli_project_info['name'] = root.attrib.get('name')
     sapelli_project_info['sapelli_id'] = int(root.attrib.get('id'))
-    sapelli_project_info['sapelli_fingerprint'] = get_project_fingerprint(project_xml_file)
     sapelli_project_info['forms'] = []
 
     for child in root:
@@ -274,8 +302,14 @@ def parse_project(project_xml_file):
     return sapelli_project_info
 
 
-def get_project_fingerprint(project_xml_file):
+def get_project_fingerprint(tmp_file, tmp_dir):
     """
     TODO
     """
-    return -1 #todo use Sapelli jar to get fingerprint
+    command = 'java -cp %s uk.ac.ucl.excites.sapelli.collector.SapColCmdLn -p %s -load "%s" -json' % (
+        settings.SAPELLI_JAR,
+        tmp_dir,
+        tmp_file
+    )
+    std_output = commands.getstatusoutput(command)[1]
+    return json.loads(std_output).get('fingerprint')

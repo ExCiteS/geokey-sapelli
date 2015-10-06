@@ -42,9 +42,9 @@ def create_project(sapelli_project_info, user, tmp_path):
     )
 
     sapelli_project = SapelliProject.objects.create(
-        project = geokey_project,
-        sapelli_id = sapelli_project_info.get('sapelli_id'),
-        sapelli_fingerprint = sapelli_project_info.get('sapelli_fingerprint')
+        project=geokey_project,
+        sapelli_id=sapelli_project_info.get('sapelli_id'),
+        sapelli_fingerprint=sapelli_project_info.get('sapelli_fingerprint')
     )
 
     for form in sapelli_project_info.get('forms'):
