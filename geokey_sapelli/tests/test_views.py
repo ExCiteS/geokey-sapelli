@@ -20,7 +20,7 @@ from geokey import version
 
 from .model_factories import SapelliProjectFactory, create_full_project
 
-from ..views import ProjectList, ProjectUpload, DataUpload, Login
+from ..views import ProjectList, ProjectUpload, DataUpload, LoginAPI
 
 from ..helper.dynamic_menu import MenuEntry
 
@@ -261,15 +261,15 @@ class DataUploadTest(TestCase):
         self.assertEqual(project.project.observations.count(), 4)
 
 
-class LoginTest(TestCase):
+class LoginAPITest(TestCase):
     def test_url(self):
         self.assertEqual(
-            reverse('geokey_sapelli:api_login'),
+            reverse('geokey_sapelli:login_api'),
             '/api/sapelli/login/'
         )
 
         resolved = resolve('/api/sapelli/login/')
-        self.assertEqual(resolved.func.func_name, Login.__name__)
+        self.assertEqual(resolved.func.func_name, LoginAPI.__name__)
 
     def test_post(self):
         user = UserF.create()
@@ -286,8 +286,8 @@ class LoginTest(TestCase):
             'password': '123456'
         }
 
-        view = Login.as_view()
-        url = reverse('geokey_sapelli:api_login')
+        view = LoginAPI.as_view()
+        url = reverse('geokey_sapelli:login_api')
 
         factory = RequestFactory()
         request = factory.post(url, data)

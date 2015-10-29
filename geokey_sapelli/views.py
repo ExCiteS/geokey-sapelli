@@ -193,12 +193,12 @@ class DataUpload(LoginRequiredMixin, TemplateView):
 #
 # ############################################################################
 
-class Login(TokenView):
+class LoginAPI(TokenView):
     def post(self, request, *args, **kwargs):
         request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
         request.POST['grant_type'] = 'password'
 
-        return super(Login, self).post(request, *args, **kwargs)
+        return super(LoginAPI, self).post(request, *args, **kwargs)
 
 
 class ProjectDescriptionAPI(APIView):
