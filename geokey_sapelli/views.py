@@ -15,6 +15,7 @@ from geokey.core.decorators import (
     handle_exceptions_for_ajax,
     handle_exceptions_for_admin
 )
+from geokey.projects.models import Project
 
 from .models import SapelliProject
 from helper.sapelli_loader import SapelliLoaderMixin
@@ -276,3 +277,42 @@ class ProjectUploadAPI(APIView, SapelliLoaderMixin):
         else:
             # return project description (as json) to signal successful upload:
             Response(sapelli_project.get_description())
+
+
+class FindObservationAPI(APIView):
+    """
+    TODO
+    """
+    @handle_exceptions_for_ajax
+    def get(self, request, project_id, category_id, sapelli_record_start_time, sapelli_record_device_id):
+        """
+        TODO
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : int
+            Identifies the project on the data base
+        category_id : int
+            Identifies the category on the data base
+        sapelli_record_start_time : string
+            ISO 8601 timestamp with ms accuracy and UTC offset
+        sapelli_record_device_id : int
+            Sapelli-generated device id
+
+        Returns
+        -------
+        TODO
+
+        Raises
+        ------
+        TODO
+        """
+        if request.user.is_anonymous():
+            raise PermissionDenied('API access not authorised, please login.')
+        
+        project = Project.objects.get(pk=project_id)
+        observation = project.observations.get(category_id=category_id, properties__at_StartTime=sapelli_record_start_time, properties__at_DeviceId=sapelli_record_device_id)
+        return Response({'observation_id': observation.id})
+
