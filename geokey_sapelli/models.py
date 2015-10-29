@@ -1,3 +1,4 @@
+import json
 import csv
 from django.db.models import (
     Model,
@@ -8,6 +9,8 @@ from django.db.models import (
     CharField,
     BooleanField
 )
+
+from geokey.contributions.models import Observation
 
 from .manager import SapelliProjectManager
 
@@ -26,7 +29,7 @@ class SapelliProject(Model):
     sapelli_fingerprint = IntegerField()
 
     objects = SapelliProjectManager()
-    
+
     def get_description(self):
         """
         TODO
@@ -67,6 +70,8 @@ class SapelliProject(Model):
         location = form.location_fields.all()[0].sapelli_id
         reader = csv.DictReader(csvfile)
         imported_features = 0
+        updated_features = 0
+        ignored_features = 0
 
         for row in reader:
             feature = {
@@ -101,18 +106,52 @@ class SapelliProject(Model):
 
                 feature['properties'][key] = value
 
-            from geokey.contributions.serializers import (
-                ContributionSerializer)
-            serializer = ContributionSerializer(
-                data=feature,
-                context={'user': user, 'project': self.project}
-            )
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
+            from geokey.contributions.serializers import (ContributionSerializer)
 
-            imported_features += 1
+            try:
+                observation = self.project.observations.get(
+                    category_id=form.category.id,
+                    properties__at_StartTime=row['StartTime'],
+                    properties__at_DeviceId=row['DeviceID']
+                )
 
-        return imported_features
+                equal = True
+
+                if json.loads(feature['location']['geometry']) != json.loads(observation.location.geometry.json):
+                    equal = False
+
+                if len(feature['properties']) != len(observation.properties):
+                    equal = False
+
+                for key in feature['properties']:
+                    if feature['properties'][key] != observation.properties[key]:
+                        equal = False
+
+                if not equal:
+                    serializer = ContributionSerializer(
+                        observation,
+                        data=feature,
+                        context={'user': user, 'project': self.project}
+                    )
+
+                    if serializer.is_valid(raise_exception=True):
+                        serializer.save()
+
+                    updated_features += 1
+                else:
+                    ignored_features += 1
+            except Observation.DoesNotExist:
+                serializer = ContributionSerializer(
+                    data=feature,
+                    context={'user': user, 'project': self.project}
+                )
+
+                if serializer.is_valid(raise_exception=True):
+                    serializer.save()
+
+                imported_features += 1
+
+        return imported_features, updated_features, ignored_features
 
 
 class SapelliForm(Model):

@@ -171,14 +171,18 @@ class DataUpload(LoginRequiredMixin, TemplateView):
         project = context.get('sapelli_project')
 
         if project is not None:
-            file = request.FILES.get('data')
+            the_file = request.FILES.get('data')
             form_id = request.POST.get('form_id')
 
-            num_records = project.import_from_csv(request.user, form_id, file)
+            imported, updated, ignored = project.import_from_csv(
+                request.user, form_id, the_file
+            )
 
             messages.success(
                 self.request,
-                "%s records have been added to the project" % num_records
+                "%s records have been added to the project. %s have been "
+                "updated. %s have been ignored because they were identical "
+                "to exisiting contributions." % (imported, updated, ignored)
             )
 
         return self.render_to_response(context)

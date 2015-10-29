@@ -17,6 +17,16 @@ class ProjectTest(TestCase):
 
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.csv'))
         file = File(open(path, 'rb'))
-        number = sapelli_project.import_from_csv(user, form.category_id, file)
-        self.assertEqual(number, 4)
+        imported, updated, ignored = sapelli_project.import_from_csv(user, form.category_id, file)
+        self.assertEqual(imported, 4)
+        self.assertEqual(updated, 0)
+        self.assertEqual(ignored, 0)
         self.assertEqual(sapelli_project.project.observations.count(), 4)
+
+        path = normpath(join(dirname(abspath(__file__)), 'files/updated.csv'))
+        file = File(open(path, 'rb'))
+        imported, updated, ignored = sapelli_project.import_from_csv(user, form.category_id, file)
+        self.assertEqual(imported, 1)
+        self.assertEqual(updated, 2)
+        self.assertEqual(ignored, 1)
+        self.assertEqual(sapelli_project.project.observations.count(), 5)
