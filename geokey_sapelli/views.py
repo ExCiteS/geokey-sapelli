@@ -194,22 +194,27 @@ class ProjectDescriptionAPI(APIView):
     """
     API Endpoint for consulting the mapping of Sapelli projects
     (identified by id and fingerprint) to corresponding GeoKey projects
-    sapelli/api/projects/description/xxxx/yyyyyyy
+    api/sapelli/projects/description/xxxx/yyyyyyy
+    With xxxx = Sapelli Project ID; and yyyyyyy = Sapelli Project Fingerprint
     """
     @handle_exceptions_for_ajax
-    def post(self, request, sapelli_project_id, sapelli_project_fingerprint):
+    def get(self, request, sapelli_project_id, sapelli_project_fingerprint):
         """
-        TODO
+        Handles GET requests for information about the GeoKey project that
+        corresponds to the Sapelli project with the given id and fingerprint.
 
         Parameter
         ---------
         request : rest_framework.request.Request
             Object representing the request.
-        TODO
+        sapelli_project_id : string
+            Sapelli Project ID
+        sapelli_project_fingerprint : string
+            Sapelli Project Fingerprint
 
         Returns
         -------
-        TODO
+        JSON with information about the GeoKey project and its categories (corresponding to Sapelli Forms).
 
         Raises
         ------
@@ -219,6 +224,7 @@ class ProjectDescriptionAPI(APIView):
             raise PermissionDenied('API access not authorised, please login.')
         try:
             sapelli_project = SapelliProject.objects.get_single_by_sapelli_info(request.user, sapelli_project_id, sapelli_project_fingerprint)
+        # TODO no access exception
         except SapelliProject.DoesNotExist:
             return Response({'error': 'No such project'})
         else:
@@ -229,7 +235,7 @@ class ProjectDescriptionAPI(APIView):
 class ProjectUploadAPI(APIView, SapelliLoaderMixin):
     """
     API Endpoint for uploading a new Sapelli project.
-    sapelli/api/projects/new/
+    api/sapelli/projects/new/
     """
     @handle_exceptions_for_ajax
     def post(self, request):

@@ -39,8 +39,8 @@ class SapelliProject(Model):
         # Sapelli project fingerprint:
         description['sapelli_project_fingerprint'] = self.sapelli_fingerprint
         # Mapping of Sapelli Form ids to GeoKey category ids:
-        description['form_category_mappings'] = ()
-        for form in self.forms:
+        description['form_category_mappings'] = []
+        for form in self.forms.all():
             description['form_category_mappings'].append({'sapelli_form_id': form.sapelli_id, 'geokey_category_id': form.category.id})
         return description
 
