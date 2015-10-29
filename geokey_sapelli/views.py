@@ -2,11 +2,14 @@ from django.views.generic import TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.exceptions import PermissionDenied
+from django.conf import settings
+
 from braces.views import LoginRequiredMixin
 
-from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from oauth2_provider.views.base import TokenView
 
 from geokey.core.decorators import (
     handle_exceptions_for_ajax,
@@ -189,6 +192,14 @@ class DataUpload(LoginRequiredMixin, TemplateView):
 # Public API views
 #
 # ############################################################################
+
+class Login(TokenView):
+    def post(self, request, *args, **kwargs):
+        request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
+        request.POST['grant_type'] = 'password'
+
+        return super(Login, self).post(request, *args, **kwargs)
+
 
 class ProjectDescriptionAPI(APIView):
     """

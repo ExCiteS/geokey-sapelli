@@ -1,3 +1,4 @@
+import json
 from os.path import dirname, normpath, abspath, join
 
 from django.test import TestCase
@@ -8,14 +9,18 @@ from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
+from django.conf import settings
 
+from django.test.client import RequestFactory
+
+from geokey.applications.tests.model_factories import ApplicationFactory
 from geokey.users.tests.model_factories import UserF
 from geokey.projects.models import Project
 from geokey import version
 
 from .model_factories import SapelliProjectFactory, create_full_project
 
-from ..views import ProjectList, ProjectUpload, DataUpload
+from ..views import ProjectList, ProjectUpload, DataUpload, Login
 
 from ..helper.dynamic_menu import MenuEntry
 
@@ -252,3 +257,43 @@ class DataUploadTest(TestCase):
         )
         self.assertEqual(unicode(response.content), rendered)
         self.assertEqual(project.project.observations.count(), 4)
+
+
+class LoginTest(TestCase):
+    def test_url(self):
+        self.assertEqual(
+            reverse('geokey_sapelli:api_login'),
+            '/api/sapelli/login/'
+        )
+
+        resolved = resolve('/api/sapelli/login/')
+        self.assertEqual(resolved.func.func_name, Login.__name__)
+
+    def test_post(self):
+        user = UserF.create()
+        user.set_password('123456')
+        user.save()
+
+        ApplicationFactory.create(**{
+            'client_id': settings.SAPELLI_CLIENT_ID,
+            'authorization_grant_type': 'password'
+        })
+
+        data = {
+            'username': user.email,
+            'password': '123456'
+        }
+
+        view = Login.as_view()
+        url = reverse('geokey_sapelli:api_login')
+
+        factory = RequestFactory()
+        request = factory.post(url, data)
+        response = view(request)
+
+        response_json = json.loads(response.content)
+        self.assertEqual(response_json.get('token_type'), 'Bearer')
+        self.assertEqual(response_json.get('scope'), 'read write')
+        self.assertEqual(response_json.get('expires_in'), 36000)
+        self.assertIsNotNone(response_json.get('access_token'))
+        self.assertIsNotNone(response_json.get('refresh_token'))
