@@ -1,9 +1,14 @@
 from django.conf.urls import patterns, url
 
-from views import ProjectUpload, DataUpload, ProjectList, ProjectDescriptionAPI, ProjectUploadAPI
+from views import ProjectUpload, DataUpload, ProjectList, ProjectDescriptionAPI, ProjectUploadAPI, Login
 
 urlpatterns = patterns(
     '',
+
+    #
+    # ADMIN PAGES
+    #
+
     url(
         r'^admin/sapelli/$',
         ProjectList.as_view(),
@@ -23,5 +28,14 @@ urlpatterns = patterns(
     url(
         r'^admin/api/projects/new/$',
         ProjectUploadAPI.as_view(),
-        name='project_upload_api')
+        name='project_upload_api'),
+
+    #
+    # API ENDPOINTS
+    #
+
+    url(
+        r'^api/sapelli/login/$',
+        Login.as_view(),
+        name='api_login'),
 )

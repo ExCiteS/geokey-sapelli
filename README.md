@@ -20,6 +20,12 @@ Sapelli support in Geokey. This extension enables user to upload decision trees 
 
 3. Go to your GeoKey installation and edit `settings.py` file (usually in `local_settings\`), and add `'geokey_sapelli',` to the `INSTALLED_APPS` list.
 
+4. To use the extension via the API, first register a new OAuth application with Authorisation type _password_. You will then get the Client ID. Add the Client ID to your `settings.py` (usually in `local_settings\`) as follows:
+
+    ```
+    SAPELLI_CLIENT_ID = 'YOUR_CLIENT_ID'
+    ```
+
 4. Restart the server.
 
 5. Open a browser and go to the `/admin/sapelli/` path on your GeoKey server (e.g. `http://localhost:8080`). If you see a page titled "**Sapelli**" you have correctly installed the geokey-sapelli extension.
@@ -28,4 +34,3 @@ Sapelli support in Geokey. This extension enables user to upload decision trees 
     ```
     python manage.py test geokey_sapelli
     ```
-

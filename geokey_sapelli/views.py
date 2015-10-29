@@ -1,11 +1,15 @@
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.core.exceptions import PermissionDenied
+from django.conf import settings
+
 from braces.views import LoginRequiredMixin
 
-from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from oauth2_provider.views.base import TokenView
 
 from geokey.core.decorators import (
     handle_exceptions_for_ajax,
@@ -28,11 +32,11 @@ class AbstractSapelliView(LoginRequiredMixin, TemplateView):
     @staticmethod
     def get_menu_label():
         raise NotImplementedError
-    
+
     @staticmethod
     def get_menu_url():
         raise NotImplementedError
-    
+
     def add_menu(self,context):
         context['menu_entries'] = [MenuEntry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)) for subclass in AbstractSapelliView.__subclasses__()]
         return context
@@ -43,15 +47,15 @@ class ProjectList(AbstractSapelliView):
     page for the Sapelli extension.
     """
     template_name = 'sapelli_project_list.html'
-    
+
     @staticmethod
     def get_menu_label():
         return 'Project list'
-    
+
     @staticmethod
     def get_menu_url():
         return 'geokey_sapelli:index'
-    
+
     def get_context_data(self):
         """
         Returns the context to render the view. Contains a list of Sapelli
@@ -65,23 +69,24 @@ class ProjectList(AbstractSapelliView):
         context = {'projects': projects}
         return self.add_menu(context)
 
+
 class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
     """
     Presents a form to upload a .sap file to create a new project.
     """
     template_name = 'sapelli_upload_project.html'
-    
+
     @staticmethod
     def get_menu_label():
         return 'Upload new Sapelli project'
-    
+
     @staticmethod
     def get_menu_url():
         return 'geokey_sapelli:project_upload'
-    
+
     def get_context_data(self):
         return self.add_menu({})
-        
+
     def post(self, request):
         """
         Handles the POST request.
@@ -178,11 +183,20 @@ class DataUpload(LoginRequiredMixin, TemplateView):
 
         return self.render_to_response(context)
 
+
 # ############################################################################
 #
 # Public API views
 #
 # ############################################################################
+
+class Login(TokenView):
+    def post(self, request, *args, **kwargs):
+        request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
+        request.POST['grant_type'] = 'password'
+
+        return super(Login, self).post(request, *args, **kwargs)
+
 
 class ProjectDescriptionAPI(APIView):
     """
