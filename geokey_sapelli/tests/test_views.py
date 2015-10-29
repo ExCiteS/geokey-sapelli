@@ -24,6 +24,8 @@ from ..views import ProjectList, ProjectUpload, DataUpload, Login
 
 from ..helper.dynamic_menu import MenuEntry
 
+from ..helper.dynamic_menu import MenuEntry
+
 
 class ProjectListTest(TestCase):
     def test_url(self):
