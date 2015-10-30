@@ -185,7 +185,7 @@ class DataCSVUpload(LoginRequiredMixin, TemplateView):
                 self.request,
                 "%s records have been added to the project. %s have been "
                 "updated. %s have been ignored because they were identical "
-                "to exisiting contributions." % (imported, updated, ignored)
+                "to existing contributions." % (imported, updated, ignored)
             )
 
         return self.render_to_response(context)
