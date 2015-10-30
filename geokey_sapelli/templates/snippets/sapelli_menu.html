@@ -10,6 +10,11 @@
                         {{ entry.label }}
                     </a>
                     {% endfor %}
+                    {% if sapelli_project %}
+                    <a href="{% url 'admin:project_overview' sapelli_project.project.id %}" class="list-group-item">
+                        Manage project
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

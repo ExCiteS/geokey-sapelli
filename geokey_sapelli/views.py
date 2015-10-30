@@ -33,14 +33,19 @@ from helper.dynamic_menu import MenuEntry
 class AbstractSapelliView(LoginRequiredMixin, TemplateView):
     @staticmethod
     def get_menu_label():
-        raise NotImplementedError
+        return None
 
     @staticmethod
     def get_menu_url():
-        raise NotImplementedError
+        return None
 
     def add_menu(self, context):
-        context['menu_entries'] = [MenuEntry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)) for subclass in AbstractSapelliView.__subclasses__()]
+        menu_entries = []
+        for subclass in AbstractSapelliView.__subclasses__():
+            if subclass.get_menu_label() and subclass.get_menu_url():
+                menu_entries.append(MenuEntry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)))
+
+        context['menu_entries'] = menu_entries
         return context
 
 
@@ -131,7 +136,7 @@ class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
         return self.render_to_response({})
 
 
-class DataCSVUpload(LoginRequiredMixin, TemplateView):
+class DataCSVUpload(AbstractSapelliView):
     """
     Presents a form to upload CSV files to create contributions.
     """
@@ -152,7 +157,8 @@ class DataCSVUpload(LoginRequiredMixin, TemplateView):
         dict
         """
         project = SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
-        return {'sapelli_project': project}
+        context = {'sapelli_project': project}
+        return self.add_menu(context)
 
     def post(self, request, project_id):
         """
@@ -364,4 +370,3 @@ class FindObservationAPI(APIView):
         #except Exception, e:
         #        return Response({'error': str(e)})
         return Response({'observation_id': observation.id})
-

@@ -26,7 +26,10 @@
                 {% if forloop.first %}<ul class="list-unstyled overview-list">{% endif %}
 
                     <li>
-                        <h4><a href="{% url 'geokey_sapelli:data_csv_upload' sapelli.project.id%}">{{ sapelli.project.name }}</a></h4>
+                        <h4>
+                            <a href="{% url 'geokey_sapelli:data_csv_upload' sapelli.project.id %}">{{ sapelli.project.name }}</a>
+                            <a href="{% url 'admin:project_overview' sapelli.project.id %}"  class="label label-info">Manage  project</a>
+                        </h4>
                         {% if sapelli.project.description %}<p>{{sapelli.project.description}}</p>{% endif %}
                     </li>
 
