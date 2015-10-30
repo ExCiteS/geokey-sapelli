@@ -110,7 +110,7 @@ class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
             messages.success(self.request, "The project has been created.")
 
             return redirect(
-                'geokey_sapelli:data_upload',
+                'geokey_sapelli:data_csv_upload',
                 project_id=sapelli_project.project.id
             )
         except SapelliSAPException, e:
@@ -131,11 +131,11 @@ class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
         return self.render_to_response({})
 
 
-class DataUpload(LoginRequiredMixin, TemplateView):
+class DataCSVUpload(LoginRequiredMixin, TemplateView):
     """
     Presents a form to upload CSV files to create contributions.
     """
-    template_name = 'sapelli_upload_data.html'
+    template_name = 'sapelli_upload_data_csv.html'
 
     @handle_exceptions_for_admin
     def get_context_data(self, project_id):

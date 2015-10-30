@@ -20,7 +20,7 @@ from geokey import version
 
 from .model_factories import SapelliProjectFactory, create_full_project
 
-from ..views import ProjectList, ProjectUpload, DataUpload, LoginAPI
+from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI
 
 from ..helper.dynamic_menu import MenuEntry
 
@@ -148,16 +148,16 @@ class ProjectUploadTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(
             response['location'], reverse(
-                'geokey_sapelli:data_upload',
+                'geokey_sapelli:data_csv_upload',
                 kwargs={'project_id': project.id}
             )
         )
 
 
-class DataUploadTest(TestCase):
+class DataCSVUploadTest(TestCase):
     def setUp(self):
         self.user = UserF.create()
-        self.view = DataUpload.as_view()
+        self.view = DataCSVUpload.as_view()
         self.request = HttpRequest()
         self.request.method = 'GET'
         self.request.user = AnonymousUser()
@@ -170,15 +170,15 @@ class DataUploadTest(TestCase):
     def test_url(self):
         self.assertEqual(
             reverse(
-                'geokey_sapelli:data_upload',
+                'geokey_sapelli:data_csv_upload',
                 kwargs={'project_id': 1}
             ),
-            '/admin/sapelli/projects/1/upload/'
+            '/admin/sapelli/projects/1/csv_upload/'
         )
 
-        resolved = resolve('/admin/sapelli/projects/1/upload/')
+        resolved = resolve('/admin/sapelli/projects/1/csv_upload/')
         self.assertEqual(resolved.kwargs['project_id'], '1')
-        self.assertEqual(resolved.func.func_name, DataUpload.__name__)
+        self.assertEqual(resolved.func.func_name, DataCSVUpload.__name__)
 
     def test_get_with_anonymous(self):
         project = create_full_project(self.user)
@@ -198,7 +198,7 @@ class DataUploadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_upload_data.html',
+            'sapelli_upload_data_csv.html',
             {
                 'sapelli_project': project,
                 'user': self.user,
@@ -243,7 +243,7 @@ class DataUploadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_upload_data.html',
+            'sapelli_upload_data_csv.html',
             {
                 'sapelli_project': project,
                 'user': self.user,
