@@ -40,7 +40,7 @@ class SapelliLoaderMixin(object):
             fingerprint = get_project_fingerprint(tmp_file, tmp_dir)
             sapelli_project_info['sapelli_fingerprint'] = fingerprint
 
-            if SapelliProject.objects.exists_by_sapelli_info(
+            if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
                     user,
                     sapelli_project_info['sapelli_id'],
                     sapelli_project_info['sapelli_fingerprint']):

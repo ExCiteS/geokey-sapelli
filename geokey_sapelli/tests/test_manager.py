@@ -9,30 +9,59 @@ from ..models import SapelliProject
 
 
 class SapelliManagerTest(TestCase):
-    def test_get_list(self):
+    def test_get_list_for_administration(self):
         user = UserF.create()
         project = ProjectF.create(add_admins=[user])
 
-        admin_project = SapelliProjectFactory.create(**{'project': project})
+        admin_sap_project = SapelliProjectFactory.create(**{'project': project})
         SapelliProjectFactory.create_batch(2)
 
-        projects = SapelliProject.objects.get_list(user)
-        self.assertEqual(1, projects.count())
-        self.assertEqual(projects[0], admin_project)
+        sap_projects = SapelliProject.objects.get_list_for_administration(user)
+        self.assertEqual(1, sap_projects.count())
+        self.assertEqual(sap_projects[0], admin_sap_project)
 
-    def test_get_single(self):
+    def test_get_list_for_contribution(self):
+        user = UserF.create()
+        project = ProjectF.create(add_contributors=[user])
+
+        contrib_sap_project = SapelliProjectFactory.create(**{'project': project})
+        SapelliProjectFactory.create_batch(2)
+
+        sap_projects = SapelliProject.objects.get_list_for_contribution(user)
+        self.assertEqual(1, len(sap_projects))
+        self.assertEqual(sap_projects[0], contrib_sap_project)
+
+    def test_get_single_for_administration(self):
         user = UserF.create()
         project = ProjectF.create(add_admins=[user])
 
-        admin_project = SapelliProjectFactory.create(**{'project': project})
-        other_project = SapelliProjectFactory.create()
+        admin_sap_project = SapelliProjectFactory.create(**{'project': project})
+        other_sap_project = SapelliProjectFactory.create()
 
-        ref = SapelliProject.objects.get_single(
-            user, admin_project.project_id)
-        self.assertEqual(ref, admin_project)
+        ref = SapelliProject.objects.get_single_for_administration(
+            user, admin_sap_project.project_id)
+        self.assertEqual(ref, admin_sap_project)
 
         try:
-            SapelliProject.objects.get_single(user, other_project.project_id)
+            SapelliProject.objects.get_single_for_administration(user, other_sap_project.project_id)
+        except SapelliProject.DoesNotExist:
+            pass
+        else:
+            self.fail('SapelliProject.DoesNotExist not raised')
+
+    def test_get_single_for_contribution(self):
+        user = UserF.create()
+        project = ProjectF.create(add_contributors=[user])
+
+        contrib_sap_project = SapelliProjectFactory.create(**{'project': project})
+        other_sap_project = SapelliProjectFactory.create()
+
+        ref = SapelliProject.objects.get_single_for_contribution(
+            user, contrib_sap_project.project_id)
+        self.assertEqual(ref, contrib_sap_project)
+
+        try:
+            SapelliProject.objects.get_single_for_contribution(user, other_sap_project.project_id)
         except SapelliProject.DoesNotExist:
             pass
         else:

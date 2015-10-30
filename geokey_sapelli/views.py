@@ -62,13 +62,13 @@ class ProjectList(AbstractSapelliView):
     def get_context_data(self):
         """
         Returns the context to render the view. Contains a list of Sapelli
-        projects that are available for the user.
+        projects that are available for the user to contribute to.
 
         Returns
         -------
         dict
         """
-        projects = SapelliProject.objects.get_list(self.request.user)
+        projects = SapelliProject.objects.get_list_for_contribution(self.request.user)
         context = {'projects': projects}
         return self.add_menu(context)
 
@@ -151,8 +151,7 @@ class DataUpload(LoginRequiredMixin, TemplateView):
         -------
         dict
         """
-        project = SapelliProject.objects.get_single(
-            self.request.user, project_id)
+        project = SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
         return {'sapelli_project': project}
 
     def post(self, request, project_id):
@@ -235,10 +234,9 @@ class ProjectDescriptionAPI(APIView):
         if request.user.is_anonymous():
             raise PermissionDenied('API access not authorised, please login.')
         try:
-            sapelli_project = SapelliProject.objects.get_single_by_sapelli_info(request.user, sapelli_project_id, sapelli_project_fingerprint)
-        # TODO no access exception
+            sapelli_project = SapelliProject.objects.get_single_for_contribution_by_sapelli_info(request.user, sapelli_project_id, sapelli_project_fingerprint)
         except SapelliProject.DoesNotExist:
-            return Response({'error': 'No such project'})
+            return Response({'error': 'No such project'}, status=404)
         else:
             # return project description (as json):
             return Response(sapelli_project.get_description())
@@ -293,7 +291,7 @@ class FindObservationAPI(APIView):
         request : rest_framework.request.Request
             Object representing the request.
         project_id : int
-            Identifies the project on the data base
+            Identifies the GeoKey project on the data base
         category_id : int
             Identifies the category on the data base
         sapelli_record_start_time : string
