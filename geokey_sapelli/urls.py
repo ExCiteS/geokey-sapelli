@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from views import ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI, ProjectUploadAPI, FindObservationAPI
+from views import ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI, ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI
 
 urlpatterns = patterns(
     '',
@@ -38,6 +38,10 @@ urlpatterns = patterns(
         r'^api/sapelli/projects/new/$',
         ProjectUploadAPI.as_view(),
         name='project_upload_api'),
+    url(
+        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/csv_upload/(?P<category_id>[0-9]+)/$',
+        DataCSVUploadAPI.as_view(),
+        name='data_csv_upload_api'),
     url(
         r'^api/sapelli/projects/(?P<project_id>[0-9]+)/find_observation/(?P<category_id>[0-9]+)/(?P<sapelli_record_start_time>[0-9Tt:\-\.+Zz]+)/(?P<sapelli_record_device_id>[0-9]+)/$',
         FindObservationAPI.as_view(),

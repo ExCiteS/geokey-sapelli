@@ -171,15 +171,14 @@ class DataCSVUpload(LoginRequiredMixin, TemplateView):
             The rendered view
         """
         context = self.get_context_data(project_id)
-        project = context.get('sapelli_project')
+        sapelli_project = context.get('sapelli_project')
 
-        if project is not None:
+        if sapelli_project is not None:
             the_file = request.FILES.get('data')
             form_id = request.POST.get('form_id')
+            # TODO read Sapelli Form id (String!) from the csv file header and get corresponding SapelliForm that way!
 
-            imported, updated, ignored = project.import_from_csv(
-                request.user, form_id, the_file
-            )
+            imported, updated, ignored = sapelli_project.import_from_csv(request.user, form_id, the_file)
 
             messages.success(
                 self.request,
@@ -281,6 +280,50 @@ class ProjectUploadAPI(APIView, SapelliLoaderMixin):
             Response(sapelli_project.get_description())
 
 
+class DataCSVUploadAPI(APIView):
+    """
+    API Endpoint for uploading data as CSV.
+    api/sapelli/projects/xxxx/csv_upload/yyyy/
+    """
+    @handle_exceptions_for_ajax
+    def post(self, request, project_id, category_id):
+        """
+        TODO
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : int
+            Identifies the GeoKey project on the data base
+        category_id : int
+            Identifies the GeoKey category and thereby the SapelliForm
+        
+        Returns
+        -------
+        TODO
+
+        Raises
+        ------
+        TODO
+        """
+        # TODO read Sapelli Form id (String!) from the csv file header and get corresponding SapelliForm that way!
+        
+        if request.user.is_anonymous():
+            raise PermissionDenied('API access not authorised, please login.')
+        try:
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
+        except SapelliProject.DoesNotExist:
+            return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
+        else:
+            #try:
+            the_file = request.FILES.get('data')
+            imported, updated, ignored = sapelli_project.import_from_csv(request.user, category_id, the_file)
+            return Response({'added': imported, 'updated': updated, 'duplicates': ignored})
+            #except Exception, e:
+            #    return Response({'error': str(e)})
+
+
 class FindObservationAPI(APIView):
     """
     TODO
@@ -313,8 +356,12 @@ class FindObservationAPI(APIView):
         """
         if request.user.is_anonymous():
             raise PermissionDenied('API access not authorised, please login.')
-        
-        project = Project.objects.get(pk=project_id)
-        observation = project.observations.get(category_id=category_id, properties__at_StartTime=sapelli_record_start_time, properties__at_DeviceId=sapelli_record_device_id)
+        try:
+            project = Project.objects.get(pk=project_id)
+            observation = project.observations.get(category_id=category_id, properties__at_StartTime=sapelli_record_start_time, properties__at_DeviceId=sapelli_record_device_id)
+        except Project.DoesNotExist:
+            return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
+        #except Exception, e:
+        #        return Response({'error': str(e)})
         return Response({'observation_id': observation.id})
 

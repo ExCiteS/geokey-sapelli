@@ -50,14 +50,19 @@ class SapelliProject(Model):
     def import_from_csv(self, user, form_id, csvfile):
         """
         Reads an uploaded CSV file and creates the contributions and returns
-        the number of contributions created.
-
+        the number of contributions created, updated and ignored.
+        
+        Parameter
+        ---------
         user : geokey.users.models.User
             User who uploaded the CSV. Will be used as the creater of each
             contribution.
         form_id : int
             Identifies the SapelliForm that is used to parse the incoming
             data. Has to be set by the uploading user in the upload form.
+            Note that the id value of SapelliForm is the same as the id of
+            the GeoKey category that corresponds to it. So the parameter
+            could just as well be called 'category_id'.
         csvfile : django.core.files.File
             The file that was uploaded
 
@@ -65,7 +70,12 @@ class SapelliProject(Model):
         -------
         int
             The number of contributions created
+        int
+            The number of contributions updated
+        int
+            The number of contributions ignored
         """
+		# TODO read Sapelli Form id (String!) from the csv file header and get corresponding SapelliForm that way!
         form = self.forms.get(pk=form_id)
         location = form.location_fields.all()[0].sapelli_id
         reader = csv.DictReader(csvfile)
