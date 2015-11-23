@@ -19,7 +19,7 @@ Sapelli support in GeoKey. This extension enables user to upload decision trees 
 Installation instructions
 -------------------------
 
-*Note:* This guide assumes you have a working [GeoKey](https://github.com/ExCiteS/geokey) installation.
+*Note:* This guide assumes you have a working `GeoKey <https://github.com/ExCiteS/geokey>`_ installation.
 
 1. Clone the repository:
 
@@ -34,12 +34,12 @@ Installation instructions
   cd geokey-sapelli
   pip install -e .
 
-3. Go to your GeoKey installation and edit `settings.py` file (usually in `local_settings\`):
+3. Go to your GeoKey installation and edit ``settings.py`` file (usually in ``local_settings\``):
 
-    - Add `'geokey_sapelli',` to the `INSTALLED_APPS` list.
-    - Add the absolute path to the Sapelli jar file: `SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-2.0.0-SNAPSHOT-jar-with-dependencies.jar'`
+  - Add ``'geokey_sapelli',`` to the `INSTALLED_APPS` list.
+  - Add the absolute path to the Sapelli jar file: ``SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-2.0.0-SNAPSHOT-jar-with-dependencies.jar'``
 
-4. To use the extension via the API, first register a new OAuth application with Authorisation type _password_. You will then get the Client ID. Add the Client ID to your `settings.py` (usually in `local_settings\`) as follows:
+4. To use the extension via the API, first register a new OAuth application with Authorisation type _password_. You will then get the Client ID. Add the Client ID to your ``settings.py`` (usually in ``local_settings\``) as follows:
 
 .. code-block:: console
 
@@ -53,11 +53,9 @@ Installation instructions
 
 5. Restart the server.
 
-6. Open a browser and go to the `/admin/sapelli/` path on your GeoKey server (e.g. `http://localhost:8080`). If you see a page titled "**Sapelli**" you have correctly installed the geokey-sapelli extension.
+6. Open a browser and go to the ``/admin/sapelli/`` path on your GeoKey server (e.g. ``http://localhost:8080``). If you see a page titled "**Sapelli**" you have correctly installed the geokey-sapelli extension.
 
 7. To run tests specific to this extension go to your GeoKey installation folder and run:
-
-6. To run tests specific to this extension go to your GeoKey installation folder and run:
 
 .. code-block:: console
 
