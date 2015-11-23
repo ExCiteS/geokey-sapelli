@@ -1,0 +1,45 @@
+language: python
+
+python:
+  - '2.7'
+
+services:
+  - postgresql
+
+addons:
+  postgresql: '9.4'
+
+virtualenv:
+  system_site_packages: true
+
+install:
+  - sudo rm /etc/apt/sources.list.d/ubuntugis-stable-source.list
+  - sudo apt-get update -y
+  - sudo apt-get install python-gdal gdal-bin binutils
+  - export C_INCLUDE_PATH=/usr/include/gdal
+  - export CPLUS_INCLUDE_PATH=/usr/include/gdal
+  - pip install --upgrade pip
+
+before_script:
+  - psql template1 postgres -c 'create extension hstore;'
+  - psql -c 'create database geokey;' -U postgres
+  - psql -U postgres -d geokey -c "create extension postgis;"
+  - pip install geokey
+  - pip install -r travis/requirements.txt
+  - pip install -e .
+  - python travis/manage.py migrate
+
+script:
+  - coverage run --source=geokey_sapelli travis/manage.py test geokey_sapelli
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: excites
+  password:
+    secure: CpTWFd1A/U8NPZJGxFHygoMxX0JKR6mmO91OU50cCNnn35BD7ehCPm8exRvmxIfn2bRMtoIEOlQK4kkk6QaVTwL3PLTxClCMhnQxd2qew4eEksmqvGRc2b+TKtLBRqGGHtBRcGJf12ViIHFJ2BjLhCZZjQVw10PzL//NpJLUEe9suqW4AqhnWyxhOrZr5lZUArpkPKJYzvFk9n4+1njcVZWu3ZeeWc+B2ssOF0JOInRkGZNG3LE+BlmNbedaTvHAVMUUfQWFOMnelX0OueSoyhZhqq0aqBkuboennIUnJoTzTwIaEiwTrwlhbFILPa35XzlMvosi4y3qTyCbJnFboVcuVRkPD4CgF5l2nTx9mOT+3ZZl2IFXSha7VDXp0d6fHtgi6lpqIBN8Tlk2D2N6JAP/jCzF/4wSNoZYbVBgb4WO+vHovPqy4+M4FuKulEVY6Vw4aPKGxEYOVswRsMoz1KEiemqbJbDT3M3Sc+M288PFEK+4Vdo/4dYvUBKJQUazhATTcBZX8kXs2DTM+tHDyYLqFVrTzkSdAo2o2f8gqtLhVEc4xFBn536wx423FRSFhwX3aSe1zSfhDSrh2bUTUaoE9B3By/UZmtP3W3IeSKeJtsvocAnz8Z+7SVldhTohsHJnwetL+y9CuT4EI7RLdmNatvj6QbWSXsCyjHn5sjg=
+  on:
+    tags: true
+    branch: master
