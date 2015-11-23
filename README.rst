@@ -1,23 +1,38 @@
-# geokey-sapelli
+.. image:: https://img.shields.io/pypi/v/geokey-sapelli.svg
+    :alt: PyPI Package
+    :target: https://pypi.python.org/pypi/geokey-sapelli
 
-Sapelli support in Geokey. This extension enables user to upload decision trees and data via the admin interfaces.
+.. image:: https://img.shields.io/travis/ExCiteS/geokey-sapelli/master.svg
+    :alt: Travis CI Build Status
+    :target: https://travis-ci.org/ExCiteS/geokey-sapelli
 
-### Installation instructions
+.. image:: https://img.shields.io/coveralls/ExCiteS/geokey-sapelli/master.svg
+    :alt: Coveralls Test Coverage
+    :target: https://coveralls.io/r/ExCiteS/geokey-sapelli
+
+
+geokey-sapelli
+==============
+
+Sapelli support in GeoKey. This extension enables user to upload decision trees and data via the admin interfaces.
+
+Installation instructions
+-------------------------
 
 *Note:* This guide assumes you have a working [GeoKey](https://github.com/ExCiteS/geokey) installation.
 
-1. Clone the repository
+1. Clone the repository:
 
-  ```
+.. code-block:: console
+
   git clone https://github.com/ExCiteS/geokey-sapelli.git
-  ```
 
-2. Install the package
-  
-  ```
+2. Install the package:
+
+.. code-block:: console
+
   cd geokey-sapelli
   pip install -e .
-  ```
 
 3. Go to your GeoKey installation and edit `settings.py` file (usually in `local_settings\`):
 
@@ -26,15 +41,15 @@ Sapelli support in Geokey. This extension enables user to upload decision trees 
 
 4. To use the extension via the API, first register a new OAuth application with Authorisation type _password_. You will then get the Client ID. Add the Client ID to your `settings.py` (usually in `local_settings\`) as follows:
 
-    ```
-    SAPELLI_CLIENT_ID = 'YOUR_CLIENT_ID'
-    ```
+.. code-block:: console
+
+  SAPELLI_CLIENT_ID = 'YOUR_CLIENT_ID'
 
 4. Add the data base tables:
 
-  ```
+.. code-block:: console
+
   python manage.py migrate geokey_sapelli
-  ```
 
 5. Restart the server.
 
@@ -43,6 +58,7 @@ Sapelli support in Geokey. This extension enables user to upload decision trees 
 7. To run tests specific to this extension go to your GeoKey installation folder and run:
 
 6. To run tests specific to this extension go to your GeoKey installation folder and run:
-  ```
+
+.. code-block:: console
+
   python manage.py test geokey_sapelli
-  ```
