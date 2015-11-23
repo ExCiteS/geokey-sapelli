@@ -11,7 +11,7 @@ repository = join('https://github.com/ExCiteS', name)
 setup(
     name=name,
     version=version,
-    description='Import data to GeoKey from CSV',
+    description='Read Sapelli project and load data from CSVs to GeoKey',
     url=repository,
     download_url=join(repository, 'tarball', version),
     author='ExCiteS',
