@@ -39,7 +39,7 @@ Installation instructions
   - Add ``'geokey_sapelli',`` to the `INSTALLED_APPS` list.
   - Add the absolute path to the Sapelli jar file: ``SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-2.0.0-SNAPSHOT-jar-with-dependencies.jar'``
 
-4. To use the extension via the API, first register a new OAuth application with Authorisation type _password_. You will then get the Client ID. Add the Client ID to your ``settings.py`` (usually in ``local_settings\``) as follows:
+4. To use the extension via the API, first register a new OAuth application with Authorisation type *password*. You will then get the Client ID. Add the Client ID to your ``settings.py`` (usually in ``local_settings\``) as follows:
 
 .. code-block:: console
 
