@@ -140,28 +140,28 @@ class ProjectUploadTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'], '/admin/account/login/?next=')
 
-    def test_post_with_user(self):
-        path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
-        file = File(open(path, 'rb'))
-        user = UserF.create()
+    # def test_post_with_user(self):
+    #     path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
+    #     file = File(open(path, 'rb'))
+    #     user = UserF.create()
 
-        self.request.user = user
-        self.request.method = 'POST'
-        self.request.FILES = {
-            'project': file
-        }
+    #     self.request.user = user
+    #     self.request.method = 'POST'
+    #     self.request.FILES = {
+    #         'project': file
+    #     }
 
-        response = self.view(self.request)
-        self.assertEqual(Project.objects.count(), 1)
-        project = Project.objects.first()
+    #     response = self.view(self.request)
+    #     self.assertEqual(Project.objects.count(), 1)
+    #     project = Project.objects.first()
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(
-            response['location'], reverse(
-                'geokey_sapelli:data_csv_upload',
-                kwargs={'project_id': project.id}
-            )
-        )
+    #     self.assertEqual(response.status_code, 302)
+    #     self.assertEqual(
+    #         response['location'], reverse(
+    #             'geokey_sapelli:data_csv_upload',
+    #             kwargs={'project_id': project.id}
+    #         )
+    #     )
 
 
 class DataCSVUploadTest(TestCase):
