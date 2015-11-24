@@ -118,11 +118,11 @@ class ProjectUploadTest(TestCase):
                     MenuEntry(
                         label='Project list',
                         url='geokey_sapelli:index',
-                        active=True),
+                        active=False),
                     MenuEntry(
                         label='Upload new Sapelli project',
                         url='geokey_sapelli:project_upload',
-                        active=False)]
+                        active=True)]
             }
         )
         self.assertEqual(unicode(response.content), rendered)
@@ -273,11 +273,11 @@ class DataCSVUploadTest(TestCase):
                     MenuEntry(
                         label='Project list',
                         url='geokey_sapelli:index',
-                        active=True),
+                        active=False),
                     MenuEntry(
                         label='Upload new Sapelli project',
                         url='geokey_sapelli:project_upload',
-                        active=False)]
+                        active=True)]
             }
         )
 
