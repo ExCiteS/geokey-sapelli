@@ -30,3 +30,4 @@ WSGI_APPLICATION = 'settings.wsgi.application'
 ROOT_URLCONF = 'settings.urls'
 
 SAPELLI_JAR = '../files/sapelli-collector-cmdln-2.0.0-beta-16-jar-with-dependencies.jar'
+SAPELLI_CLIENT_ID = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
