@@ -24,8 +24,6 @@ from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI
 
 from ..helper.dynamic_menu import MenuEntry
 
-from ..helper.dynamic_menu import MenuEntry
-
 
 class ProjectListTest(TestCase):
     def test_url(self):
@@ -53,8 +51,14 @@ class ProjectListTest(TestCase):
                 'PLATFORM_NAME': get_current_site(request).name,
                 'GEOKEY_VERSION': version.get_version(),
                 'menu_entries': [
-                    MenuEntry(label='Project list', url='geokey_sapelli:index', active=True),
-                    MenuEntry(label='Upload new Sapelli project', url='geokey_sapelli:project_upload', active=False)]
+                    MenuEntry(
+                        label='Project list',
+                        url='geokey_sapelli:index',
+                        active=True),
+                    MenuEntry(
+                        label='Upload new Sapelli project',
+                        url='geokey_sapelli:project_upload',
+                        active=False)]
             }
         )
         self.assertEqual(unicode(response.content), rendered)
@@ -111,8 +115,14 @@ class ProjectUploadTest(TestCase):
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),
                 'menu_entries': [
-                    MenuEntry(label='Project list', url='geokey_sapelli:index', active=False),
-                    MenuEntry(label='Upload new Sapelli project', url='geokey_sapelli:project_upload', active=True)]
+                    MenuEntry(
+                        label='Project list',
+                        url='geokey_sapelli:index',
+                        active=True),
+                    MenuEntry(
+                        label='Upload new Sapelli project',
+                        url='geokey_sapelli:project_upload',
+                        active=False)]
             }
         )
         self.assertEqual(unicode(response.content), rendered)
@@ -203,7 +213,16 @@ class DataCSVUploadTest(TestCase):
                 'sapelli_project': project,
                 'user': self.user,
                 'PLATFORM_NAME': get_current_site(self.request).name,
-                'GEOKEY_VERSION': version.get_version()
+                'GEOKEY_VERSION': version.get_version(),
+                'menu_entries': [
+                    MenuEntry(
+                        label='Project list',
+                        url='geokey_sapelli:index',
+                        active=True),
+                    MenuEntry(
+                        label='Upload new Sapelli project',
+                        url='geokey_sapelli:project_upload',
+                        active=False)]
             }
         )
         self.assertEqual(unicode(response.content), rendered)
@@ -249,7 +268,16 @@ class DataCSVUploadTest(TestCase):
                 'user': self.user,
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'messages': get_messages(self.request),
-                'GEOKEY_VERSION': version.get_version()
+                'GEOKEY_VERSION': version.get_version(),
+                'menu_entries': [
+                    MenuEntry(
+                        label='Project list',
+                        url='geokey_sapelli:index',
+                        active=True),
+                    MenuEntry(
+                        label='Upload new Sapelli project',
+                        url='geokey_sapelli:project_upload',
+                        active=False)]
             }
         )
 
