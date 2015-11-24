@@ -45,17 +45,17 @@ Installation instructions
 
   SAPELLI_CLIENT_ID = 'YOUR_CLIENT_ID'
 
-4. Add the data base tables:
+5. Add the data base tables:
 
 .. code-block:: console
 
   python manage.py migrate geokey_sapelli
 
-5. Restart the server.
+6. Restart the server.
 
-6. Open a browser and go to the ``/admin/sapelli/`` path on your GeoKey server (e.g. ``http://localhost:8080``). If you see a page titled "**Sapelli**" you have correctly installed the geokey-sapelli extension.
+7. Open a browser and go to the ``/admin/sapelli/`` path on your GeoKey server (e.g. ``http://localhost:8080``). If you see a page titled "**Sapelli**" you have correctly installed the geokey-sapelli extension.
 
-7. To run tests specific to this extension go to your GeoKey installation folder and run:
+8. To run tests specific to this extension go to your GeoKey installation folder and run:
 
 .. code-block:: console
 
