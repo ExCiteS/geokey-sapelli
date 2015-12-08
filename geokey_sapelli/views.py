@@ -204,6 +204,8 @@ class DataCSVUpload(AbstractSapelliView):
 
 class LoginAPI(TokenView):
     def post(self, request, *args, **kwargs):
+        if not (request.POST._mutable):
+            request.POST = request.POST.copy()
         request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
         request.POST['grant_type'] = 'password'
 
