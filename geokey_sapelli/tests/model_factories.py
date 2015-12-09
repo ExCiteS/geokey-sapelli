@@ -4,7 +4,7 @@ from PIL import Image
 
 from django.core.files.base import ContentFile
 
-from geokey.projects.tests.model_factories import ProjectF
+from geokey.projects.tests.model_factories import ProjectFactory
 from geokey.categories.tests.model_factories import (
     CategoryFactory,
     FieldFactory,
@@ -37,7 +37,7 @@ class SapelliProjectFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SapelliProject
 
-    project = factory.SubFactory(ProjectF)
+    project = factory.SubFactory(ProjectFactory)
     sapelli_id = factory.Sequence(lambda n: n)
     sapelli_fingerprint = factory.Sequence(lambda n: n)
 
@@ -79,7 +79,7 @@ class SapelliChoiceFactory(factory.django.DjangoModelFactory):
 
 
 def create_full_project(user):
-    geokey_project = ProjectF.create(
+    geokey_project = ProjectFactory.create(
         add_admins=[user],
         **{'name': 'Mapping Cultures'}
     )
