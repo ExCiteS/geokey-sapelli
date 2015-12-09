@@ -4,7 +4,7 @@ from PIL import Image
 
 from django.core.files.base import ContentFile
 
-from geokey.projects.tests.model_factories import ProjectF
+from geokey.projects.tests.model_factories import ProjectFactory
 from geokey.categories.tests.model_factories import (
     CategoryFactory,
     FieldFactory,
@@ -33,11 +33,11 @@ def get_image(file_name='test.png', width=200, height=200):
     return the_file
 
 
-class SapelliProjectFactory(factory.django.DjangoModelFactory):
+class SapelliProjectFactoryactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SapelliProject
 
-    project = factory.SubFactory(ProjectF)
+    project = factory.SubFactory(ProjectFactory)
     sapelli_id = factory.Sequence(lambda n: n)
     sapelli_fingerprint = factory.Sequence(lambda n: n)
 
@@ -47,7 +47,7 @@ class SapelliFormFactory(factory.django.DjangoModelFactory):
         model = SapelliForm
 
     category = factory.SubFactory(CategoryFactory)
-    sapelli_project = factory.SubFactory(SapelliProjectFactory)
+    sapelli_project = factory.SubFactory(SapelliProjectFactoryactory)
     sapelli_id = factory.Sequence(lambda n: 'Form %s' % n)
 
 
@@ -79,7 +79,7 @@ class SapelliChoiceFactory(factory.django.DjangoModelFactory):
 
 
 def create_full_project(user):
-    geokey_project = ProjectF.create(
+    geokey_project = ProjectFactory.create(
         add_admins=[user],
         **{'name': 'Mapping Cultures'}
     )
@@ -149,7 +149,7 @@ def create_full_project(user):
         'name': 'Dog Bin'
     })
 
-    project = SapelliProjectFactory.create(**{'project': geokey_project})
+    project = SapelliProjectFactoryactory.create(**{'project': geokey_project})
     form = SapelliFormFactory.create(**{
         'category': geokey_cat,
         'sapelli_project': project,

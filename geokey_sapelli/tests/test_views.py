@@ -13,10 +13,9 @@ from django.conf import settings
 
 from django.test.client import RequestFactory
 
-from geokey.applications.tests.model_factories import ApplicationFactory
-from geokey.users.tests.model_factories import UserF
-from geokey.projects.models import Project
 from geokey import version
+from geokey.applications.tests.model_factories import ApplicationFactory
+from geokey.users.tests.model_factories import UserFactory
 
 from .model_factories import SapelliProjectFactory, create_full_project
 
@@ -102,7 +101,7 @@ class ProjectUploadTest(TestCase):
         self.assertEqual(response['location'], '/admin/account/login/?next=')
 
     def test_get_with_user(self):
-        user = UserF.create()
+        user = UserFactory.create()
         self.request.user = user
 
         response = self.view(self.request).render()
@@ -143,7 +142,7 @@ class ProjectUploadTest(TestCase):
     # def test_post_with_user(self):
     #     path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
     #     file = File(open(path, 'rb'))
-    #     user = UserF.create()
+    #     user = UserFactory.create()
 
     #     self.request.user = user
     #     self.request.method = 'POST'
@@ -166,7 +165,7 @@ class ProjectUploadTest(TestCase):
 
 class DataCSVUploadTest(TestCase):
     def setUp(self):
-        self.user = UserF.create()
+        self.user = UserFactory.create()
         self.view = DataCSVUpload.as_view()
         self.request = HttpRequest()
         self.request.method = 'GET'
@@ -300,7 +299,7 @@ class LoginAPITest(TestCase):
         self.assertEqual(resolved.func.func_name, LoginAPI.__name__)
 
     def test_post(self):
-        user = UserF.create()
+        user = UserFactory.create()
         user.set_password('123456')
         user.save()
 

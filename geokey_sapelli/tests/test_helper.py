@@ -5,7 +5,7 @@ from unittest import TestCase
 from django.core.files import File
 from django.conf import settings
 
-from geokey.users.tests.model_factories import UserF
+from geokey.users.tests.model_factories import UserFactory
 from geokey.categories.tests.model_factories import CategoryFactory
 from geokey.categories.models import Category, NumericField, DateTimeField
 
@@ -17,7 +17,7 @@ from ..helper.sapelli_loader import (
 from ..helper.project_mapper import create_project, create_implicit_fields
 
 
-class TestSapelliLoader(TestCase):	
+class TestSapelliLoader(TestCase):
     def test_extract_sap(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))
@@ -382,7 +382,7 @@ class TestCreateProject(TestCase):
         }
         directory = normpath(join(dirname(abspath(__file__)), 'files'))
 
-        geokey_project = create_project(sapelli_project_info, UserF.create(), directory)
+        geokey_project = create_project(sapelli_project_info, UserFactory.create(), directory)
         self.assertEqual(geokey_project.name, 'Mapping Cultures')
         self.assertEqual(geokey_project.sapelli_project.sapelli_id, 1111)
         self.assertEqual(geokey_project.sapelli_project.sapelli_fingerprint, -1001003931)
