@@ -203,7 +203,40 @@ class DataCSVUpload(AbstractSapelliView):
 # ############################################################################
 
 class LoginAPI(TokenView):
+    """
+    This API allows Sapelli Collector instances (running on smartphones) to
+    login to the GeoKey server without the need for full OAuth-style
+    authentication. Instead all that is needed is a POST request which
+    supplies username and password.
+    The reason is that the Sapelli Collector app has to work with _any_ GeoKey
+    server instance, meaning that we cannot simply hardcode a predefined OAuth
+    client-id in the app source code, as it would be different on different
+    GeoKey servers. Instead we let the geokey-sapelli extension play the role
+    of the application/client (registered to the GeoKey server, as explained in
+    README.rst) and let the smartphone app authenticate users through this API.
+    """    
     def post(self, request, *args, **kwargs):
+        """
+        Handles POST requests for user authentication.
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request,
+            expected to contain POST fields 'username' and 'password'.
+
+        Returns
+        -------
+        If username and password are correct/authorised, the response is a JSON
+		object containing the OAuth access_token, if not the response is a JSON
+		object containing error information.
+
+        Raises
+        ------
+        TODO
+		"""
+        # ensure POST request is mutable:
+        # (this isn't always the case, see http://stackoverflow.com/q/12611345)
         if not (request.POST._mutable):
             request.POST = request.POST.copy()
         request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
