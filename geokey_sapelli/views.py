@@ -228,13 +228,13 @@ class LoginAPI(TokenView):
         Returns
         -------
         If username and password are correct/authorised, the response is a JSON
-		object containing the OAuth access_token, if not the response is a JSON
-		object containing error information.
+        object containing the OAuth access_token, if not the response is a JSON
+        object containing error information.
 
         Raises
         ------
         TODO
-		"""
+        """
         # ensure POST request is mutable:
         # (this isn't always the case, see http://stackoverflow.com/q/12611345)
         if not (request.POST._mutable):
