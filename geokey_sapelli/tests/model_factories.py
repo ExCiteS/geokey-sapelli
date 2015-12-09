@@ -33,7 +33,7 @@ def get_image(file_name='test.png', width=200, height=200):
     return the_file
 
 
-class SapelliProjectFactoryactory(factory.django.DjangoModelFactory):
+class SapelliProjectFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SapelliProject
 
@@ -47,7 +47,7 @@ class SapelliFormFactory(factory.django.DjangoModelFactory):
         model = SapelliForm
 
     category = factory.SubFactory(CategoryFactory)
-    sapelli_project = factory.SubFactory(SapelliProjectFactoryactory)
+    sapelli_project = factory.SubFactory(SapelliProjectFactory)
     sapelli_id = factory.Sequence(lambda n: 'Form %s' % n)
 
 
@@ -149,7 +149,7 @@ def create_full_project(user):
         'name': 'Dog Bin'
     })
 
-    project = SapelliProjectFactoryactory.create(**{'project': geokey_project})
+    project = SapelliProjectFactory.create(**{'project': geokey_project})
     form = SapelliFormFactory.create(**{
         'category': geokey_cat,
         'sapelli_project': project,
