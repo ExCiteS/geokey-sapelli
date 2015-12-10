@@ -22,6 +22,7 @@
 
         <div class="col-sm-8">
             <h3 class="header">Sapelli projects</h3>
+
             {% for sapelli in projects %}
                 {% if forloop.first %}<ul class="list-unstyled overview-list">{% endif %}
 
@@ -34,6 +35,8 @@
                     </li>
 
                 {% if forloop.last %}</ul>{% endif %}
+            {% empty %}
+                <p>No Sapelli projects were found.</p>
             {% endfor %}
         </div>
     </div>
