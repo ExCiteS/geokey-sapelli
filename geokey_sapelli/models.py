@@ -1,32 +1,27 @@
 import json
 import csv
-from django.db.models import (
-    Model,
-    OneToOneField,
-    IntegerField,
-    ImageField,
-    ForeignKey,
-    CharField,
-    BooleanField
-)
 
+from django.db import models
+from django.dispatch import receiver
+
+from geokey.projects.models import Project
 from geokey.contributions.models import Observation
 
 from .manager import SapelliProjectManager
 
 
-class SapelliProject(Model):
+class SapelliProject(models.Model):
     """
     Represents a Sapelli project. Is usually created by parsing a Sapelli
     decision tree.
     """
-    project = OneToOneField(
+    project = models.OneToOneField(
         'projects.Project',
         primary_key=True,
         related_name='sapelli_project'
     )
-    sapelli_id = IntegerField()
-    sapelli_fingerprint = IntegerField()
+    sapelli_id = models.IntegerField()
+    sapelli_fingerprint = models.IntegerField()
 
     objects = SapelliProjectManager()
 
@@ -116,7 +111,7 @@ class SapelliProject(Model):
 
                 feature['properties'][key] = value
 
-            from geokey.contributions.serializers import (ContributionSerializer)
+            from geokey.contributions.serializers import ContributionSerializer
 
             try:
                 observation = self.project.observations.get(
@@ -164,64 +159,91 @@ class SapelliProject(Model):
         return imported_features, updated_features, ignored_features
 
 
-class SapelliForm(Model):
+@receiver(models.signals.post_save, sender=Project)
+def post_save_project(sender, instance, **kwargs):
+    """
+    Receiver that is called after a project is saved. Deletes related Sapelli
+    project, when original project is marked as deleted.
+    """
+    if instance.status == 'deleted':
+        try:
+            project = SapelliProject.objects.get(project=instance)
+            project.delete()
+        except SapelliProject.DoesNotExist:
+            pass
+
+
+@receiver(models.signals.pre_delete, sender=Project)
+def pre_delete_project(sender, instance, **kwargs):
+    """
+    Receiver that is called after a project is deleted. Deletes related Sapelli
+    project.
+    """
+    try:
+        project = SapelliProject.objects.get(project=instance)
+        project.delete()
+    except SapelliProject.DoesNotExist:
+        pass
+
+
+class SapelliForm(models.Model):
     """
     Represents a Sapelli form. Is usually created by parsing a Sapelli
     decision tree.
     """
-    category = OneToOneField(
+    category = models.OneToOneField(
         'categories.Category',
         primary_key=True,
         related_name='sapelli_form'
     )
-    sapelli_project = ForeignKey(
+    sapelli_project = models.ForeignKey(
         'SapelliProject',
         related_name='forms'
     )
-    sapelli_id = CharField(max_length=255)
+    sapelli_id = models.CharField(max_length=255)
 
 
-class LocationField(Model):
+class LocationField(models.Model):
     """
     Represents a Location field.
     """
-    sapelli_form = ForeignKey(
+    sapelli_form = models.ForeignKey(
         'SapelliForm',
         related_name='location_fields'
     )
-    sapelli_id = CharField(max_length=255)
+    sapelli_id = models.CharField(max_length=255)
 
 
-class SapelliField(Model):
+class SapelliField(models.Model):
     """
     Represents a Sapelli input option, can be a Text input, a list or a choice
     root element.
     """
-    sapelli_form = ForeignKey(
+    sapelli_form = models.ForeignKey(
         'SapelliForm',
         related_name='fields'
     )
-    field = ForeignKey(
+    field = models.ForeignKey(
         'categories.Field',
         related_name='sapelli_field'
     )
-    sapelli_id = CharField(max_length=255)
-    truefalse = BooleanField(default=False)
+    sapelli_id = models.CharField(max_length=255)
+    truefalse = models.BooleanField(default=False)
 
 
-class SapelliItem(Model):
+class SapelliItem(models.Model):
     """
     Represents a Sapelli Choice element that has no Choice elements as childs.
     Is usually created by parsing a Sapelli decision tree.
     """
-    lookup_value = OneToOneField(
+    lookup_value = models.OneToOneField(
         'categories.LookupValue',
         primary_key=True,
         related_name='sapelli_item'
     )
-    image = ImageField(upload_to='sapelli/item', null=True)
-    number = IntegerField()
-    sapelli_choice_root = ForeignKey(
+    image = models.ImageField(upload_to='sapelli/item', null=True)
+    number = models.IntegerField()
+    sapelli_choice_root = models.ForeignKey(
         'SapelliField',
         related_name='items'
     )
