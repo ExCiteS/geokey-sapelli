@@ -8,5 +8,6 @@ register(
     'geokey_sapelli',
     'Sapelli',
     display_admin=True,
-    superuser=False
+    superuser=False,
+    version=__version__
 )
