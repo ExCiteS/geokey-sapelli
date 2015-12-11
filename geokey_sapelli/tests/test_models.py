@@ -4,12 +4,17 @@ from django.core.files import File
 from django.test import TestCase
 
 from geokey.users.tests.model_factories import UserFactory
+from geokey.projects.models import Project
+from geokey.projects.tests.model_factories import ProjectFactory
 
-from .model_factories import create_full_project
+from ..models import SapelliProject, post_save_project, pre_delete_project
+from .model_factories import SapelliProjectFactory, create_full_project
 
 
-class ProjectTest(TestCase):
+class SapelliProjectTest(TestCase):
+
     def test_import_from_csv(self):
+
         user = UserFactory.create()
         sapelli_project = create_full_project(user)
 
@@ -38,3 +43,36 @@ class ProjectTest(TestCase):
         self.assertEqual(updated, 2)
         self.assertEqual(ignored, 1)
         self.assertEqual(sapelli_project.project.observations.count(), 5)
+
+
+class ProjectSaveTest(TestCase):
+
+    def test_post_save_when_project_made_deleted(self):
+
+        project = ProjectFactory.create(status='active')
+        sapelli_project = SapelliProjectFactory.create(project=project)
+
+        project.status = 'deleted'
+        project.save
+
+        post_save_project(Project, instance=project)
+
+        self.assertEqual(
+            SapelliProject.objects.filter(pk=sapelli_project.id).exists(),
+            False
+        )
+
+
+class ProjectDeleteTest(TestCase):
+
+    def test_pre_delete_project(self):
+
+        project = ProjectFactory.create(status='active')
+        sapelli_project = SapelliProjectFactory.create(project=project)
+
+        pre_delete_project(Project, instance=project)
+
+        self.assertEqual(
+            SapelliProject.objects.filter(pk=sapelli_project.id).exists(),
+            False
+        )
