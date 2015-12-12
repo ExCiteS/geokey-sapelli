@@ -31,7 +31,7 @@ urlpatterns = patterns(
         LoginAPI.as_view(),
         name='login_api'),
     url(
-        r'^api/sapelli/projects/description/(?P<sapelli_project_id>[0-9]+)/(?P<sapelli_project_fingerprint>[0-9]+)/$',
+        r'^api/sapelli/projects/description/(?P<sapelli_project_id>[0-9]+)/(?P<sapelli_project_fingerprint>-?[0-9]+)/$',
         ProjectDescriptionAPI.as_view(),
         name='project_description_api'),
     url(
