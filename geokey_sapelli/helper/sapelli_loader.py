@@ -313,10 +313,13 @@ def get_project_fingerprint(tmp_file, tmp_dir):
     """
     TODO
     """
-    command = 'java -cp %s uk.ac.ucl.excites.sapelli.collector.SapColCmdLn -p %s -load "%s" -json' % (
-        settings.SAPELLI_JAR,
-        tmp_dir,
-        tmp_file
-    )
-    std_output = commands.getstatusoutput(command)[1]
-    return json.loads(std_output).get('fingerprint')
+    try:
+        command = 'java -cp %s uk.ac.ucl.excites.sapelli.collector.SapColCmdLn -p %s -load "%s" -json' % (
+            settings.SAPELLI_JAR,
+            tmp_dir,
+            tmp_file
+        )
+        std_output = commands.getstatusoutput(command)[1]
+        return json.loads(std_output).get('fingerprint')
+    except BaseException:
+        raise SapelliXMLException('PROJECT.xml fingerprinting failed.')
