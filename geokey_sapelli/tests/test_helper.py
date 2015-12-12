@@ -15,6 +15,7 @@ from ..helper.sapelli_loader import (
     parse_list, parse_list_items, parse_text_element, parse_location_element
 )
 from ..helper.project_mapper import create_project, create_implicit_fields
+from ..helper.sapelli_exceptions import SapelliXMLException
 
 
 class TestSapelliLoader(TestCase):
@@ -27,23 +28,26 @@ class TestSapelliLoader(TestCase):
     def test_parse_project(self):
         file = normpath(join(dirname(abspath(__file__)), 'files/PROJECT.xml'))
         project = parse_project(file)
-
         self.assertEqual(project.get('name'), 'Mapping Cultures')
         self.assertEqual(project.get('sapelli_id'), 1111)
         self.assertEqual(len(project.get('forms')), 1)
 
     def test_parse_form(self):
         file = normpath(join(dirname(abspath(__file__)), 'files/PROJECT.xml'))
-        choice = ET.parse(file).getroot().find('Form')
-        form = parse_form(choice)
+        form_xml = ET.parse(file).getroot().find('Form')
+        form = parse_form(form_xml)
         self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
         self.assertEqual(len(form.get('locations')), 1)
         self.assertEqual(len(form.get('fields')), 10)
 
     def test_parse_form_without_id(self):
-        element = ET.XML('<Form name="Lefini" startField="Situation" end="_LOOP" shortcut="true" endVibrate="true" shortcutImage="Elephant.png" storeEndTime="true" audioFeedback="NONE"></Form>')
+        element = ET.XML('<Form name="Lefini" end="_LOOP" endVibrate="true"><Location id="Position" timeout="120"/></Form>')
         form = parse_form(element)
         self.assertEqual(form.get('sapelli_id'), 'Lefini')
+
+    def test_parse_form_without_location(self):
+        element = ET.XML('<Form id="Lefini" end="_LOOP" endVibrate="true"></Form>')
+        self.assertRaises(SapelliXMLException, parse_form, element)
 
     def test_parse_choice(self):
         element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'

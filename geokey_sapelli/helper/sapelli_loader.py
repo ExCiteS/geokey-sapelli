@@ -124,6 +124,7 @@ def parse_base_field(element):
 
 
 def parse_text_element(element):
+    # TODO generate ids from caption if missing
     number_cnt = ['UnsignedInt', 'SignedInt', 'UnsignedFloat', 'SignedFloat']
     field = parse_base_field(element)
 
@@ -161,6 +162,7 @@ def parse_orientation_element(element):
 
 
 def parse_checkbox_element(element):
+    # TODO generate ids from caption if missing
     field = parse_base_field(element)
     field['geokey_type'] = 'LookupField'
     field['truefalse'] = True
@@ -173,6 +175,7 @@ def parse_checkbox_element(element):
 
 
 def parse_button_element(element):
+    # TODO generate ids from caption if missing
     column = element.attrib.get('column')
 
     if column in ['none', None]:
@@ -194,6 +197,7 @@ def parse_button_element(element):
 
 
 def parse_list(element):
+    # TODO generate ids from caption if missing
     target_items = dict(
         List='Item',
         MultiList='Item',
@@ -211,7 +215,7 @@ def parse_location_element(element):
     return field
 
 
-def parse_form(form_xml):
+def parse_form(form_xml, page=False):
     """
     Parses a form element
 
@@ -226,16 +230,16 @@ def parse_form(form_xml):
         Parse form containing the id and choices of the form
     """
     form = dict()
-    form['sapelli_id'] = form_xml.attrib.get('name')
+    form['sapelli_id'] = form_xml.attrib.get('id')
     if not form['sapelli_id']:
-        form['sapelli_id'] = form_xml.attrib.get('id')
+        form['sapelli_id'] = form_xml.attrib.get('name')
 
     fields = []
     locations = []
 
     for child in form_xml:
         if child.tag == 'Page':
-            page_fields = parse_form(child).get('fields')
+            page_fields = parse_form(child, page=True).get('fields')
             for f in page_fields:
                 fields.append(f)
 
@@ -262,11 +266,11 @@ def parse_form(form_xml):
                 if field:
                     fields.append(field)
 
+    if not page and len(locations) == 0:
+        raise SapelliXMLException('geokey-sapelli only supports Sapelli Forms which have a Location field.')
+
     form['fields'] = fields
     form['locations'] = locations
-
-    if len(locations) == 0:
-        raise SapelliSAPException('geokey-sapelli only supports Sapelli Forms which have a Location field.')
 
     return form
 
