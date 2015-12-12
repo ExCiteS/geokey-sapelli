@@ -184,13 +184,14 @@ class DataCSVUpload(AbstractSapelliView):
             form_id = request.POST.get('form_id')
             # TODO read Sapelli Form id (String!) from the csv file header and get corresponding SapelliForm that way!
 
-            imported, updated, ignored = sapelli_project.import_from_csv(request.user, form_id, the_file)
+            imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, form_id, the_file)
 
             messages.success(
                 self.request,
                 "%s records have been added to the project. %s have been "
                 "updated. %s have been ignored because they were identical "
-                "to existing contributions." % (imported, updated, ignored)
+                "to existing contributions. %s records where ignored because"
+                "they lack location coordinates." % (imported, updated, ignored_duplicate, ignored_no_loc)
             )
 
         return self.render_to_response(context)
@@ -359,8 +360,8 @@ class DataCSVUploadAPI(APIView):
         else:
             #try:
             the_file = request.FILES.get('data')
-            imported, updated, ignored = sapelli_project.import_from_csv(request.user, category_id, the_file)
-            return Response({'added': imported, 'updated': updated, 'duplicates': ignored})
+            imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, category_id, the_file)
+            return Response({'added': imported, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
             #except Exception, e:
             #    return Response({'error': str(e)})
 

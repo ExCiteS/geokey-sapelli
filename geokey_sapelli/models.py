@@ -68,17 +68,32 @@ class SapelliProject(models.Model):
         int
             The number of contributions updated
         int
-            The number of contributions ignored
+            The number of contributions ignored due to being duplicates
+        int
+            The number of contributions ignored due to lacking location coordinates
         """
+        if csvfile is None:
+            return 0, 0, 0, 0
+
         # TODO read Sapelli Form id (String!) from the csv file header and get corresponding SapelliForm that way!
         form = self.forms.get(pk=form_id)
+        # Note only 1 (the first) location field supported:
         location = form.location_fields.all()[0].sapelli_id
+
         reader = csv.DictReader(csvfile)
-        imported_features = 0
-        updated_features = 0
-        ignored_features = 0
+        
+        imported = 0
+        updated = 0
+        ignored_duplicate = 0
+        ignored_no_loc = 0
+
+        # TODO check modelID/modelSchemaNumber=1/schemaName
 
         for row in reader:
+            if not row['%s.Longitude' % location]:
+                ignored_no_loc += 1
+                continue
+            
             feature = {
                 "location": {
                     "geometry": '{ "type": "Point", "coordinates": '
@@ -142,9 +157,9 @@ class SapelliProject(models.Model):
                     if serializer.is_valid(raise_exception=True):
                         serializer.save()
 
-                    updated_features += 1
+                    updated += 1
                 else:
-                    ignored_features += 1
+                    ignored_duplicate += 1
             except Observation.DoesNotExist:
                 serializer = ContributionSerializer(
                     data=feature,
@@ -154,9 +169,9 @@ class SapelliProject(models.Model):
                 if serializer.is_valid(raise_exception=True):
                     serializer.save()
 
-                imported_features += 1
+                imported += 1
 
-        return imported_features, updated_features, ignored_features
+        return imported, updated, ignored_duplicate, ignored_no_loc
 
 
 @receiver(models.signals.post_save, sender=Project)
