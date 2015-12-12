@@ -26,7 +26,7 @@ class SapelliLoaderMixin(object):
     def store_file(self, sap_file):
         filename, extension = os.path.splitext(sap_file.name)
         path = default_storage.save(
-            'tmp/' + filename + extension,
+            'tmp/sap_uploads/' + filename + extension,
             ContentFile(sap_file.read())
         )
         return os.path.join(settings.MEDIA_ROOT, path)
@@ -264,6 +264,9 @@ def parse_form(form_xml):
 
     form['fields'] = fields
     form['locations'] = locations
+
+    if len(locations) == 0:
+        raise SapelliSAPException('geokey-sapelli only supports Sapelli Forms which have a Location field.')
 
     return form
 
