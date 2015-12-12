@@ -114,7 +114,7 @@ def parse_list_items(list_element, leaf_tag):
 
 def parse_base_field(element):
     field = {
-        'sapelli_id': element.attrib.get('id'),
+        'sapelli_id': element.attrib.get('id') if element.attrib.get('id') else 'id_unknown',
         'caption': element.attrib.get('caption'),
         'description': element.attrib.get('description'),
         'required': element.attrib.get('optional') != 'true',
@@ -143,19 +143,22 @@ def parse_orientation_element(element):
         fields.append({
             'sapelli_id': 'Orientation.Azimuth',
             'caption': 'Azimuth',
-            'geokey_type': 'NumericField'
+            'geokey_type': 'NumericField',
+            'truefalse': False
         })
     if element.attrib.get('storePitch') != 'false':
         fields.append({
             'sapelli_id': 'Orientation.Pitch',
             'caption': 'Pitch',
-            'geokey_type': 'NumericField'
+            'geokey_type': 'NumericField',
+            'truefalse': False
         })
     if element.attrib.get('storeRoll') != 'false':
         fields.append({
             'sapelli_id': 'Orientation.Roll',
             'caption': 'Roll',
-            'geokey_type': 'NumericField'
+            'geokey_type': 'NumericField',
+            'truefalse': False
         })
 
     return fields
