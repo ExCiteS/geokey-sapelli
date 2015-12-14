@@ -17,9 +17,18 @@ from geokey.core.decorators import (
 )
 from geokey.projects.models import Project
 
+from . import __version__
+
 from .models import SapelliProject
-from helper.sapelli_loader import SapelliLoaderMixin
-from helper.sapelli_exceptions import SapelliException, SapelliSAPException, SapelliXMLException, SapelliDuplicateException
+from .helper.sapelli_loader import load_from_sap
+from .helper.sapelli_exceptions import (
+    SapelliException,
+    SapelliSAPException,
+    SapelliXMLException,
+    SapelliDuplicateException,
+    SapelliCSVException
+)
+
 
 from helper.dynamic_menu import MenuEntry
 
@@ -46,6 +55,7 @@ class AbstractSapelliView(LoginRequiredMixin, TemplateView):
                 menu_entries.append(MenuEntry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)))
 
         context['menu_entries'] = menu_entries
+        context['GEOKEY_SAPELLI_VERSION'] = __version__
         return context
 
 
@@ -73,12 +83,11 @@ class ProjectList(AbstractSapelliView):
         -------
         dict
         """
-        projects = SapelliProject.objects.get_list_for_contribution(self.request.user)
-        context = {'projects': projects}
+        context = {'sapelli_projects': SapelliProject.objects.get_list_for_contribution(self.request.user)}
         return self.add_menu(context)
 
 
-class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
+class ProjectUpload(AbstractSapelliView):
     """
     Presents a form to upload a .sap file to create a new project.
     """
@@ -86,7 +95,7 @@ class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
 
     @staticmethod
     def get_menu_label():
-        return 'Upload new Sapelli project'
+        return 'Add project'
 
     @staticmethod
     def get_menu_url():
@@ -110,28 +119,34 @@ class ProjectUpload(AbstractSapelliView, SapelliLoaderMixin):
             Redirecting to the data upload form
         """
         try:
-            sapelli_project = self.load(request.FILES.get('project'), request.user)
+            sapelli_project = load_from_sap(request.FILES.get('sap_file'), request.user)
 
-            messages.success(self.request, "The project has been created.")
+            messages.success(self.request, 'The project has been created.')
 
             return redirect(
                 'geokey_sapelli:data_csv_upload',
-                project_id=sapelli_project.project.id
+                project_id=sapelli_project.geokey_project.id
             )
         except SapelliSAPException, e:
             messages.error(
                 self.request,
-                'The uploaded file is not a valid Sapelli project file (*.sap) [' + str(e) + ']'
+                'Failed to load Sapelli project, due to:\n\n' + str(e)
+            )
+            if not (e.java_stacktrace is None):
+                messages.error(
+                    self.request,
+                    e.java_stacktrace,
+                    extra_tags='java_stacktrace'
             )
         except SapelliXMLException, e:
             messages.error(
                 self.request,
-                'Failed to parse PROJECT.xml file [' + str(e) + ']'
+                'Failed to parse PROJECT.xml file, due to:\n\n' + str(e)
             )
         except SapelliDuplicateException:
-            messages.error(
+            messages.warning(
                 self.request,
-                'You already have a matching Sapelli project.'
+                'You already have access to a matching Sapelli project.'
             )
         return self.render_to_response({})
 
@@ -150,7 +165,7 @@ class DataCSVUpload(AbstractSapelliView):
         Parameter
         ---------
         project_id : int
-            Identifies the project on the data base
+            Identifies the GeoKey project on the data base
 
         Returns
         -------
@@ -169,7 +184,7 @@ class DataCSVUpload(AbstractSapelliView):
         django.http.HttpRequest
             Object representing the request.
         project_id : int
-            Identifies the project on the data base
+            Identifies the Geokey project on the data base
 
         Returns
         -------
@@ -180,19 +195,21 @@ class DataCSVUpload(AbstractSapelliView):
         sapelli_project = context.get('sapelli_project')
 
         if sapelli_project is not None:
-            the_file = request.FILES.get('data')
-            form_id = request.POST.get('form_id')
-            # TODO read Sapelli Form id (String!) from the csv file header and get corresponding SapelliForm that way!
-
-            imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, form_id, the_file)
-
-            messages.success(
-                self.request,
-                "%s records have been added to the project. %s have been "
-                "updated. %s have been ignored because they were identical "
-                "to existing contributions. %s records where ignored because"
-                "they lack location coordinates." % (imported, updated, ignored_duplicate, ignored_no_loc)
-            )
+            csv_file = request.FILES.get('csv_file')
+            form_category_id = request.POST.get('form_category_id')
+            try:
+                imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, csv_file, form_category_id)
+                messages.success(
+                    self.request,
+                    "Result:\n"
+                    " - %s records have been added as project contributions;\n"
+                    " - %s have been updated;\n"
+                    " - %s have been ignored because they were identical to existing contributions;\n"
+                    " - %s where ignored because they lack location coordinates."
+                    % (imported, updated, ignored_duplicate, ignored_no_loc)
+                )
+            except SapelliCSVException, e:
+                messages.error(self.request, 'Failed to process CSV file, due to:\n\n' + str(e))
 
         return self.render_to_response(context)
 
@@ -287,7 +304,7 @@ class ProjectDescriptionAPI(APIView):
             return Response(sapelli_project.get_description())
 
 
-class ProjectUploadAPI(APIView, SapelliLoaderMixin):
+class ProjectUploadAPI(APIView):
     """
     API Endpoint for uploading a new Sapelli project.
     api/sapelli/projects/new/
@@ -314,7 +331,12 @@ class ProjectUploadAPI(APIView, SapelliLoaderMixin):
         if request.user.is_anonymous():
             raise PermissionDenied('API access not authorised, please login.')
         try:
-            sapelli_project = self.load(request.FILES.get('project'), request.user)
+            sapelli_project = load_from_sap(request.FILES.get('sap_file'), request.user)
+        except SapelliSAPException, e:
+            error_response = {'error': str(e)}
+            if e.java_stacktrace is not None:
+                error_response['java_stacktrace'] = e.java_stacktrace
+            return Response(error_response)
         except SapelliException, e:
             return Response({'error': str(e)})
         else:
@@ -322,9 +344,10 @@ class ProjectUploadAPI(APIView, SapelliLoaderMixin):
             Response(sapelli_project.get_description())
 
 
+
 class DataCSVUploadAPI(APIView):
     """
-    API Endpoint for uploading data as CSV.
+    API Endpoint for uploading Sapelli records as CSV.
     api/sapelli/projects/xxxx/csv_upload/yyyy/
     """
     @handle_exceptions_for_ajax
@@ -336,9 +359,9 @@ class DataCSVUploadAPI(APIView):
         ---------
         request : rest_framework.request.Request
             Object representing the request.
-        project_id : int
+        project_id : str
             Identifies the GeoKey project on the data base
-        category_id : int
+        category_id : str
             Identifies the GeoKey category and thereby the SapelliForm
         
         Returns
@@ -358,12 +381,12 @@ class DataCSVUploadAPI(APIView):
         except SapelliProject.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         else:
-            #try:
-            the_file = request.FILES.get('data')
-            imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, category_id, the_file)
-            return Response({'added': imported, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
-            #except Exception, e:
-            #    return Response({'error': str(e)})
+            try:
+                csv_file = request.FILES.get('csv_file')
+                imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, csv_file, category_id)
+                return Response({'added': imported, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
+            except BaseException, e:
+                return Response({'error': str(e)})
 
 
 class FindObservationAPI(APIView):
@@ -399,8 +422,11 @@ class FindObservationAPI(APIView):
         if request.user.is_anonymous():
             raise PermissionDenied('API access not authorised, please login.')
         try:
-            project = Project.objects.get(pk=project_id)
-            observation = project.observations.get(category_id=category_id, properties__at_StartTime=sapelli_record_start_time, properties__at_DeviceId=sapelli_record_device_id)
+            geokey_project = Project.objects.get(pk=project_id)
+            observation = geokey_project.observations.get(
+                category_id=category_id,
+                properties__at_StartTime=sapelli_record_start_time,
+                properties__at_DeviceId=sapelli_record_device_id)
         except Project.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         #except Exception, e:

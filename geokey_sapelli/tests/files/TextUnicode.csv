@@ -1,0 +1,3 @@
+﻿StartTime,StartTime-LocalYYYYMMDD_HHMMSS,StartTime-UCTOffsetH,StartTime-UnixMS,DeviceID,txtText,位置.Latitude,位置.Longitude,位置.Altitude,位置.Bearing,位置.Speed,位置.Accuracy,位置.TimeUTC,位置.Provider,modelID=32914926972437817,modelSchemaNumber=1,schemaName="TextUnicode_测试_(v0.23):TextTest",
+2015-12-12T06:22:37.835-05:00,"2015-12-12 06:22:37",-5.0,1449919357835,1752196661,"test",51.03219103,3.71047663,51.0,,0.0,59.0,2015-10-21T11:28:09.000+02:00,1
+2015-12-12T06:23:04.570-05:00,"2015-12-12 06:23:04",-5.0,1449919384570,1752196661,"한자test",51.03219103,3.71047663,51.0,,0.0,59.0,2015-10-21T11:28:09.000+02:00,1

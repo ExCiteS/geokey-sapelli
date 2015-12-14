@@ -11,10 +11,10 @@ from ..models import SapelliProject
 class SapelliManagerTest(TestCase):
     def test_get_list_for_administration(self):
         user = UserFactory.create()
-        project = ProjectFactory.create(add_admins=[user])
+        geokey_project = ProjectFactory.create(add_admins=[user])
 
         admin_sap_project = SapelliProjectFactory.create(
-            **{'project': project}
+            **{'geokey_project': geokey_project}
         )
         SapelliProjectFactory.create_batch(2)
 
@@ -24,10 +24,10 @@ class SapelliManagerTest(TestCase):
 
     def test_get_list_for_contribution(self):
         user = UserFactory.create()
-        project = ProjectFactory.create(add_contributors=[user])
+        geokey_project = ProjectFactory.create(add_contributors=[user])
 
         contrib_sap_project = SapelliProjectFactory.create(
-            **{'project': project}
+            **{'geokey_project': geokey_project}
         )
         SapelliProjectFactory.create_batch(2)
 
@@ -37,21 +37,21 @@ class SapelliManagerTest(TestCase):
 
     def test_get_single_for_administration(self):
         user = UserFactory.create()
-        project = ProjectFactory.create(add_admins=[user])
+        geokey_project = ProjectFactory.create(add_admins=[user])
 
         admin_sap_project = SapelliProjectFactory.create(
-            **{'project': project}
+            **{'geokey_project': geokey_project}
         )
         other_sap_project = SapelliProjectFactory.create()
 
         ref = SapelliProject.objects.get_single_for_administration(
-            user, admin_sap_project.project_id)
+            user, admin_sap_project.geokey_project.id)
         self.assertEqual(ref, admin_sap_project)
 
         try:
             SapelliProject.objects.get_single_for_administration(
                 user,
-                other_sap_project.project_id
+                other_sap_project.geokey_project.id
             )
         except SapelliProject.DoesNotExist:
             pass
@@ -60,21 +60,21 @@ class SapelliManagerTest(TestCase):
 
     def test_get_single_for_contribution(self):
         user = UserFactory.create()
-        project = ProjectFactory.create(add_contributors=[user])
+        geokey_project = ProjectFactory.create(add_contributors=[user])
 
         contrib_sap_project = SapelliProjectFactory.create(
-            **{'project': project}
+            **{'geokey_project': geokey_project}
         )
         other_sap_project = SapelliProjectFactory.create()
 
         ref = SapelliProject.objects.get_single_for_contribution(
-            user, contrib_sap_project.project_id)
+            user, contrib_sap_project.geokey_project.id)
         self.assertEqual(ref, contrib_sap_project)
 
         try:
             SapelliProject.objects.get_single_for_contribution(
                 user,
-                other_sap_project.project_id
+                other_sap_project.geokey_project.id
             )
         except SapelliProject.DoesNotExist:
             pass

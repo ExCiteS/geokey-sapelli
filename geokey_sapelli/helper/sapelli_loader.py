@@ -4,7 +4,6 @@ import os
 import xml.etree.ElementTree as ET
 
 from zipfile import ZipFile, BadZipfile
-from os.path import basename
 
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
@@ -19,310 +18,126 @@ from .sapelli_exceptions import (
 )
 
 
-class SapelliLoaderMixin(object):
+def load_from_sap(sap_file, user):
     """
-    TODO
-    """
-    def store_file(self, sap_file):
-        filename, extension = os.path.splitext(sap_file.name)
-        path = default_storage.save(
-            'tmp/sap_uploads/' + filename + extension,
-            ContentFile(sap_file.read())
-        )
-        return os.path.join(settings.MEDIA_ROOT, path)
+    Loads & saves a SapelliProject from the given SAP file.
 
-    def load(self, sap_file, user):
+    Parameters
+    ----------
+    sap_file : django.core.files.File
+        Uploaded (suspected) SAP file.
+
+    Returns
+    -------
+    SapelliProject:
+        SapelliProject instance for the parsed project.
+    
+    Raises
+    ------
+    SapelliSAPException:
+        When project loading fails.
+    SapelliDuplicateException:
+        When the user already has access to the same project.
+    """
+    # Check if we got a file at all:
+    if sap_file is None:
+        raise SapelliSAPException('No file provided.')
+    
+    # Store copy of file on disk (as it probably is an "in memory" file uploaded in an HTTP request):
+    try:
+        filename, extension = os.path.splitext(os.path.basename(sap_file.name))
+        relative_sap_file_path = default_storage.save('sapelli/Uploads/' + filename + extension, ContentFile(sap_file.read()))
+        sap_file_path = default_storage.path(relative_sap_file_path)
+    except BaseException:
+        raise SapelliSAPException('Failed to store uploaded file.')
+
+    # The file will be deleted if an exception is raised in this block:
+    try:
+        # Check if it is a valid SAP file:
+        check_sap_file(sap_file_path)
+        # Load Sapelli project (extract+parse) using SapColCmdLn Java program:
+        sapelli_project_info = get_sapelli_project_info(sap_file_path)
+    except BaseException, e:
+        try: # Remove possibly dangerous file:
+            os.remove(sap_file_path)
+        except OSError:
+            pass
+        raise e
+
+    # Check for duplicates:
+    if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
+            user,
+            sapelli_project_info['sapelli_id'],
+            sapelli_project_info['sapelli_fingerprint']):
+        raise SapelliDuplicateException
+
+    # Create GeoKey and SapelliProject:
+    try:
+        geokey_project = create_project(sapelli_project_info, user)
+    except BaseException, e:
+        raise SapelliSAPException(str(e))
+
+    # When successful return the SapelliProject object:
+    return geokey_project.sapelli_project
+
+    
+def check_sap_file(sap_file_path):
+    """
+    Checks if the file at the given path is a valid Sapelli project file.
+
+    Parameters
+    ----------
+    sap_file_path : str
+        Path to (suspected) Sapelli project file.
+
+    Raises
+    ------
+    SapelliSAPException:
+        When the given file does not exist, is not a ZIP archive, or does not contain PROJECT.xml.
+    """
+    try:
+        if not os.path.isfile(sap_file_path):
+            raise SapelliSAPException('The file does not exist.')
+        # Check if it is a ZIP file:
+        zip = ZipFile(sap_file_path) # throws BadZipfile
+        # Check if it contains PROJECT.xml:
+        zip.getinfo('PROJECT.xml') # throws KeyError
+    except BadZipfile:
+        raise SapelliSAPException('The file is not a valid Sapelli project file (*.sap, *.excites or *.zip).')
+    except KeyError:
+        raise SapelliSAPException('The file is not a valid Sapelli project file (ZIP archive does not contain PROJECT.xml file).')
+    finally:
         try:
-            tmp_file = self.store_file(sap_file)
-            tmp_dir = extract_sap(sap_file)
-            sapelli_project_info = parse_project(tmp_dir + '/PROJECT.xml')
+            zip.close()
+        except BaseException:
+            pass
 
-            fingerprint = get_project_fingerprint(tmp_file, tmp_dir)
-            sapelli_project_info['sapelli_fingerprint'] = fingerprint
-
-            if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
-                    user,
-                    sapelli_project_info['sapelli_id'],
-                    sapelli_project_info['sapelli_fingerprint']):
-                raise SapelliDuplicateException
-
-            geokey_project = create_project(sapelli_project_info, user, tmp_dir)
-
-            # when successful return the SapelliProject object:
-            return geokey_project.sapelli_project
-        # TODO other exceptions
-        except BadZipfile:
-            raise SapelliSAPException('Not a valid ZIP file.')
-
-
-def extract_sap(file):
+def get_sapelli_project_info(sap_file_path):
     """
-    Extracts a Sapelli project zip file and returns the path to the directory
-    that stores the files.
+    Uses the Sapelli Collector cmdlnd client (Java) to extract the SAP file and parse the PROJECT.xml.
 
     Parameters
     ----------
-    file : str
-        Path to the file
+    sap_file_path : str
+        Path to Sapelli project file.
 
     Returns
     -------
-    str
-        Path to the extracted files
-    """
-    outpath = settings.MEDIA_ROOT + '/tmp/' + basename(file.name)
-
-    z = ZipFile(file)
-    for name in z.namelist():
-        z.extract(name, outpath)
-    file.close()
-
-    return outpath
-
-
-def parse_list_items(list_element, leaf_tag):
-    """
-    Traverses through the child elements of a choice an returns all leaf
-    elements.
-
-    Parameter
-    ---------
-    list_element : xml.etree.ElementTree.Element
-        Choice element that is traversed
-    leaf_tag : string
-        Tag name of elements that is looked for
-
-    Returns
-    -------
-    List
-        List of all leaf elements
-    """
-    items = []
-    child_items = list_element.findall(leaf_tag)
-
-    if len(child_items) > 0:
-        for child in child_items:
-            items = items + parse_list_items(child, leaf_tag)
-    else:
-        items.append({
-            'value': list_element.attrib.get('value'),
-            'img': list_element.attrib.get('img')
-        })
-
-    return items
-
-
-def parse_base_field(element):
-    field = {
-        'sapelli_id': element.attrib.get('id') if element.attrib.get('id') else 'id_unknown',
-        'caption': element.attrib.get('caption'),
-        'description': element.attrib.get('description'),
-        'required': element.attrib.get('optional') != 'true',
-        'truefalse': False
-    }
-    return field
-
-
-def parse_text_element(element):
-    # TODO generate ids from caption if missing
-    number_cnt = ['UnsignedInt', 'SignedInt', 'UnsignedFloat', 'SignedFloat']
-    field = parse_base_field(element)
-
-    if element.attrib.get('content') in number_cnt:
-        field['geokey_type'] = 'NumericField'
-    else:
-        field['geokey_type'] = 'TextField'
-
-    return field
-
-
-def parse_orientation_element(element):
-    fields = []
-
-    if element.attrib.get('storeAzimuth') != 'false':
-        fields.append({
-            'sapelli_id': 'Orientation.Azimuth',
-            'caption': 'Azimuth',
-            'geokey_type': 'NumericField',
-            'truefalse': False
-        })
-    if element.attrib.get('storePitch') != 'false':
-        fields.append({
-            'sapelli_id': 'Orientation.Pitch',
-            'caption': 'Pitch',
-            'geokey_type': 'NumericField',
-            'truefalse': False
-        })
-    if element.attrib.get('storeRoll') != 'false':
-        fields.append({
-            'sapelli_id': 'Orientation.Roll',
-            'caption': 'Roll',
-            'geokey_type': 'NumericField',
-            'truefalse': False
-        })
-
-    return fields
-
-
-def parse_checkbox_element(element):
-    # TODO generate ids from caption if missing
-    field = parse_base_field(element)
-    field['geokey_type'] = 'LookupField'
-    field['truefalse'] = True
-    field['items'] = [
-        {'value': 'false'},
-        {'value': 'true'}
-    ]
-
-    return field
-
-
-def parse_button_element(element):
-    # TODO generate ids from caption if missing
-    column = element.attrib.get('column')
-
-    if column in ['none', None]:
-        return None
-
-    field = parse_base_field(element)
-
-    if column == 'datetime':
-        field['geokey_type'] = 'DateTimeField'
-    elif column == 'boolean':
-        field['geokey_type'] = 'LookupField'
-        field['truefalse'] = True
-        field['items'] = [
-            {'value': 'false'},
-            {'value': 'true'}
-        ]
-
-    return field
-
-
-def parse_list(element):
-    # TODO generate ids from caption if missing
-    target_items = dict(
-        List='Item',
-        MultiList='Item',
-        Choice='Choice'
-    )
-    field = parse_base_field(element)
-    field['geokey_type'] = 'LookupField'
-    field['items'] = parse_list_items(element, target_items[element.tag])
-
-    return field
-
-
-def parse_location_element(element):
-    field = parse_base_field(element)
-    return field
-
-
-def parse_form(form_xml, page=False):
-    """
-    Parses a form element
-
-    Parameter
-    ---------
-    form_xml : xml.etree.ElementTree.Element
-        Form element that is parsed
-
-    Returns
-    -------
-    dict
-        Parse form containing the id and choices of the form
-    """
-    form = dict()
-    form['sapelli_id'] = form_xml.attrib.get('id')
-    if not form['sapelli_id']:
-        form['sapelli_id'] = form_xml.attrib.get('name')
-
-    fields = []
-    locations = []
-
-    for child in form_xml:
-        if child.tag == 'Page':
-            page_fields = parse_form(child, page=True).get('fields')
-            for f in page_fields:
-                fields.append(f)
-
-        elif child.tag == 'Location':
-            locations.append(parse_location_element(child))
-
-        elif child.attrib.get('noColumn') != 'true':
-            if child.tag == 'Text':
-                fields.append(parse_text_element(child))
-
-            elif child.tag in ['List', 'MultiList', 'Choice']:
-                fields.append(parse_list(child))
-
-            elif child.tag == 'Orientation':
-                orientation_fields = parse_orientation_element(child)
-                for f in orientation_fields:
-                    fields.append(f)
-
-            elif child.tag == 'Check':
-                fields.append(parse_checkbox_element(child))
-
-            elif child.tag == 'Button':
-                field = parse_button_element(child)
-                if field:
-                    fields.append(field)
-
-    if not page and len(locations) == 0:
-        raise SapelliXMLException('geokey-sapelli only supports Sapelli Forms which have a Location field.')
-
-    form['fields'] = fields
-    form['locations'] = locations
-
-    return form
-
-
-def parse_project(project_xml_file):
-    """
-    Parses a Sapelli XML project description into a native representation.
-
-    Parameters
-    ----------
-    file : str
-        Path to the decision tree file
-
-    Returns
-    -------
-    dict
-        Contains all essential information about the parsed Sapelli project
-    """
-    sapelli_project_info = dict()
-
-    try:
-        tree = ET.parse(project_xml_file)
-    except IOError:
-        raise SapelliSAPException('SAP file does not contain a PROJECT.xml file')
-
-    root = tree.getroot()
-
-    sapelli_project_info['name'] = root.attrib.get('name')
-    sapelli_project_info['sapelli_id'] = int(root.attrib.get('id'))
-    sapelli_project_info['forms'] = []
-
-    for child in root:
-        if child.tag == 'Form':
-            sapelli_project_info['forms'].append(parse_form(child))
-
-    return sapelli_project_info
-
-
-def get_project_fingerprint(tmp_file, tmp_dir):
-    """
-    TODO
+    dict:
+        the "sapelli_project_info" dictionary describing the loaded project.
+    
+    Raises
+    ------
+    SapelliSAPException:
+        When an error occurs during running of SapColCmdLn, will contain java_stacktrace.
     """
     try:
-        command = 'java -cp %s uk.ac.ucl.excites.sapelli.collector.SapColCmdLn -p %s -load "%s" -json' % (
+        command = 'java -cp %s uk.ac.ucl.excites.sapelli.collector.SapColCmdLn -p %s -load "%s" -geokey' % (
             settings.SAPELLI_JAR,
-            tmp_dir,
-            tmp_file
+            default_storage.path('sapelli/'),
+            sap_file_path
         )
         std_output = commands.getstatusoutput(command)[1]
-        return json.loads(std_output).get('fingerprint')
+        return json.loads(std_output)
     except BaseException:
-        raise SapelliXMLException('PROJECT.xml fingerprinting failed.')
+        raise SapelliSAPException('SapColCmdLn error', java_stacktrace=std_output)

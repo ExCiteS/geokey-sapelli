@@ -9,7 +9,8 @@ from geokey.categories.tests.model_factories import (
     CategoryFactory,
     FieldFactory,
     LookupFieldFactory,
-    LookupValueFactory
+    LookupValueFactory,
+    TextFieldFactory
 )
 
 from ..models import (
@@ -37,7 +38,7 @@ class SapelliProjectFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SapelliProject
 
-    project = factory.SubFactory(ProjectFactory)
+    geokey_project = factory.SubFactory(ProjectFactory)
     sapelli_id = factory.Sequence(lambda n: n)
     sapelli_fingerprint = factory.Sequence(lambda n: n)
 
@@ -75,21 +76,21 @@ class SapelliChoiceFactory(factory.django.DjangoModelFactory):
     lookup_value = factory.SubFactory(LookupValueFactory)
     image = get_image()
     number = factory.Sequence(lambda n: n)
-    sapelli_choice_root = factory.SubFactory(SapelliFieldFactory)
+    sapelli_field = factory.SubFactory(SapelliFieldFactory)
 
 
-def create_full_project(user):
+def create_horniman_sapelli_project(user):
     geokey_project = ProjectFactory.create(
         add_admins=[user],
-        **{'name': 'Mapping Cultures'}
+        **{'name': 'Mapping Cultures (v1.1)'}
     )
     geokey_cat = CategoryFactory.create(**{
         'name': 'Horniman Gardens',
         'project': geokey_project
     })
     select_field = LookupFieldFactory.create(**{
-        'name': 'Garden Feature',
-        'key': 'garden-feature',
+        'name': 'Garden_Feature',
+        'key': 'garden_feature',
         'category': geokey_cat
     })
     LookupValueFactory.create(**{
@@ -149,11 +150,21 @@ def create_full_project(user):
         'name': 'Dog Bin'
     })
 
-    project = SapelliProjectFactory.create(**{'project': geokey_project})
+    sapelli_project = SapelliProjectFactory.create(**{
+        'geokey_project': geokey_project,
+        'name': 'Mapping Cultures',
+        'variant': None,
+        'version': '1.1',
+        'sapelli_id': 1111,
+        'sapelli_fingerprint': -1001003931,
+        'sapelli_model_id': 55263534870692951,
+		'path': None
+    })
     form = SapelliFormFactory.create(**{
         'category': geokey_cat,
-        'sapelli_project': project,
-        'sapelli_id': 'Horniman Gardens'
+        'sapelli_project': sapelli_project,
+        'sapelli_id': 'Horniman Gardens',
+        'sapelli_model_schema_number': 1
     })
     SapelliLocationFactory.create(**{
         'sapelli_form': form,
@@ -162,14 +173,56 @@ def create_full_project(user):
     choice_root = SapelliFieldFactory.create(**{
         'sapelli_form': form,
         'field': select_field,
-        'sapelli_id': 'Garden Feature'
+        'sapelli_id': 'Garden_Feature'
     })
 
     for idx, value in enumerate(select_field.lookupvalues.all()):
         SapelliChoiceFactory.create(**{
             'lookup_value': value,
             'number': idx,
-            'sapelli_choice_root': choice_root
+            'sapelli_field': choice_root
         })
 
-    return project
+    return sapelli_project
+
+
+def create_textunicode_sapelli_project(user):
+    geokey_project = ProjectFactory.create(
+        add_admins=[user],
+        **{'name': u'TextUnicode_\u6d4b\u8bd5_(v0.23)'}
+    )
+    geokey_cat = CategoryFactory.create(**{
+        'name': 'TextTest',
+        'project': geokey_project
+    })
+    text_field = TextFieldFactory.create(**{
+        'name': 'txtText',
+        'key': 'txttext',
+        'category': geokey_cat
+    })
+    sapelli_project = SapelliProjectFactory.create(**{
+        'geokey_project': geokey_project,
+        'name': 'TextUnicode',
+        'variant': '\u6d4b\u8bd5',
+        'version': '0.23',
+        'sapelli_id': 1337,
+        'sapelli_fingerprint': 1961882530,
+        'sapelli_model_id': 32914926972437817
+    })
+    form = SapelliFormFactory.create(**{
+        'category': geokey_cat,
+        'sapelli_project': sapelli_project,
+        'sapelli_id': 'TextTest',
+        'sapelli_model_schema_number': 1
+    })
+    SapelliLocationFactory.create(**{
+        'sapelli_form': form,
+        'sapelli_id':  u'\u4f4d\u7f6e'
+    })
+    sap_text_field = SapelliFieldFactory.create(**{
+        'sapelli_form': form,
+        'field': text_field,
+        'sapelli_id': 'txtText'
+    })
+
+    return sapelli_project

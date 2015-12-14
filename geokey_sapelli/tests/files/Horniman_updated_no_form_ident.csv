@@ -1,0 +1,2 @@
+﻿StartTime,StartTime-LocalYYYYMMDD_HHMMSS,StartTime-UCTOffsetH,StartTime-UnixMS,DeviceID,Garden_Feature,Garden_Feature-Value,Garden_Feature-Image,Position.Latitude,Position.Longitude,Position.Altitude,Position.Bearing,Position.Speed,Position.Accuracy,Position.TimeUTC,Position.Provider,
+2014-12-05T13:37:40.793Z,08/11/2014 13:37,0,1.41545E+12,4136949986,11,Covered Bin,covered bin.png,51.44207987,-0.060492195,145.5999756,199,1.251000047,50,2014-11-08T13:39:39.000Z,1,,
