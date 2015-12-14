@@ -1,7 +1,7 @@
 from geokey.extensions.base import register
 
 
-VERSION = (0, 1, 1)
+VERSION = (0, 5, 0)
 __version__ = '.'.join(map(str, VERSION))
 
 register(
