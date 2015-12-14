@@ -29,5 +29,5 @@ MEDIA_URL = '/assets/'
 WSGI_APPLICATION = 'settings.wsgi.application'
 ROOT_URLCONF = 'settings.urls'
 
-SAPELLI_JAR = '../files/sapelli-collector-cmdln-2.0.0-beta-16.5-jar-with-dependencies.jar'
+SAPELLI_JAR = 'lib/sapelli-collector-cmdln-with-deps.jar'
 SAPELLI_CLIENT_ID = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
