@@ -97,6 +97,16 @@ horniman_sapelli_project_info = {
 }
 
 
+def with_stacktrace(func, *args):
+    try:
+        return func(*args)
+    except SapelliSAPException, e:
+        if e.java_stacktrace is not None:
+            # make java stacktrace visible in test log:
+            raise SapelliSAPException(str(e) + '\n' + e.java_stacktrace)
+        else:
+            raise e
+
 class TestSapelliLoader(TestCase):
     def tearDown(self):
         # delete project(s):
@@ -124,14 +134,14 @@ class TestSapelliLoader(TestCase):
         
     def test_get_sapelli_project_info_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
-        sapelli_project_info = get_sapelli_project_info(path)
+        sapelli_project_info = with_stacktrace(get_sapelli_project_info, path)
         sapelli_project_info.pop('installation_path', None)
         self.assertEquals(sapelli_project_info, horniman_sapelli_project_info)
         
     def test_load_from_sap_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))
-        sapelli_project = load_from_sap(file, UserFactory.create())
+        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
         self.assertEqual(sapelli_project.name, horniman_sapelli_project_info['name'])
         self.assertEqual(sapelli_project.version, horniman_sapelli_project_info['version'])
         self.assertEqual(sapelli_project.geokey_project.name, horniman_sapelli_project_info['display_name'])
@@ -142,7 +152,7 @@ class TestSapelliLoader(TestCase):
     def test_load_from_sap_complex(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Complex.sap'))
         file = File(open(path, 'rb'))
-        sapelli_project = load_from_sap(file, UserFactory.create())
+        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
         self.assertEqual(sapelli_project.name, horniman_sapelli_project_info['name'])
         self.assertEqual(sapelli_project.variant, '[Test]')
         self.assertEqual(sapelli_project.version, '2.0')
@@ -153,7 +163,7 @@ class TestSapelliLoader(TestCase):
     def test_load_from_sap_unicode(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.sap'))
         file = File(open(path, 'rb'))
-        sapelli_project = load_from_sap(file, UserFactory.create())
+        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
         self.assertEqual(sapelli_project.name, 'TextUnicode')
         self.assertEqual(sapelli_project.variant, u'\u6d4b\u8bd5')
         self.assertEqual(sapelli_project.version, '0.23')
