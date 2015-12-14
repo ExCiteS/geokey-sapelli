@@ -23,21 +23,22 @@
         <div class="col-sm-8">
             <h3 class="header">Sapelli projects</h3>
 
-            {% for sapelli in projects %}
-                {% if forloop.first %}<ul class="list-unstyled overview-list">{% endif %}
-
+			<ul class="list-unstyled overview-list">
+            {% for sapelli_project in sapelli_projects %}
                     <li>
-                        <h4>
-                            <a href="{% url 'geokey_sapelli:data_csv_upload' sapelli.project.id %}">{{ sapelli.project.name }}</a>
-                            <a href="{% url 'admin:project_overview' sapelli.project.id %}"  class="label label-info">Manage  project</a>
+                        <h4>{{ sapelli_project.geokey_project.name }}</h4>
+                        {% if sapelli_project.geokey_project.description %}<p>{{sapelli_project.geokey_project.description}}</p>{% endif %}
+						<h4>
+							<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="label label-info">Upload data</a>
+							<a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="label label-info">Manage project</a>
                         </h4>
-                        {% if sapelli.project.description %}<p>{{sapelli.project.description}}</p>{% endif %}
-                    </li>
-
-                {% if forloop.last %}</ul>{% endif %}
-            {% empty %}
-                <p>No Sapelli projects were found.</p>
+                    </li>                
             {% endfor %}
+				<li>
+					{% if not sapelli_projects %}<p>No Sapelli projects were found.</p>{% endif %}
+					<h4><a href="{% url 'geokey_sapelli:project_upload' %}" class="label label-info">Add project</a></h4>
+				</li>
+			</ul>
         </div>
     </div>
 </div>

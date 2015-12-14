@@ -15,7 +15,7 @@
 </div>
 
 <div class="container">
-    {% include 'snippets/messages.html' %}
+    {% include 'snippets/sapelli_messages.html' %}
 
     <div class="row">
         {% include 'snippets/sapelli_menu.html' %}
@@ -25,8 +25,9 @@
             <form role="form" method="POST" action="{% url 'geokey_sapelli:project_upload' %}" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
                 <div class="form-group">
-                    <label for="project" class="control-label">Sapelli file</label>
-                    <input type="file" name="project" id="project" required>
+                    <label for="sap_file" class="control-label">Sapelli Project file:</label>
+                    <input type="file" name="sap_file" id="sap_file" required>
+					Typically the file has extension .sap, .sapelli, .excites, or .zip.
                 </div>
 
                 <div class="form-group">
@@ -43,7 +44,7 @@
         <link rel="stylesheet" href="/static/lib/file-upload/css/fileinput.min.css">
         <script src="/static/lib/file-upload/js/fileinput.min.js"></script>
         <script>
-            $('input#project').fileinput({
+            $('input#sap_file').fileinput({
                 'showUpload': false
             });
         </script>

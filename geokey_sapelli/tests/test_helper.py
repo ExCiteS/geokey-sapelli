@@ -1,3 +1,5 @@
+import time
+import copy
 import xml.etree.ElementTree as ET
 from os.path import dirname, normpath, abspath, join
 from unittest import TestCase
@@ -9,396 +11,203 @@ from geokey.users.tests.model_factories import UserFactory
 from geokey.categories.tests.model_factories import CategoryFactory
 from geokey.categories.models import Category, NumericField, DateTimeField
 
-from ..helper.sapelli_loader import (
-    extract_sap, parse_project, parse_form, parse_base_field,
-    parse_orientation_element, parse_checkbox_element, parse_button_element,
-    parse_list, parse_list_items, parse_text_element, parse_location_element
-)
+from ..helper.sapelli_loader import load_from_sap, check_sap_file, get_sapelli_project_info
+from ..models import SapelliProject
 from ..helper.project_mapper import create_project, create_implicit_fields
-from ..helper.sapelli_exceptions import SapelliXMLException
+from ..helper.sapelli_exceptions import SapelliException, SapelliSAPException, SapelliXMLException, SapelliDuplicateException
 
+"""
+Output of get_sapelli_project_info() for Horniman.sap,
+except for the 'installation_path' key, which we left out here.
+"""
+horniman_sapelli_project_info = {
+    'name': 'Mapping Cultures',
+    'variant': None,
+    'version': '1.1',
+    'sapelli_id': 1111,
+    'display_name': 'Mapping Cultures (v1.1)',
+    'sapelli_fingerprint': -1001003931,
+    'sapelli_model_id': 55263534870692951,
+    'forms': [{
+        'sapelli_id': 'Horniman Gardens',
+        'sapelli_model_schema_number': 1,
+        'stores_end_time': False,
+        'locations': [{
+            'sapelli_id': 'Position',
+            'required': False,
+            'truefalse': False,
+            'caption': None,
+            'description': None,
+            'geokey_type': None
+        }],
+        'fields': [{
+            'sapelli_id': 'Garden_Feature',
+            'description': None,
+            'caption': None,
+            'truefalse': False,
+            'required': True,
+            'geokey_type': 'LookupField',
+            'items': [
+                {
+                    'value': 'Red Flowers',
+                    'img': 'red flowers.png'
+                }, {
+                    'value': 'Blue Flowers',
+                    'img': 'blue flowers.png'
+                }, {
+                    'value': 'Yellow Flowers',
+                    'img': 'yellow flowers.png'
+                }, {
+                    'value': 'Edible Plants',
+                    'img': 'BeenTold.png'
+                }, {
+                    'value': 'Medicinal Plants',
+                    'img': 'Medicine.png'
+                }, {
+                    'value': 'Two Legged Animal',
+                    'img': 'Chicken.png'
+                }, {
+                    'value': 'Four Legged Animal',
+                    'img': 'Sheep.png'
+                }, {
+                    'value': 'Old Bench With Memorial',
+                    'img': 'memorial.png'
+                }, {
+                    'value': 'Old Bench with No Memorial',
+                    'img': 'no memorial.png'
+                }, {
+                    'value': 'New Bench With Memorial',
+                    'img': 'memorial.png'
+                }, {
+                    'value': 'New Bench with No Memorial',
+                    'img': 'no memorial.png'
+                }, {
+                    'value': 'Covered Bin',
+                    'img': 'covered bin.png'
+                }, {
+                    'value': 'Uncovered Bin',
+                    'img': 'uncovered bin.png'
+                }, {
+                    'value': 'Dog Bin',
+                    'img': 'dog bin.png'
+                }
+            ]
+        }]
+    }]
+}
+
+
+def with_stacktrace(func, *args):
+    try:
+        return func(*args)
+    except SapelliSAPException, e:
+        if e.java_stacktrace is not None:
+            # make java stacktrace visible in test log:
+            raise SapelliSAPException(str(e) + '\n' + e.java_stacktrace)
+        else:
+            raise e
 
 class TestSapelliLoader(TestCase):
-    def test_extract_sap(self):
+    def tearDown(self):
+        # delete project(s):
+        for sapelli_project in SapelliProject.objects.filter(sapelli_id__in=[horniman_sapelli_project_info['sapelli_id'], 1337]):
+            try:
+                sapelli_project.geokey_project.delete() # will also delete sapelli_project
+            except BaseException, e:
+                pass
+
+    def test_check_sap_file_non_existing(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/' + str(time.time())))
+        self.assertRaises(SapelliSAPException, check_sap_file, path)
+
+    def test_check_sap_file_non_zip(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/img/ok.svg'))
+        self.assertRaises(SapelliSAPException, check_sap_file, path)
+        
+    def test_check_sap_file_no_xml(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/Empty.zip'))
+        self.assertRaises(SapelliSAPException, check_sap_file, path)
+
+    def test_check_sap_file_horniman(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
+        check_sap_file(path)
+        
+    def test_get_sapelli_project_info_horniman(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
+        sapelli_project_info = with_stacktrace(get_sapelli_project_info, path)
+        sapelli_project_info.pop('installation_path', None)
+        self.assertEquals(sapelli_project_info, horniman_sapelli_project_info)
+        
+    def test_load_from_sap_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))
-        directory = extract_sap(file)
-        self.assertEqual(directory, settings.MEDIA_ROOT + '/tmp/Horniman.sap')
+        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
+        self.assertEqual(sapelli_project.name, horniman_sapelli_project_info['name'])
+        self.assertEqual(sapelli_project.version, horniman_sapelli_project_info['version'])
+        self.assertEqual(sapelli_project.geokey_project.name, horniman_sapelli_project_info['display_name'])
+        self.assertEqual(sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])
+        self.assertEqual(sapelli_project.sapelli_fingerprint, horniman_sapelli_project_info['sapelli_fingerprint'])
+        self.assertEqual(sapelli_project.sapelli_model_id, horniman_sapelli_project_info['sapelli_model_id'])
+        
+    def test_load_from_sap_complex(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/Complex.sap'))
+        file = File(open(path, 'rb'))
+        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
+        self.assertEqual(sapelli_project.name, horniman_sapelli_project_info['name'])
+        self.assertEqual(sapelli_project.variant, '[Test]')
+        self.assertEqual(sapelli_project.version, '2.0')
+        self.assertEqual(sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])
+        self.assertEqual(sapelli_project.sapelli_fingerprint, -421056405)
+        self.assertEqual(sapelli_project.forms.count(), 2)
+        
+    def test_load_from_sap_unicode(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.sap'))
+        file = File(open(path, 'rb'))
+        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
+        self.assertEqual(sapelli_project.name, 'TextUnicode')
+        self.assertEqual(sapelli_project.variant, u'\u6d4b\u8bd5')
+        self.assertEqual(sapelli_project.version, '0.23')
+        self.assertEqual(sapelli_project.sapelli_id, 1337)
+        self.assertEqual(sapelli_project.sapelli_fingerprint, 1961882530)
+        self.assertEqual(sapelli_project.sapelli_model_id, 32914926972437817)
 
-    def test_parse_project(self):
-        file = normpath(join(dirname(abspath(__file__)), 'files/PROJECT.xml'))
-        project = parse_project(file)
-        self.assertEqual(project.get('name'), 'Mapping Cultures')
-        self.assertEqual(project.get('sapelli_id'), 1111)
-        self.assertEqual(len(project.get('forms')), 1)
-
-    def test_parse_form(self):
-        file = normpath(join(dirname(abspath(__file__)), 'files/PROJECT.xml'))
-        form_xml = ET.parse(file).getroot().find('Form')
-        form = parse_form(form_xml)
-        self.assertEqual(form.get('sapelli_id'), 'Horniman Gardens')
-        self.assertEqual(len(form.get('locations')), 1)
-        self.assertEqual(len(form.get('fields')), 10)
-
-    def test_parse_form_without_id(self):
-        element = ET.XML('<Form name="Lefini" end="_LOOP" endVibrate="true"><Location id="Position" timeout="120"/></Form>')
-        form = parse_form(element)
-        self.assertEqual(form.get('sapelli_id'), 'Lefini')
-
-    def test_parse_form_without_location(self):
-        element = ET.XML('<Form id="Lefini" end="_LOOP" endVibrate="true"></Form>')
-        self.assertRaises(SapelliXMLException, parse_form, element)
-
-    def test_parse_choice(self):
-        element = ET.XML('<Choice id="Garden Feature" rows="2" cols="2">'
-                         '<Choice value="Flowers" img="flowers.png" rows="3" '
-                         'cols="2"><Choice value="Red Flowers" '
-                         'img="red flowers.png"/><Choice value="Blue Flowers" '
-                         'img="blue flowers.png"/><Choice value="Yellow '
-                         'Flowers" img="yellow flowers.png"/></Choice><Choice '
-                         'value="Animals" img="Sheep.png" rows="2" cols="1">'
-                         '<Choice value="Two Legged Animal" '
-                         'img="Chicken.png"/><Choice value="Four Legged '
-                         'Animal" img="Sheep.png"/></Choice></Choice>')
-        items = parse_list_items(element, 'Choice')
-        self.assertEqual(len(items), 5)
-
-    def test_parse_base_field(self):
-        element = ET.XML('<Text caption="Text no-caps:" '
-                         'description="Text no-caps:" content="text" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_base_field(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('description'), 'Text no-caps:')
-        self.assertEqual(result.get('required'), False)
-
-        element = ET.XML('<Text caption="Text no-caps:" '
-                         'description="Text no-caps:" content="text" '
-                         'autoCaps="none" optional="false" id="text"/>')
-        result = parse_base_field(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('description'), 'Text no-caps:')
-        self.assertEqual(result.get('required'), True)
-
-        element = ET.XML('<Text caption="Text no-caps:" '
-                         'description="Text no-caps:" content="text" '
-                         'autoCaps="none" id="text"/>')
-        result = parse_base_field(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('description'), 'Text no-caps:')
-        self.assertEqual(result.get('required'), True)
-
-    def test_parse_list(self):
-        element = ET.XML('<List id="Community" captions="Province:;Community:"'
-                         ' optional="false" editable="false" preSelectDefault='
-                         '"false"><Item value="Community P1.1"/><Item value='
-                         '"Community P1.2"/><Item value="Community P2.1"/>'
-                         '<Item value="Community P2.2"/><Item value="Community'
-                         ' P2.3"/></List>')
-        field = parse_list(element)
-        self.assertEqual(field.get('sapelli_id'), 'Community')
-        self.assertEqual(field.get('geokey_type'), 'LookupField')
-        self.assertEqual(len(field.get('items')), 5)
-
-    def test_parse_multilist(self):
-        element = ET.XML('<MultiList id="Community" captions="Province:;'
-                         'Community:" optional="false" editable="false" '
-                         'preSelectDefault="false"><Item value="Province 1">'
-                         '<Item value="Community P1.1"/><Item value="'
-                         'Community P1.2"/></Item><Item value="Province 2">'
-                         '<Item value="Community P2.1"/><Item value="Community'
-                         ' P2.2"/><Item value="Community P2.3"/></Item><Item '
-                         'value="Province 3"/></MultiList>')
-        items = parse_list_items(element, 'Item')
-        self.assertEqual(len(items), 6)
-
-    def test_parse_list_items(self):
-        element = ET.XML('<List id="Community" captions="Province:;Community:"'
-                         ' optional="false" editable="false" preSelectDefault='
-                         '"false"><Item value="Community P1.1"/><Item value='
-                         '"Community P1.2"/><Item value="Community P2.1"/>'
-                         '<Item value="Community P2.2"/><Item value="Community'
-                         ' P2.3"/></List>')
-        items = parse_list_items(element, 'Item')
-        self.assertEqual(len(items), 5)
-
-    def test_parse_text_element(self):
-        element = ET.XML('<Text caption="Text no-caps:" content="text" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'TextField')
-        self.assertEqual(result.get('required'), False)
-
-    def test_parse_optional_text_element(self):
-        element = ET.XML('<Text caption="Text no-caps:" content="text" '
-                         'autoCaps="none" optional="false" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'TextField')
-        self.assertEqual(result.get('required'), True)
-
-        element = ET.XML('<Text caption="Text no-caps:" content="text" '
-                         'autoCaps="none" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'TextField')
-        self.assertEqual(result.get('required'), True)
-
-    def test_parse_password_element(self):
-        element = ET.XML('<Text caption="Text no-caps:" content="Password" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'TextField')
-        self.assertEqual(result.get('required'), False)
-
-    def test_parse_email_element(self):
-        element = ET.XML('<Text caption="Text no-caps:" content="Email" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'TextField')
-        self.assertEqual(result.get('required'), False)
-
-    def test_parse_phone_element(self):
-        element = ET.XML('<Text caption="Text no-caps:" content="PhoneNumber" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'TextField')
-        self.assertEqual(result.get('required'), False)
-
-    def test_parse_number_element(self):
-        element = ET.XML('<Text caption="Text no-caps:" content="UnsignedInt" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'NumericField')
-        self.assertEqual(result.get('required'), False)
-
-        element = ET.XML('<Text caption="Text no-caps:" content="SignedInt" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'NumericField')
-        self.assertEqual(result.get('required'), False)
-
-        element = ET.XML('<Text caption="Text no-caps:" '
-                         'content="UnsignedFloat" autoCaps="none" '
-                         'optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'NumericField')
-        self.assertEqual(result.get('required'), False)
-
-        element = ET.XML('<Text caption="Text no-caps:" content="SignedFloat" '
-                         'autoCaps="none" optional="true" id="text"/>')
-        result = parse_text_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'text')
-        self.assertEqual(result.get('caption'), 'Text no-caps:')
-        self.assertEqual(result.get('geokey_type'), 'NumericField')
-        self.assertEqual(result.get('required'), False)
-
-    def test_parse_orientation_element(self):
-        element = ET.XML('<Orientation id="orientationField" optional="false" '
-                         'storeAzimuth="true" storePitch="true" '
-                         'storeRoll="true" />')
-        fields = parse_orientation_element(element)
-        self.assertEqual(len(fields), 3)
-        for field in fields:
-            self.assertIn(field.get('caption'), ['Azimuth', 'Pitch', 'Roll'])
-            self.assertEqual(field.get('geokey_type'), 'NumericField')
-
-        element = ET.XML('<Orientation id="orientationField" '
-                         'optional="false" />')
-        fields = parse_orientation_element(element)
-        self.assertEqual(len(fields), 3)
-        for field in fields:
-            self.assertIn(field.get('caption'), ['Azimuth', 'Pitch', 'Roll'])
-            self.assertEqual(field.get('geokey_type'), 'NumericField')
-
-        element = ET.XML('<Orientation id="orientationField" optional="false" '
-                         'storeAzimuth="false" storePitch="true" '
-                         'storeRoll="true" />')
-        fields = parse_orientation_element(element)
-        self.assertEqual(len(fields), 2)
-        for field in fields:
-            self.assertIn(field.get('caption'), ['Pitch', 'Roll'])
-            self.assertEqual(field.get('geokey_type'), 'NumericField')
-
-        element = ET.XML('<Orientation id="orientationField" optional="false" '
-                         'storeAzimuth="false" storePitch="false" '
-                         'storeRoll="true" />')
-        fields = parse_orientation_element(element)
-        self.assertEqual(len(fields), 1)
-        for field in fields:
-            self.assertIn(field.get('caption'), ['Roll'])
-            self.assertEqual(field.get('geokey_type'), 'NumericField')
-
-    def test_parse_checkbox_element(self):
-        element = ET.XML('<Check id="eatsPork" caption="Do you eat pork?" '
-                         'optional="false" defaultValue="false" />')
-
-        result = parse_checkbox_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'eatsPork')
-        self.assertEqual(result.get('caption'), 'Do you eat pork?')
-        self.assertEqual(result.get('geokey_type'), 'LookupField')
-        self.assertEqual(len(result.get('items')), 2)
-        for item in result.get('items'):
-            self.assertIn(item.get('value'), ['false', 'true'])
-
-    def test_parse_button_element(self):
-        element = ET.XML('<Button id="trainTimes" caption="Train" '
-                         'column="datetime" optional="false" />')
-        result = parse_button_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'trainTimes')
-        self.assertEqual(result.get('caption'), 'Train')
-        self.assertEqual(result.get('geokey_type'), 'DateTimeField')
-
-        element = ET.XML('<Button id="trainTimes" caption="Train" '
-                         'column="boolean" optional="false" />')
-        result = parse_button_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'trainTimes')
-        self.assertEqual(result.get('caption'), 'Train')
-        self.assertEqual(result.get('geokey_type'), 'LookupField')
-        self.assertEqual(len(result.get('items')), 2)
-        for item in result.get('items'):
-            self.assertIn(item.get('value'), ['false', 'true'])
-
-        element = ET.XML('<Button id="trainTimes" caption="Train" '
-                         'column="none" optional="false" />')
-        result = parse_button_element(element)
-        self.assertIsNone(result)
-
-    def test_parse_location_field(self):
-        element = ET.XML('<Location id="Location" maxAccuracyRadius="40.0" '
-                         'useBestKnownLocationOnTimeout="false" '
-                         'storeAltitude="false" jump="Confirmation" '
-                         'skipOnBack="true" />')
-        result = parse_location_element(element)
-        self.assertEqual(result.get('sapelli_id'), 'Location')
+    def test_load_from_sap_no_location(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/NoLocation.sap'))
+        file = File(open(path, 'rb'))
+        self.assertRaises(SapelliSAPException, load_from_sap, file, UserFactory.create())
 
 
-class TestCreateProject(TestCase):
+class TestProjectMapper(TestCase):
     def test_create_implicit_fields(self):
         category = CategoryFactory.create()
-        create_implicit_fields(category)
-
+        create_implicit_fields(category, stores_end_time=True)
         ref_cat = Category.objects.get(pk=category.id)
-        self.assertEqual(ref_cat.fields.count(), 2)
+        self.assertEqual(ref_cat.fields.count(), 3)
         for field in ref_cat.fields.select_subclasses():
-            self.assertIn(field.name, ['Device Id', 'Start Time'])
-
-            if field.name == 'Device Id':
+            self.assertIn(field.name, ['Device Id', 'Start Time', 'End Time'])
+            if field.key == 'DeviceId':
                 self.assertTrue(isinstance(field, NumericField))
-            elif field.name == 'Start Time':
+            elif field.key == 'StartTime':
+                self.assertTrue(isinstance(field, DateTimeField))
+            elif field.key == 'EndTime':
                 self.assertTrue(isinstance(field, DateTimeField))
 
     def test_create_project(self):
-        sapelli_project_info = {
-            'name': 'Mapping Cultures',
-            'sapelli_id': 1111,
-            'sapelli_fingerprint': -1001003931,
-            'forms': [{
-                'sapelli_id': 'Horniman Gardens',
-                'locations': [{
-                    'sapelli_id': 'Position'
-                }],
-                'fields': [{
-                    'sapelli_id': 'Text',
-                    'truefalse': False,
-                    'geokey_type': 'TextField',
-                }, {
-                    'sapelli_id': 'list',
-                    'truefalse': False,
-                    'geokey_type': 'LookupField',
-                    'items': [
-                        {'value': 'value 1'},
-                        {'value': 'value 2'},
-                        {'value': 'value 3'},
-                        {'value': 'value 4'},
-                        {'value': 'value 5'}
-                    ]
-                }, {
-                    'sapelli_id': 'Garden Feature',
-                    'truefalse': False,
-                    'geokey_type': 'LookupField',
-                    'items': [
-                        {
-                            'value': 'Red Flowers',
-                            'img': 'red flowers.png'
-                        }, {
-                            'value': 'Blue Flowers',
-                            'img': 'blue flowers.png'
-                        }, {
-                            'value': 'Yellow Flowers',
-                            'img': 'yellow flowers.png'
-                        }, {
-                            'value': 'Edible Plants',
-                            'img': 'BeenTold.png'
-                        }, {
-                            'value': 'Medicinal Plants',
-                            'img': 'Medicine.png'
-                        }, {
-                            'value': 'Two Legged Animal',
-                            'img': 'Chicken.png'
-                        }, {
-                            'value': 'Four Legged Animal',
-                            'img': 'Sheep.png'
-                        }, {
-                            'value': 'Old Bench With Memorial',
-                            'img': 'memorial.png'
-                        }, {
-                            'value': 'Old Bench with No Memorial',
-                            'img': 'no memorial.png'
-                        }, {
-                            'value': 'New Bench With Memorial',
-                            'img': 'memorial.png'
-                        }, {
-                            'value': 'New Bench with No Memorial',
-                            'img': 'no memorial.png'
-                        }, {
-                            'value': 'Covered Bin',
-                            'img': 'covered bin.png'
-                        }, {
-                            'value': 'Uncovered Bin',
-                            'img': 'uncovered bin.png'
-                        }, {
-                            'value': 'Dog Bin',
-                            'img': 'dog bin.png'
-                        }
-                    ]
-                }]
-            }]
-        }
-        directory = normpath(join(dirname(abspath(__file__)), 'files'))
-
-        geokey_project = create_project(sapelli_project_info, UserFactory.create(), directory)
-        self.assertEqual(geokey_project.name, 'Mapping Cultures')
-        self.assertEqual(geokey_project.sapelli_project.sapelli_id, 1111)
-        self.assertEqual(geokey_project.sapelli_project.sapelli_fingerprint, -1001003931)
-        self.assertEqual(geokey_project.categories.count(), 1)
+        geokey_project = create_project(horniman_sapelli_project_info, UserFactory.create())
+        self.assertEqual(geokey_project.name, horniman_sapelli_project_info['display_name'])
+        self.assertEqual(geokey_project.sapelli_project.name, horniman_sapelli_project_info['name'])
+        self.assertEqual(geokey_project.sapelli_project.version, horniman_sapelli_project_info['version'])
+        self.assertEqual(geokey_project.sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])
+        self.assertEqual(geokey_project.sapelli_project.sapelli_fingerprint, horniman_sapelli_project_info['sapelli_fingerprint'])
+        self.assertEqual(geokey_project.sapelli_project.sapelli_model_id, horniman_sapelli_project_info['sapelli_model_id'])
+        self.assertEqual(geokey_project.categories.count(), len(horniman_sapelli_project_info['forms']))
 
         category = geokey_project.categories.all()[0]
-        self.assertEqual(category.name, 'Horniman Gardens')
-        self.assertEqual(category.sapelli_form.location_fields.count(), 1)
-        self.assertEqual(category.fields.count(), 5)
+        self.assertEqual(category.name, horniman_sapelli_project_info['forms'][0]['sapelli_id'])
+        self.assertEqual(category.sapelli_form.location_fields.count(), len(horniman_sapelli_project_info['forms'][0]['locations']))
+        self.assertEqual(category.fields.count(),
+            len(horniman_sapelli_project_info['forms'][0]['fields']) +
+            (3 if horniman_sapelli_project_info['forms'][0]['stores_end_time'] else 2))
 
-        field = category.fields.get(key='list')
-        self.assertEqual(field.lookupvalues.count(), 5)
-
-        field = category.fields.get(key='garden-feature')
+        field = category.fields.get(key='garden_feature')
         self.assertEqual(field.lookupvalues.count(), 14)
