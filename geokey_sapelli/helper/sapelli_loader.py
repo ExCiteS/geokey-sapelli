@@ -12,10 +12,37 @@ from django.conf import settings
 from ..models import SapelliProject
 from .project_mapper import create_project
 from .sapelli_exceptions import (
+    SapelliException,
     SapelliSAPException,
     SapelliXMLException,
     SapelliDuplicateException
 )
+
+import geokey_sapelli
+
+
+def get_sapelli_dir_path():
+    """
+    Creates the Sapelli working directory.
+
+    Returns
+    -------
+    str:
+        Absolute path to the Sapelli working directory.
+    
+    Raises
+    ------
+    SapelliException:
+        When the working directory could not be created.
+    """
+    sapelli_dir_path = default_storage.path(os.path.join('sapelli', '')) # joining with '' adds the trailing / or \
+    if not os.path.exists(sapelli_dir_path):
+        # Create the directory if it doesn't exist:
+        try:
+            os.makedirs(sapelli_dir_path)
+        except BaseException, e:
+            raise SapelliException('Failed to create Sapelli working directory (%s): %s' % (sapelli_dir_path, str(e)))
+    return sapelli_dir_path
 
 
 def load_from_sap(sap_file, user):
@@ -34,6 +61,8 @@ def load_from_sap(sap_file, user):
     
     Raises
     ------
+    SapelliException:
+        In case of a configuration problem.
     SapelliSAPException:
         When project loading fails.
     SapelliDuplicateException:
@@ -46,10 +75,10 @@ def load_from_sap(sap_file, user):
     # Store copy of file on disk (as it probably is an "in memory" file uploaded in an HTTP request):
     try:
         filename, extension = os.path.splitext(os.path.basename(sap_file.name))
-        relative_sap_file_path = default_storage.save('sapelli/Uploads/' + filename + extension, ContentFile(sap_file.read()))
+        relative_sap_file_path = default_storage.save(os.path.join(get_sapelli_dir_path(), 'Uploads', '') + filename + extension, ContentFile(sap_file.read()))
         sap_file_path = default_storage.path(relative_sap_file_path)
-    except BaseException:
-        raise SapelliSAPException('Failed to store uploaded file.')
+    except BaseException, e:
+        raise SapelliSAPException('Failed to store uploaded file: ' + str(e))
 
     # The file will be deleted if an exception is raised in this block:
     try:
@@ -112,6 +141,41 @@ def check_sap_file(sap_file_path):
         except BaseException:
             pass
 
+
+def get_sapelli_jar_path():
+    """
+    Determines where the Sapelli jar file is.
+
+    Returns
+    -------
+    str:
+        Absolute path to the Sapelli jar file.
+    
+    Raises
+    ------
+    SapelliException:
+        When the Sapelli jar file cannot be found.
+    """
+    # Determine where the Sapelli jar file is expected to be:
+    if getattr(settings, 'SAPELLI_JAR', None) is not None:
+        # Use path configured in GeoKey settings.py:
+        sapelli_jar_path = settings.SAPELLI_JAR
+    else:
+        # Use default path (as advised in README.rst):
+        sapelli_jar_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.abspath(geokey_sapelli.__path__[0])),
+                'lib',
+                'sapelli-collector-cmdln-with-dependencies.jar'))
+    
+    # Check if the Sapelli jar is actually there:
+    if not os.path.isfile(sapelli_jar_path):
+        raise SapelliException('Cannot find Sapelli jar file at path: %s' % sapelli_jar_path)
+        
+    # Return path:
+    return sapelli_jar_path
+            
+
 def get_sapelli_project_info(sap_file_path):
     """
     Uses the Sapelli Collector cmdlnd client (Java) to extract the SAP file and parse the PROJECT.xml.
@@ -128,16 +192,27 @@ def get_sapelli_project_info(sap_file_path):
     
     Raises
     ------
+    SapelliException:
+        When the Sapelli jar file cannot be found,
+        the Sapelli working directory cannot be created,
+        or when the java command could not be run.
     SapelliSAPException:
         When an error occurs during running of SapColCmdLn, will contain java_stacktrace.
     """
+    # Run SapColCmdLn class from the Sapelli jar:
+    std_output = None
     try:
         command = 'java -cp %s uk.ac.ucl.excites.sapelli.collector.SapColCmdLn -p %s -load "%s" -geokey' % (
-            settings.SAPELLI_JAR,
-            default_storage.path('sapelli/'),
+            get_sapelli_jar_path(),
+            get_sapelli_dir_path(),
             sap_file_path
         )
-        std_output = commands.getstatusoutput(command)[1]
-        return json.loads(std_output)
-    except BaseException:
-        raise SapelliSAPException('SapColCmdLn error', java_stacktrace=std_output)
+        std_output = commands.getstatusoutput(command)[1] # may fail if we somehow can't run java at all(?)
+        return json.loads(std_output) #fails if java/SapColCmdLn output is not valid JSON
+    except SapelliException, se: # coming from get_sapelli_jar_path or get_sapelli_dir_path
+        raise se
+    except BaseException, e:
+        if std_output is not None:
+            raise SapelliSAPException('SapColCmdLn error', java_stacktrace=std_output)
+        else:
+            raise SapelliException('Command error: ' + str(e))

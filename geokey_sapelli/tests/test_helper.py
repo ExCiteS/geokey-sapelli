@@ -1,7 +1,7 @@
 import time
 import copy
 import xml.etree.ElementTree as ET
-from os.path import dirname, normpath, abspath, join
+from os.path import dirname, normpath, abspath, join, exists, isfile
 from unittest import TestCase
 
 from django.core.files import File
@@ -11,7 +11,7 @@ from geokey.users.tests.model_factories import UserFactory
 from geokey.categories.tests.model_factories import CategoryFactory
 from geokey.categories.models import Category, NumericField, DateTimeField
 
-from ..helper.sapelli_loader import load_from_sap, check_sap_file, get_sapelli_project_info
+from ..helper.sapelli_loader import get_sapelli_dir_path, get_sapelli_jar_path, load_from_sap, check_sap_file, get_sapelli_project_info
 from ..models import SapelliProject
 from ..helper.project_mapper import create_project, create_implicit_fields
 from ..helper.sapelli_exceptions import SapelliException, SapelliSAPException, SapelliXMLException, SapelliDuplicateException
@@ -116,6 +116,9 @@ class TestSapelliLoader(TestCase):
             except BaseException, e:
                 pass
 
+    def test_get_sapelli_dir_path(self):
+        self.assertTrue(exists(get_sapelli_dir_path()))
+
     def test_check_sap_file_non_existing(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/' + str(time.time())))
         self.assertRaises(SapelliSAPException, check_sap_file, path)
@@ -137,7 +140,10 @@ class TestSapelliLoader(TestCase):
         sapelli_project_info = with_stacktrace(get_sapelli_project_info, path)
         sapelli_project_info.pop('installation_path', None)
         self.assertEquals(sapelli_project_info, horniman_sapelli_project_info)
-        
+
+    def test_get_sapelli_jar_path(self):
+        self.assertTrue(isfile(get_sapelli_jar_path()))
+
     def test_load_from_sap_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))

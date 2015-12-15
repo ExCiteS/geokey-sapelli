@@ -148,6 +148,11 @@ class ProjectUpload(AbstractSapelliView):
                 self.request,
                 'You already have access to a matching Sapelli project.'
             )
+        except SapelliException, e:
+            messages.warning(
+                self.request,
+                'Sapelli extension configuration problem:\n\n' + str(e)
+            )
         return self.render_to_response({})
 
 

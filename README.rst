@@ -34,29 +34,31 @@ Installation instructions
   cd geokey-sapelli
   pip install -e .
 
-3. Go to your GeoKey installation and edit ``settings.py`` file (usually in ``local_settings\``):
+3. Go to your GeoKey installation and edit ``settings.py`` file (usually in ``local_settings\``) to add ``'geokey_sapelli',`` to the ``INSTALLED_APPS`` list.
 
-  - Add ``'geokey_sapelli',`` to the `INSTALLED_APPS` list.
-  - Add the absolute path to the Sapelli jar file: ``SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-2.0.0-SNAPSHOT-jar-with-dependencies.jar'``
+4. Download the latest available version of the `Sapelli Collector CmdLn front-end <https://github.com/ExCiteS/Sapelli/releases>`_. The file you want looks like ``sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar``. You have 2 options regarding the installation of this ``jar`` file:
 
-4. To use the extension via the API, first register a new OAuth application with Authorisation type *password*. You will then get the Client ID. Add the Client ID to your ``settings.py`` (usually in ``local_settings\``) as follows:
+ - Rename the file to ``sapelli-collector-cmdln-with-dependencies.jar`` and place it in the ``geokey-sapelli/lib`` folder [*Recommended*];
+ - or, place the file in a folder of your choice (you can rename it as well if you want) and again edit the above-mentioned ``settings.py`` file to add the *absolute* path to the file, like so: ``SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar'``.
+
+5. To use the extension via the API, first register a new OAuth application with Authorisation type *password*. You will then get the Client ID. Add the Client ID to your ``settings.py`` (usually in ``local_settings\``) as follows:
 
 .. code-block:: console
 
   SAPELLI_CLIENT_ID = 'YOUR_CLIENT_ID'
 
-5. Add the data base tables:
+6. Add the database tables:
 
 .. code-block:: console
 
   python manage.py migrate geokey_sapelli
 
-6. Restart the server.
-
-7. Open a browser and go to the ``/admin/sapelli/`` path on your GeoKey server (e.g. ``http://localhost:8080``). If you see a page titled "**Sapelli**" you have correctly installed the geokey-sapelli extension.
-
-8. To run tests specific to this extension go to your GeoKey installation folder and run:
+7. Run tests specific to this extension to ensure everything is correctly installed. Go to your GeoKey installation folder and run:
 
 .. code-block:: console
 
   python manage.py test geokey_sapelli
+
+8. Restart the server.
+
+9. Open a browser and go to the ``/admin/sapelli/`` path on your GeoKey server (e.g. ``http://localhost:8080``). If you see a page titled "**Sapelli**" you have correctly installed the `geokey-sapelli extension <https://github.com/ExCiteS/geokey-sapelli>`_.
