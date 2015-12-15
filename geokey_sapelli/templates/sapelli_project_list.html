@@ -27,12 +27,12 @@
             {% for sapelli_project in sapelli_projects %}
                     <li>
                         <h4>{{ sapelli_project.geokey_project.name }}</h4>
-                        {% if sapelli_project.geokey_project.description %}<p>{{sapelli_project.geokey_project.description}}</p>{% endif %}
+                        {% if sapelli_project.geokey_project.description %}<p>{{sapelli_project.geokey_project.description|linebreaks}}</p>{% endif %}
 						<h4>
 							<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="label label-info">Upload data</a>
 							<a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="label label-info">Manage project</a>
                         </h4>
-                    </li>                
+                    </li>
             {% endfor %}
 				<li>
 					{% if not sapelli_projects %}<p>No Sapelli projects were found.</p>{% endif %}
