@@ -18,7 +18,8 @@ Extension for `GeoKey <https://github.com/ExCiteS/geokey>`_ to add support for `
 Installation instructions
 -------------------------
 
-*Note:* This guide assumes you have a working `GeoKey <https://github.com/ExCiteS/geokey>`_ installation, and also have `Java <http://www.oracle.com/technetwork/java/javase/downloads>`_ (JRE or JSK, version 7 or higher) installed.
+*Note:* This guide assumes you have a working `GeoKey <https://github.com/ExCiteS/geokey>`_ installation, and also have `Java <http://www.oracle.com/technetwork/java/javase/downloads>`_ (JRE or JSK, version 7 or up) installed.
+
 
 1. Clone the repository:
 
@@ -37,7 +38,7 @@ Installation instructions
 
 4. Download the latest available version of the `Sapelli Collector CmdLn front-end <https://github.com/ExCiteS/Sapelli/releases>`_. The file you want looks like ``sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar``. You have 2 options regarding the installation of this ``jar`` file:
 
- - Rename the file to ``sapelli-collector-cmdln-with-dependencies.jar`` and place it in the ``geokey-sapelli/lib`` folder [*Recommended*];
+ - Rename the file to ``sapelli-collector-cmdln-with-dependencies.jar`` and place it in the ``geokey-sapelli/lib`` folder;
  - or, place the file in a folder of your choice (you can rename it as well if you want) and again edit the above-mentioned ``settings.py`` file to add the *absolute* path to the file, like so: ``SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar'``.
 
 5. To use the extension via the API, first register a new OAuth application with Authorisation type *password*. You will then get the Client ID. Add the Client ID to your ``settings.py`` (usually in ``local_settings\``) as follows:
