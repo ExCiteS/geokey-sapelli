@@ -350,7 +350,7 @@ def get_img_path(instance, filename):
 
 class SapelliItem(models.Model):
     """
-    Represents a Sapelli Choice element that has no Choice elements as childs.
+    Represents a Sapelli Choice element that has no Choice elements as children.
     Is usually created by parsing a Sapelli decision tree.
     """
     lookup_value = models.OneToOneField(
