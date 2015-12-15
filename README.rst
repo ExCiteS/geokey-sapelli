@@ -6,10 +6,9 @@
     :alt: Travis CI Build Status
     :target: https://travis-ci.org/ExCiteS/geokey-sapelli
 
-.. image:: https://img.shields.io/coveralls/ExCiteS/geokey-sapelli/master.svg
+.. image:: https://coveralls.io/repos/ExCiteS/geokey-sapelli/badge.svg?branch=master&service=github
     :alt: Coveralls Test Coverage
-    :target: https://coveralls.io/r/ExCiteS/geokey-sapelli
-
+    :target: https://coveralls.io/github/ExCiteS/geokey-sapelli?branch=master
 
 geokey-sapelli
 ==============
