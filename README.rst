@@ -13,7 +13,7 @@
 geokey-sapelli
 ==============
 
-Extenstion for `GeoKey <https://github.com/ExCiteS/geokey>`_ to add support for `Sapelli <https://github.com/ExCiteS/Sapelli>`_. This extension enables users to upload `Sapelli project files <http://wiki.sapelli.org/index.php/Overview>`_ (resulting in corresponding GeoKey projects), and Sapelli-produced data via the admin interfaces.
+Extension for `GeoKey <https://github.com/ExCiteS/geokey>`_ to add support for `Sapelli <https://github.com/ExCiteS/Sapelli>`_. This extension enables users to upload `Sapelli project files <http://wiki.sapelli.org/index.php/Overview>`_ (resulting in corresponding GeoKey projects), and Sapelli-produced data via the admin interfaces.
 
 Installation instructions
 -------------------------
