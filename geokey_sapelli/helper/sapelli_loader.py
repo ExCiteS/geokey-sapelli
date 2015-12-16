@@ -75,7 +75,7 @@ def load_from_sap(sap_file, user):
     # Store copy of file on disk (as it probably is an "in memory" file uploaded in an HTTP request):
     try:
         filename, extension = os.path.splitext(os.path.basename(sap_file.name))
-        relative_sap_file_path = default_storage.save(os.path.join(get_sapelli_dir_path(), 'Uploads', '') + filename + extension, ContentFile(sap_file.read()))
+        relative_sap_file_path = default_storage.save(os.path.join(get_sapelli_dir_path(), 'SAPs', '') + filename + extension, ContentFile(sap_file.read()))
         sap_file_path = default_storage.path(relative_sap_file_path)
     except BaseException, e:
         raise SapelliSAPException('Failed to store uploaded file: ' + str(e))
@@ -87,9 +87,9 @@ def load_from_sap(sap_file, user):
         # Load Sapelli project (extract+parse) using SapColCmdLn Java program:
         sapelli_project_info = get_sapelli_project_info(sap_file_path)
     except BaseException, e:
-        try: # Remove possibly dangerous file:
+        try: # Remove file:
             os.remove(sap_file_path)
-        except OSError:
+        except BaseException:
             pass
         raise e
 
@@ -102,7 +102,7 @@ def load_from_sap(sap_file, user):
 
     # Create GeoKey and SapelliProject:
     try:
-        geokey_project = create_project(sapelli_project_info, user)
+        geokey_project = create_project(sapelli_project_info, user, sap_file_path)
     except BaseException, e:
         raise SapelliSAPException(str(e))
 

@@ -30,7 +30,8 @@ class SapelliProject(models.Model):
     sapelli_id = models.IntegerField()
     sapelli_fingerprint = models.IntegerField()
     sapelli_model_id = models.BigIntegerField(default=-1)
-    path = models.CharField(max_length=511,null=True)
+    dir_path = models.CharField(max_length=511,null=True)
+    sap_path = models.CharField(max_length=511,null=True)
     
     objects = SapelliProjectManager()
 
@@ -48,6 +49,20 @@ class SapelliProject(models.Model):
             for form in self.forms.all():
                 if form.sapelli_model_schema_number == -1:
                     form.sapelli_model_schema_number = form.category.id - min_category_id + 1 #(due to Heartbeat Schema)
+
+    def delete(self):
+        # Remove SAP file:
+        try:
+            os.remove(self.sap_path)
+        except BaseException:
+            pass
+        # Remove project folder:
+        try:
+            shutil.rmtree(os.path.dirname(self.dir_path), ignore_errors=True)
+        except BaseException:
+            pass
+        # Call super delete method:
+        super(SapelliProject, self).delete()
     
     def get_description(self):
         """
@@ -275,10 +290,8 @@ def post_save_project(sender, instance, **kwargs):
     """
     if instance.status == 'deleted':
         try:
-            sapelli_project = SapelliProject.objects.get(geokey_project=instance)
-            sapelli_project.delete()
-            shutil.rmtree(os.path.dirname(sapelli_project.path), ignore_errors=True)
-        except BaseException, e:
+            SapelliProject.objects.get(geokey_project=instance).delete()
+        except BaseException:
             pass
 
 
@@ -289,10 +302,8 @@ def pre_delete_project(sender, instance, **kwargs):
     project.
     """
     try:
-        sapelli_project = SapelliProject.objects.get(geokey_project=instance)
-        sapelli_project.delete()
-        shutil.rmtree(os.path.dirname(sapelli_project.path), ignore_errors=True)
-    except BaseException, e:
+        SapelliProject.objects.get(geokey_project=instance).delete()
+    except BaseException:
         pass
 
 
@@ -343,10 +354,10 @@ class SapelliField(models.Model):
 
     
 def get_img_path(instance, filename):
-    if filename is None or instance.sapelli_field.sapelli_form.sapelli_project.path is None:
+    if filename is None or instance.sapelli_field.sapelli_form.sapelli_project.dir_path is None:
         return None
     else:
-        return os.path.join(instance.sapelli_field.sapelli_form.sapelli_project.path, 'img/', filename)
+        return os.path.join(instance.sapelli_field.sapelli_form.sapelli_project.dir_path, 'img/', filename)
 
 class SapelliItem(models.Model):
     """

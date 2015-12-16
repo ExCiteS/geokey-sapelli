@@ -2,6 +2,8 @@ import factory
 from StringIO import StringIO
 from PIL import Image
 
+from os.path import dirname, normpath, abspath, join
+
 from django.core.files.base import ContentFile
 
 from geokey.projects.tests.model_factories import ProjectFactory
@@ -158,7 +160,8 @@ def create_horniman_sapelli_project(user):
         'sapelli_id': 1111,
         'sapelli_fingerprint': -1001003931,
         'sapelli_model_id': 55263534870692951,
-		'path': None
+        'dir_path': None,
+        'sap_path': normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
     })
     form = SapelliFormFactory.create(**{
         'category': geokey_cat,
@@ -207,7 +210,9 @@ def create_textunicode_sapelli_project(user):
         'version': '0.23',
         'sapelli_id': 1337,
         'sapelli_fingerprint': 1961882530,
-        'sapelli_model_id': 32914926972437817
+        'sapelli_model_id': 32914926972437817,
+        'dir_path': None,
+        'sap_path': normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.sap'))
     })
     form = SapelliFormFactory.create(**{
         'category': geokey_cat,
