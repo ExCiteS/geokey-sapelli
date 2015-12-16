@@ -4,43 +4,69 @@
 
 {% block main %}
 <div class="page-header">
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-6">
-                <h1 class="smaller"><a href="{% url 'geokey_sapelli:index' %}">Sapelli</a></h1>
-            </div>
-        </div>
-
-    </div>
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-6">
+				<h1 class="smaller"><a href="{% url 'geokey_sapelli:index' %}">Sapelli</a></h1>
+			</div>
+		</div>
+	</div>
 </div>
 
 <div class="container">
-    {% include 'snippets/messages.html' %}
+	{% include 'snippets/messages.html' %}
 
-    <div class="row">
-        {% include 'snippets/sapelli_menu.html' %}
+	<div class="row">
+		{% include 'snippets/sapelli_menu.html' %}
 
-        <div class="col-sm-8">
-            <h3 class="header">Sapelli projects</h3>
+		<div class="col-sm-8">
+			<h3 class="header">Sapelli projects</h3>
 
-			<ul class="list-unstyled overview-list">
-            {% for sapelli_project in sapelli_projects %}
-                    <li>
-                        <h4>{{ sapelli_project.geokey_project.name }}</h4>
-                        {% if sapelli_project.geokey_project.description %}<p>{{sapelli_project.geokey_project.description|linebreaks}}</p>{% endif %}
-						<h4>
-							<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="label label-info">Upload data</a>
-							<a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="label label-info">Manage project</a>
-                        </h4>
-                    </li>
-            {% endfor %}
+			<ul id="projects" class="list-unstyled overview-list">
+			{% for sapelli_project in sapelli_projects %}
 				<li>
-					{% if not sapelli_projects %}<p>No Sapelli projects were found.</p>{% endif %}
+					<h4>{{ sapelli_project.geokey_project.name }}</h4>
+					{% if sapelli_project.geokey_project.description %}
+					<p>{{sapelli_project.geokey_project.description|linebreaks}}</p>
+					{% endif %}
+					<h4>
+						<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="label label-info">Upload data</a>
+						{% if sapelli_project.sap_path %}
+						<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="label label-info">Download SAP</a>
+						<div class="label label-info" data-toggle="modal" data-target="#qrDialog-{{ sapelli_project.geokey_project.id }}">SAP QR code</div>
+						{% endif %}
+						<a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="label label-info">Manage project</a>
+					</h4>
+					{% if sapelli_project.sap_path %}
+					<div class="modal fade" id="qrDialog-{{ sapelli_project.geokey_project.id }}" tabindex="-1" role="dialog" aria-labelledby="qrDialogLabel-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
+						<div class="modal-dialog modal-sm">
+							<div class="modal-content">
+								<div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Close">&times;</button>
+									<h6 class="item-info">Sapelli project</h6>
+									<h4 class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
+								</div>
+								<div class="modal-body" style="text-align: center">
+									<h6 class="item-info" id="qrDialogLabel-{{ sapelli_project.geokey_project.id }}">QR link to download SAP file:</h6>
+									<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}">
+										<img src="{% url 'geokey_sapelli:sap_download_qr_link_api' sapelli_project.geokey_project.id %}" title="QR code to download SAP file" style="padding-bottom: 1em;"/>
+									</a>
+									<h5 class="modal-title" style="text-align: justify; text-justify: auto;">To install the project on your Android device, simply scan the QR code using the <a href="https://play.google.com/store/apps/details?id=uk.ac.ucl.excites.sapelli.collector" target="_blank">Sapelli Collector app</a>.</h5>
+								</div>
+							</div>
+						</div>
+					</div>
+					{% endif %}
+			{% endfor %}
+				<li>
+					{% if not sapelli_projects %}
+					<p>No Sapelli projects were found.</p>
+					{% endif %}
 					<h4><a href="{% url 'geokey_sapelli:project_upload' %}" class="label label-info">Add project</a></h4>
 				</li>
 			</ul>
-        </div>
-    </div>
+		</div>
+	</div>
 </div>
 {% endblock %}
 

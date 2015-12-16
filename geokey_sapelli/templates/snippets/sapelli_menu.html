@@ -3,7 +3,7 @@
                 <div class="panel-heading">
                     <h6 class="item-info">Extension</h6>
                     <h3>Sapelli</h3>
-					<h6 class="item-info">Version: {{ GEOKEY_SAPELLI_VERSION }}</h6>
+                    <h6 class="item-info">Version: {{ GEOKEY_SAPELLI_VERSION }}</h6>
                 </div>
                 <div class="list-group">
                     {% for entry in menu_entries %}
@@ -11,11 +11,8 @@
                         {{ entry.label }}
                     </a>
                     {% endfor %}
-                    {% if sapelli_project %}
-                    <a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="list-group-item">
-                        Manage project
-                    </a>
-                    {% endif %}
                 </div>
             </div>
+            
+            {% include 'snippets/sapelli_project_menu.html' %}
         </div>
