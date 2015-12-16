@@ -18,7 +18,7 @@ from geokey.applications.tests.model_factories import ApplicationFactory
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 
-from .model_factories import SapelliProjectFactory, create_horniman_sapelli_project
+from .model_factories import GeoKeySapelliApplicationFactory, SapelliProjectFactory, create_horniman_sapelli_project
 from .. import __version__
 from ..models import SapelliProject
 from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI
@@ -302,6 +302,16 @@ class DataCSVUploadTest(TestCase):
 
 
 class LoginAPITest(TestCase):
+    def setUp(self):
+        self.user = UserFactory.create()
+        self.user.set_password('123456')
+        self.user.save()
+        self.app = GeoKeySapelliApplicationFactory.create()
+
+    def tearDown(self):
+        self.user.delete()
+        self.app.delete()
+
     def test_url(self):
         self.assertEqual(
             reverse('geokey_sapelli:login_api'),
@@ -312,17 +322,8 @@ class LoginAPITest(TestCase):
         self.assertEqual(resolved.func.func_name, LoginAPI.__name__)
 
     def test_post(self):
-        user = UserFactory.create()
-        user.set_password('123456')
-        user.save()
-
-        ApplicationFactory.create(**{
-            'client_id': settings.SAPELLI_CLIENT_ID,
-            'authorization_grant_type': 'password'
-        })
-
         data = {
-            'username': user.email,
+            'username': self.user.email,
             'password': '123456'
         }
 

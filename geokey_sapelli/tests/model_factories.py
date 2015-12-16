@@ -5,7 +5,9 @@ from PIL import Image
 from os.path import dirname, normpath, abspath, join
 
 from django.core.files.base import ContentFile
+from django.conf import settings
 
+from geokey.applications.tests.model_factories import ApplicationFactory
 from geokey.projects.tests.model_factories import ProjectFactory
 from geokey.categories.tests.model_factories import (
     CategoryFactory,
@@ -34,6 +36,11 @@ def get_image(file_name='test.png', width=200, height=200):
     the_file.content_type = 'image/png'
 
     return the_file
+
+
+class GeoKeySapelliApplicationFactory(ApplicationFactory):
+    client_id = settings.SAPELLI_CLIENT_ID
+    authorization_grant_type = 'password'
 
 
 class SapelliProjectFactory(factory.django.DjangoModelFactory):
