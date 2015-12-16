@@ -15,13 +15,13 @@ from django.test.client import RequestFactory
 
 from geokey import version
 from geokey.applications.tests.model_factories import ApplicationFactory
-from geokey.users.tests.model_factories import UserFactory
+from geokey.users.tests.model_factories import UserFactory, AccessTokenFactory
 from geokey.projects.models import Project
 
 from .model_factories import GeoKeySapelliApplicationFactory, SapelliProjectFactory, create_horniman_sapelli_project
 from .. import __version__
 from ..models import SapelliProject
-from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI
+from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
 from ..helper.dynamic_menu import MenuEntry
 
 
@@ -340,3 +340,85 @@ class LoginAPITest(TestCase):
         self.assertEqual(response_json.get('expires_in'), 36000)
         self.assertIsNotNone(response_json.get('access_token'))
         self.assertIsNotNone(response_json.get('refresh_token'))
+
+
+class SAPDownloadAPITest(TestCase):
+    def setUp(self):
+        self.user = UserFactory.create()
+        self.view = SAPDownloadAPI.as_view()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.request.user = AnonymousUser()
+
+    def test_url(self):
+        self.assertEqual(
+            reverse(
+                'geokey_sapelli:sap_download_api',
+                kwargs={'project_id': 1}
+            ),
+            '/api/sapelli/projects/1/sap/'
+        )
+        resolved = resolve('/api/sapelli/projects/1/sap/')
+        self.assertEqual(resolved.kwargs['project_id'], '1')
+        self.assertEqual(resolved.func.func_name, SAPDownloadAPI.__name__)
+
+    def test_get_with_anonymous(self):
+        sapelli_project = create_horniman_sapelli_project(self.user)
+        response = self.view(self.request, project_id=sapelli_project.geokey_project.id)
+        self.assertEqual(response.status_code, 403)
+
+    def test_get_with_user(self):
+        sapelli_project = create_horniman_sapelli_project(self.user)
+        self.request.user = self.user
+
+        response = self.view(self.request, project_id=sapelli_project.geokey_project.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/zip')
+
+
+class SAPDownloadQRLinkAPITest(TestCase):
+    def setUp(self):
+        self.app = GeoKeySapelliApplicationFactory.create()
+        self.user = UserFactory.create()
+        self.user.set_password('123456')
+        self.user.save()
+        AccessTokenFactory.create(user=self.user, application=self.app)
+        
+        self.view = SAPDownloadQRLinkAPI.as_view()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+        self.request.user = AnonymousUser()
+        # necessary for request.build_absolute_uri() to work:
+        self.request.META['SERVER_NAME'] = 'test-server'
+        self.request.META['SERVER_PORT'] = '80'
+
+    def tearDown(self):
+        self.app.delete()
+        self.user.delete()
+
+    def test_url(self):
+        self.assertEqual(
+            reverse(
+                'geokey_sapelli:sap_download_qr_link_api',
+                kwargs={'project_id': 1}
+            ),
+            '/api/sapelli/projects/1/sap_qr_link.png'
+        )
+        resolved = resolve('/api/sapelli/projects/1/sap_qr_link.png')
+        self.assertEqual(resolved.kwargs['project_id'], '1')
+        self.assertEqual(resolved.func.func_name, SAPDownloadQRLinkAPI.__name__)
+
+    def test_get_with_anonymous(self):
+        sapelli_project = create_horniman_sapelli_project(self.user)
+        response = self.view(self.request, project_id=sapelli_project.geokey_project.id)
+        self.assertEqual(response.status_code, 403)
+
+    def test_get_with_user(self):
+        sapelli_project = create_horniman_sapelli_project(self.user)
+        self.request.user = self.user
+
+        response = self.view(self.request, project_id=sapelli_project.geokey_project.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/png')
