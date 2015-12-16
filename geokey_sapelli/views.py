@@ -1,8 +1,16 @@
+import os
+import qrcode
+
+from StringIO import StringIO
+
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
+from django.core.urlresolvers import reverse
+from django.core.servers.basehttp import FileWrapper
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
+from django.http import HttpResponse
 
 from braces.views import LoginRequiredMixin
 
@@ -10,6 +18,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from oauth2_provider.views.base import TokenView
+from oauth2_provider.models import AccessToken
 
 from geokey.core.decorators import (
     handle_exceptions_for_ajax,
@@ -434,6 +443,92 @@ class FindObservationAPI(APIView):
                 properties__at_DeviceId=sapelli_record_device_id)
         except Project.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
-        #except Exception, e:
-        #        return Response({'error': str(e)})
+        except BaseException, e:
+            return Response({'error': str(e)})
         return Response({'observation_id': observation.id})
+
+
+class SAPDownloadAPI(APIView):
+    @handle_exceptions_for_ajax
+    def get(self, request, project_id):
+        """
+        API end-point which allows the SAP file of a project to be downloaded.
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : str
+            Identifies the GeoKey project on the data base
+        
+        Returns
+        -------
+        SAP/ZIP file download
+        """
+        # Check user access:
+        if request.user.is_anonymous():
+            raise PermissionDenied('API access not authorised, please login.')
+        # Check project access:
+        try:
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
+        except SapelliProject.DoesNotExist:
+            return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
+        # Check if we have a sap_path and whether the file is actually there:
+        if sapelli_project.sap_path is None or not os.path.isfile(sapelli_project.sap_path):
+            return Response({'error': 'No SAP file available for download'}, status=404)
+        #else:
+        wrapper = FileWrapper(file(sapelli_project.sap_path))
+        response = HttpResponse(wrapper, content_type='application/zip')
+        response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(sapelli_project.sap_path)
+        response['Content-Length'] = os.path.getsize(sapelli_project.sap_path)
+        return response
+
+
+class SAPDownloadQRLinkAPI(APIView):
+    @handle_exceptions_for_ajax
+    def get(self, request, project_id):
+        """
+        API end-point which produces PNG images that contain a QR code
+        which encodes a link to download the SAP file of a project.
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : str
+            Identifies the GeoKey project on the data base
+        
+        Returns
+        -------
+        PNG image download
+        """
+        if request.user.is_anonymous():
+            raise PermissionDenied('API access not authorised, please login.')
+        # Check if current user can contribute to the project:
+        try:
+            SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
+        except SapelliProject.DoesNotExist:
+            return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
+        try:
+            # Generate download url:
+            sap_download_url = (
+                request.build_absolute_uri(reverse('geokey_sapelli:sap_download_api', kwargs={'project_id': project_id})) +
+                '?access_token=' + AccessToken.objects.filter(user=request.user)[0].token)
+            # generate QR png image:
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_M,
+                box_size=5,
+                border=0,
+                )
+            qr.add_data(sap_download_url)
+            qr.make(fit=True)
+            img_buffer = StringIO()
+            qr.make_image().save(img_buffer, "PNG")
+            # Grab img file from in-memory, make response with correct MIME-type
+            response = HttpResponse(img_buffer.getvalue(), content_type = 'image/png')
+            # ..and correct content-disposition
+            response['Content-Disposition'] = 'attachment; filename=%s' % request.path[request.path.rfind('/')+1:]
+            return response
+        except BaseException, e:
+            return Response({'error': str(e)})

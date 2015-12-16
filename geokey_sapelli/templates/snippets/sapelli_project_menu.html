@@ -1,0 +1,19 @@
+{% if sapelli_project %}
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h6 class="item-info">Project</h6>
+					<h4>{{ sapelli_project.geokey_project.name }}</h4>
+				</div>
+				<div class="list-group">
+					<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="list-group-item">
+						Upload data
+					</a>
+					<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="list-group-item">
+						Download SAP
+					</a>
+					<a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="list-group-item">
+						Manage project
+					</a>
+				</div>
+			</div>
+{% endif %}

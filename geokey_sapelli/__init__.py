@@ -1,8 +1,9 @@
+import pkg_resources # part of setuptools
+
 from geokey.extensions.base import register
 
-
-VERSION = (0, 5, 1)
-__version__ = '.'.join(map(str, VERSION))
+# Get installed version:
+__version__ = pkg_resources.require(__name__)[0].version
 
 register(
     'geokey_sapelli',

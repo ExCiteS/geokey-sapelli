@@ -39,7 +39,7 @@ def create_implicit_fields(category, stores_end_time=False):
             )
 
 
-def create_project(sapelli_project_info, user):
+def create_project(sapelli_project_info, user, sap_file_path=None):
     geokey_project = Project.create(
         sapelli_project_info.get('display_name'),
         ('Sapelli project id: %s;\nSapelli project fingerprint: %s;' % (
@@ -60,7 +60,8 @@ def create_project(sapelli_project_info, user):
             sapelli_id=sapelli_project_info.get('sapelli_id'),
             sapelli_fingerprint=sapelli_project_info.get('sapelli_fingerprint'),
             sapelli_model_id=sapelli_project_info.get('sapelli_model_id'),
-            path=sapelli_project_info.get('installation_path')
+            dir_path=sapelli_project_info.get('installation_path'),
+            sap_path=sap_file_path
         )
 
         for form in sapelli_project_info.get('forms'):
@@ -126,9 +127,9 @@ def create_project(sapelli_project_info, user):
                         # Image:
                         img_relative_path = item.get('img')
                         img_file = None
-                        if img_relative_path and sapelli_project.path:
+                        if img_relative_path and sapelli_project.dir_path:
                             try:
-                                img_file = File(open(os.path.join(sapelli_project.path, 'img/', img_relative_path), 'rb'))
+                                img_file = File(open(os.path.join(sapelli_project.dir_path, 'img/', img_relative_path), 'rb'))
                             except IOError:
                                 pass
                         if img_file is not None:

@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from views import ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI, ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI
+from views import ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI, ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
 
 urlpatterns = patterns(
     '',
@@ -45,5 +45,13 @@ urlpatterns = patterns(
     url(
         r'^api/sapelli/projects/(?P<project_id>[0-9]+)/find_observation/(?P<category_id>[0-9]+)/(?P<sapelli_record_start_time>[0-9Tt:\-\.+Zz]+)/(?P<sapelli_record_device_id>[0-9]+)/$',
         FindObservationAPI.as_view(),
-        name='find_observation_api')
+        name='find_observation_api'),
+    url(
+        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/sap/$',
+        SAPDownloadAPI.as_view(),
+        name='sap_download_api'),
+    url(
+        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/sap_qr_link.png$',
+        SAPDownloadQRLinkAPI.as_view(),
+        name='sap_download_qr_link_api'),
 )
