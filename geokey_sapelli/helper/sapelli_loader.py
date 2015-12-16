@@ -86,25 +86,25 @@ def load_from_sap(sap_file, user):
         check_sap_file(sap_file_path)
         # Load Sapelli project (extract+parse) using SapColCmdLn Java program:
         sapelli_project_info = get_sapelli_project_info(sap_file_path)
+        
+        # Check for duplicates:
+        if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
+                user,
+                sapelli_project_info['sapelli_id'],
+                sapelli_project_info['sapelli_fingerprint']):
+            raise SapelliDuplicateException
+
+        # Create GeoKey and SapelliProject:
+        try:
+            geokey_project = create_project(sapelli_project_info, user, sap_file_path)
+        except BaseException, e:
+            raise SapelliSAPException(str(e))
     except BaseException, e:
         try: # Remove file:
             os.remove(sap_file_path)
         except BaseException:
             pass
         raise e
-
-    # Check for duplicates:
-    if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
-            user,
-            sapelli_project_info['sapelli_id'],
-            sapelli_project_info['sapelli_fingerprint']):
-        raise SapelliDuplicateException
-
-    # Create GeoKey and SapelliProject:
-    try:
-        geokey_project = create_project(sapelli_project_info, user, sap_file_path)
-    except BaseException, e:
-        raise SapelliSAPException(str(e))
 
     # When successful return the SapelliProject object:
     return geokey_project.sapelli_project
