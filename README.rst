@@ -5,7 +5,7 @@
 .. image:: https://requires.io/github/ExCiteS/geokey-sapelli/requirements.svg?branch=master
     :alt: Requirements Status
     :target: https://requires.io/github/ExCiteS/geokey-sapelli/requirements/?branch=master
-
+ 
 .. image:: https://img.shields.io/travis/ExCiteS/geokey-sapelli/master.svg
     :alt: Travis CI Build Status
     :target: https://travis-ci.org/ExCiteS/geokey-sapelli
