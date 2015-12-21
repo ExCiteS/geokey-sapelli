@@ -5,6 +5,13 @@ from django.db import migrations, models
 import geokey_sapelli.models
 
 
+def get_img_path(instance, filename):
+    if filename is None or instance.sapelli_field.sapelli_form.sapelli_project.dir_path is None:
+        return None
+    else:
+        return os.path.join(instance.sapelli_field.sapelli_form.sapelli_project.dir_path, 'img/', filename)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -25,6 +32,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sapelliitem',
             name='image',
-            field=models.ImageField(max_length=500, null=True, upload_to=geokey_sapelli.models.get_img_path),
+            field=models.ImageField(max_length=500, null=True, upload_to=get_img_path),
         ),
     ]
