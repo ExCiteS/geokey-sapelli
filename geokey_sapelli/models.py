@@ -352,12 +352,6 @@ class SapelliField(models.Model):
     sapelli_id = models.CharField(max_length=255)
     truefalse = models.BooleanField(default=False)
 
-    
-def get_img_path(instance, filename):
-    if filename is None or instance.sapelli_field.sapelli_form.sapelli_project.dir_path is None:
-        return None
-    else:
-        return os.path.join(instance.sapelli_field.sapelli_form.sapelli_project.dir_path, 'img/', filename)
 
 class SapelliItem(models.Model):
     """
