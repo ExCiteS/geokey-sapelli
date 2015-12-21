@@ -269,13 +269,18 @@ class LoginAPI(TokenView):
         """
         # ensure POST request is mutable:
         # (this isn't always the case, see http://stackoverflow.com/q/12611345)
-        if not (request.POST._mutable):
-            request.POST = request.POST.copy()
-        request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
-        request.POST['grant_type'] = 'password'
-
-        return super(LoginAPI, self).post(request, *args, **kwargs)
-
+        try:
+            if not (request.POST._mutable):
+                request.POST = request.POST.copy()
+            try:
+                request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
+            except AttributeError, e:
+                raise SapelliException('geokey-sapelli is not properly configured an application on the server: ' + str(e))
+            request.POST['grant_type'] = 'password'
+            
+            return super(LoginAPI, self).post(request, *args, **kwargs)
+        except BaseException, e:
+            return Response({'error': str(e)})
 
 class ProjectDescriptionAPI(APIView):
     """
