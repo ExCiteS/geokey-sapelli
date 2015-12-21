@@ -37,6 +37,7 @@ from .helper.sapelli_exceptions import (
     SapelliDuplicateException,
     SapelliCSVException
 )
+from .helper.install_checks import check_extension
 
 
 from helper.dynamic_menu import MenuEntry
@@ -57,6 +58,15 @@ class AbstractSapelliView(LoginRequiredMixin, TemplateView):
     def get_menu_url():
         return None
 
+    def check(self):
+        """
+        Checks if extension is correctly installed.
+        """
+        try:
+            check_extension()
+        except SapelliException, se:
+            messages.error(self.request, 'The Sapelli extension is not properly installed: ' + str(se))
+    
     def add_menu(self, context):
         menu_entries = []
         for subclass in AbstractSapelliView.__subclasses__():
@@ -93,6 +103,7 @@ class ProjectList(AbstractSapelliView):
         dict
         """
         context = {'sapelli_projects': SapelliProject.objects.get_list_for_contribution(self.request.user)}
+        self.check()
         return self.add_menu(context)
 
 
