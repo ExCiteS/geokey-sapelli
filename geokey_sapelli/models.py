@@ -369,7 +369,6 @@ class SapelliItem(models.Model):
         primary_key=True,
         related_name='sapelli_item'
     )
-    image = models.ImageField(upload_to=get_img_path, null=True, max_length=500)
     number = models.IntegerField()
     sapelli_field = models.ForeignKey(
         'SapelliField',

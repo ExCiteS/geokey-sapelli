@@ -1,2 +1,2 @@
-geokey==0.8.3
+geokey==0.8.5
 qrcode==5.1

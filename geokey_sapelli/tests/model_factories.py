@@ -1,10 +1,7 @@
 import factory
-from StringIO import StringIO
-from PIL import Image
 
 from os.path import dirname, normpath, abspath, join
 
-from django.core.files.base import ContentFile
 from django.conf import settings
 
 from geokey.applications.tests.model_factories import ApplicationFactory
@@ -24,18 +21,6 @@ from ..models import (
     SapelliItem,
     LocationField
 )
-
-
-def get_image(file_name='test.png', width=200, height=200):
-    image_file = StringIO()
-    image = Image.new('RGBA', size=(width, height), color=(255, 0, 255))
-    image.save(image_file, 'png')
-    image_file.seek(0)
-
-    the_file = ContentFile(image_file.read(), file_name)
-    the_file.content_type = 'image/png'
-
-    return the_file
 
 
 class GeoKeySapelliApplicationFactory(ApplicationFactory):
@@ -83,7 +68,6 @@ class SapelliChoiceFactory(factory.django.DjangoModelFactory):
         model = SapelliItem
 
     lookup_value = factory.SubFactory(LookupValueFactory)
-    image = get_image()
     number = factory.Sequence(lambda n: n)
     sapelli_field = factory.SubFactory(SapelliFieldFactory)
 
@@ -104,59 +88,73 @@ def create_horniman_sapelli_project(user):
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Red Flowers'
+        'name': 'Red Flowers',
+        'symbol': 'red flowers.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Blue Flowers'
+        'name': 'Blue Flowers',
+        'symbol': 'blue flowers.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Yellow Flowers'
+        'name': 'Yellow Flowers',
+        'symbol': 'yellow flowers.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Edible Plants'
+        'name': 'Edible Plants',
+        'symbol': 'BeenTold.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Medicinal Plants'
+        'name': 'Medicinal Plants',
+        'symbol': 'Medicine.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Two Legged Animal'
+        'name': 'Two Legged Animal',
+        'symbol': 'Chicken.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Four Legged Animal'
+        'name': 'Four Legged Animal',
+        'symbol': 'Sheep.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Old Bench With Memorial'
+        'name': 'Old Bench With Memorial',
+        'symbol': 'memorial.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Old Bench with No Memorial'
+        'name': 'Old Bench with No Memorial',
+        'symbol': 'no memorial'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'New Bench With Memorial'
+        'name': 'New Bench With Memorial',
+        'symbol': 'memorial.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'New Bench with No Memorial'
+        'name': 'New Bench with No Memorial',
+        'symbol': 'no memorial.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Covered Bin'
+        'name': 'Covered Bin',
+        'symbol': 'covered bin.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Uncovered Bin'
+        'name': 'Uncovered Bin',
+        'symbol': 'uncovered bin.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Dog Bin'
+        'name': 'Dog Bin',
+        'symbol': 'dog bin.png'
     })
 
     sapelli_project = SapelliProjectFactory.create(**{
