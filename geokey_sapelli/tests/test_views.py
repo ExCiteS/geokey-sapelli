@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.conf import settings
 
 from django.test.client import RequestFactory
@@ -24,8 +25,15 @@ from ..models import SapelliProject
 from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
 from ..helper.dynamic_menu import MenuEntry
 
-
 class ProjectListTest(TestCase):
+    def setUp(self):
+        self.view = ProjectList.as_view()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+
+        setattr(self.request, 'session', 'session')
+        setattr(self.request, '_messages', FallbackStorage(self.request))
+        
     def test_url(self):
         self.assertEqual(reverse('geokey_sapelli:index'), '/admin/sapelli/')
 
@@ -34,13 +42,9 @@ class ProjectListTest(TestCase):
 
     def test_get_with_user(self):
         sapelli_project = SapelliProjectFactory.create()
-        view = ProjectList.as_view()
-
-        request = HttpRequest()
-        request.method = 'GET'
-        request.user = sapelli_project.geokey_project.creator
-
-        response = view(request).render()
+        self.request.user = sapelli_project.geokey_project.creator
+        
+        response = self.view(self.request).render()
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
@@ -48,7 +52,8 @@ class ProjectListTest(TestCase):
             {
                 'sapelli_projects': [sapelli_project],
                 'user': sapelli_project.geokey_project.creator,
-                'PLATFORM_NAME': get_current_site(request).name,
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'messages': get_messages(self.request),
                 'GEOKEY_VERSION': version.get_version(),
                 'GEOKEY_SAPELLI_VERSION': __version__,
                 'menu_entries': [
@@ -65,11 +70,8 @@ class ProjectListTest(TestCase):
         self.assertEqual(unicode(response.content), rendered)
 
     def test_get_with_anonymous(self):
-        view = ProjectList.as_view()
-        request = HttpRequest()
-        request.method = 'GET'
-        request.user = AnonymousUser()
-        response = view(request)
+        self.request.user = AnonymousUser()
+        response = self.view(self.request)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'], '/admin/account/login/?next=')
@@ -182,10 +184,8 @@ class DataCSVUploadTest(TestCase):
         self.request.method = 'GET'
         self.request.user = AnonymousUser()
 
-        from django.contrib.messages.storage.fallback import FallbackStorage
         setattr(self.request, 'session', 'session')
-        messages = FallbackStorage(self.request)
-        setattr(self.request, '_messages', messages)
+        setattr(self.request, '_messages', FallbackStorage(self.request))
 
     def test_url(self):
         self.assertEqual(
