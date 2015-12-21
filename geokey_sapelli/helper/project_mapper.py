@@ -50,7 +50,7 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
         user
     )
 
-    # If anyting below fails the geokey_project will be deleted:
+    # If anything below fails the geokey_project will be deleted:
     try:
         sapelli_project = SapelliProject.objects.create(
             geokey_project=geokey_project,
