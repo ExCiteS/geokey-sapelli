@@ -18,9 +18,9 @@ def check_extension():
         raise SapelliException('no SAPELLI_CLIENT_ID value set in geokey settings.py.')
     # Check if an application is registered with this client_id:
     try:
-        Application.objects.get(client_id=client_id)
+        Application.objects.get(client_id=client_id, authorization_grant_type='password')
     except Application.DoesNotExist:
-        raise SapelliException('geokey_sapelli is not registered as an application on the server.')
+        raise SapelliException('geokey_sapelli is not registered as an application (with password authorisation) on the server.')
     # Check if java 1.7.0 or more recent is installed:
     try:
         status_output = commands.getstatusoutput('java -version')
