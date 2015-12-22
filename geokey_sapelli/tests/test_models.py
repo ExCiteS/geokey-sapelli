@@ -7,8 +7,8 @@ from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 from geokey.projects.tests.model_factories import ProjectFactory
 
-from ..models import SapelliProject, post_save_project, pre_delete_project
-from .model_factories import SapelliProjectFactory, create_horniman_sapelli_project, create_textunicode_sapelli_project
+from ..models import SapelliProject, post_save_project, pre_delete_project, SAPDownloadQRLink
+from .model_factories import SapelliProjectFactory, create_horniman_sapelli_project, create_textunicode_sapelli_project, GeoKeySapelliApplicationFactory
 
 from ..helper.sapelli_exceptions import SapelliCSVException
 
@@ -133,3 +133,28 @@ class ProjectDeleteTest(TestCase):
         pre_delete_project(Project, instance=geokey_project)
 
         self.assertFalse(SapelliProject.objects.filter(pk=sapelli_project.pk).exists())
+
+
+class SAPDownloadQRLinkTest(TestCase):
+    def setUp(self):
+        self.app = GeoKeySapelliApplicationFactory.create()
+        self.user = UserFactory.create()
+        self.user.set_password('123456')
+        self.user.save()
+
+    def tearDown(self):
+        try:
+            self.sap_download_qr_link.delete()
+            self.app.delete()
+            self.user.delete()
+        except BaseException:
+            pass
+
+    def test_create_qr_link(self):
+        sapelli_project = create_horniman_sapelli_project(self.user)
+        self.sap_download_qr_link = SAPDownloadQRLink.create(user=self.user, sapelli_project=sapelli_project, days_valid=1)
+
+        self.assertEqual(self.sap_download_qr_link.access_token.user, self.user)
+        self.assertEqual(self.sap_download_qr_link.access_token.application, self.app)
+        self.assertEqual(self.sap_download_qr_link.sapelli_project, sapelli_project)
+

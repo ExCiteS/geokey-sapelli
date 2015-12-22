@@ -18,7 +18,6 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from oauth2_provider.views.base import TokenView
-from oauth2_provider.models import AccessToken
 
 from geokey.core.decorators import (
     handle_exceptions_for_ajax,
@@ -28,7 +27,7 @@ from geokey.projects.models import Project
 
 from . import __version__
 
-from .models import SapelliProject
+from .models import SapelliProject, SAPDownloadQRLink
 from .helper.sapelli_loader import load_from_sap
 from .helper.sapelli_exceptions import (
     SapelliException,
@@ -522,21 +521,30 @@ class SAPDownloadQRLinkAPI(APIView):
             raise PermissionDenied('API access not authorised, please login.')
         # Check if current user can contribute to the project:
         try:
-            SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(request.user, project_id)
         except SapelliProject.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         try:
+            qr_link = None
+            try: # Try getting previously generated link/token:
+                qr_link = SAPDownloadQRLink.objects.filter(access_token__user=request.user, sapelli_project=sapelli_project).latest('access_token__expires')
+            except BaseException, e:
+                pass
+            if qr_link is None or qr_link.access_token.is_expired():
+                if(qr_link is not None):
+                    qr_link.access_token.delete() # qr_link will be deleted as well
+                # Generate new access token (valid for 1 day):
+                qr_link = SAPDownloadQRLink.create(user=request.user, sapelli_project=sapelli_project, days_valid=1)
             # Generate download url:
             sap_download_url = (
                 request.build_absolute_uri(reverse('geokey_sapelli:sap_download_api', kwargs={'project_id': project_id})) +
-                '?access_token=' + AccessToken.objects.filter(user=request.user)[0].token)
-            # generate QR png image:
+                '?access_token=' + qr_link.access_token.token)
+            # Generate QR code PNG image:
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_M,
                 box_size=5,
-                border=0,
-                )
+                border=0)
             qr.add_data(sap_download_url)
             qr.make(fit=True)
             img_buffer = StringIO()
@@ -545,6 +553,26 @@ class SAPDownloadQRLinkAPI(APIView):
             response = HttpResponse(img_buffer.getvalue(), content_type = 'image/png')
             # ..and correct content-disposition
             response['Content-Disposition'] = 'attachment; filename=%s' % request.path[request.path.rfind('/')+1:]
+            # Add additional info as response headers:
+            response['X-QR-URL'] = sap_download_url
+            response['X-QR-Access-Token'] = qr_link.access_token.token
+            response['X-QR-Access-Token-Expires'] = qr_link.access_token.expires.isoformat()
             return response
         except BaseException, e:
             return Response({'error': str(e)})
+
+    @handle_exceptions_for_ajax
+    def delete(self, request, project_id):
+        if request.user.is_anonymous():
+            raise PermissionDenied('API access not authorised, please login.')
+        # Check if current user can contribute to the project:
+        try:
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(request.user, project_id)
+        except SapelliProject.DoesNotExist:
+            return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
+        try: # Try getting & deleting previously generated link/token:
+            qr_link = SAPDownloadQRLink.objects.filter(access_token__user=request.user, sapelli_project=sapelli_project).latest('access_token__expires')
+            qr_link.access_token.delete() # qr_link will be deleted as well
+        except BaseException, e:
+            return Response({'error': str(e)})
+        return Response({'deleted': True})

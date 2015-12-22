@@ -1,8 +1,11 @@
 import factory
 
+from datetime import timedelta
+
 from os.path import dirname, normpath, abspath, join
 
 from django.conf import settings
+from django.utils import timezone
 
 from geokey.applications.tests.model_factories import ApplicationFactory
 from geokey.projects.tests.model_factories import ProjectFactory
@@ -13,13 +16,15 @@ from geokey.categories.tests.model_factories import (
     LookupValueFactory,
     TextFieldFactory
 )
+from geokey.users.tests.model_factories import AccessTokenFactory
 
 from ..models import (
     SapelliProject,
     SapelliForm,
     SapelliField,
     SapelliItem,
-    LocationField
+    LocationField,
+    SAPDownloadQRLink,
 )
 
 
@@ -236,3 +241,28 @@ def create_textunicode_sapelli_project(user):
     })
 
     return sapelli_project
+
+
+class SAPDownloadQRLinkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SAPDownloadQRLink
+
+    access_token = factory.SubFactory(AccessTokenFactory)
+    sapelli_project = factory.SubFactory(SapelliProjectFactory)
+
+
+def create_qr_link(app, user, project):
+    access_token = AccessTokenFactory.create(**{
+        'user': user,
+        'application': app,
+        'expires': timezone.now() + timedelta(days=1),
+        'token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+        'scope': 'read'
+    })
+    
+    qr_link = SAPDownloadQRLinkFactory.create(**{
+        'access_token': access_token,
+        'sapelli_project': project
+    })
+    
+    return qr_link

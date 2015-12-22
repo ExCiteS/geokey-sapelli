@@ -2,12 +2,19 @@ import json
 import re
 import os
 import shutil
+from datetime import timedelta
 
 from django.db import models
 from django.dispatch import receiver
+from django.conf import settings
+from django.utils import timezone
 
 from geokey.projects.models import Project
 from geokey.contributions.models import Observation
+from geokey.applications.models import Application
+
+from oauth2_provider.models import AccessToken
+from oauthlib.common import generate_token
 
 from .manager import SapelliProjectManager
 
@@ -368,3 +375,31 @@ class SapelliItem(models.Model):
         'SapelliField',
         related_name='items'
     )
+
+
+class SAPDownloadQRLink(models.Model):
+    access_token = models.OneToOneField('oauth2_provider.AccessToken', primary_key=True)
+    sapelli_project = models.ForeignKey(SapelliProject)
+    
+    @classmethod
+    def create(cls, user, sapelli_project, days_valid=1):
+        a_t = AccessToken.objects.create(
+            user=user,
+            application=Application.objects.get(client_id=settings.SAPELLI_CLIENT_ID),
+            expires=timezone.now() + timedelta(days=days_valid),
+            token=generate_token(),
+            scope='read')
+        qr_link = cls(access_token = a_t, sapelli_project = sapelli_project)
+        qr_link.save()
+        return qr_link
+
+
+@receiver(models.signals.pre_delete, sender=AccessToken)
+def pre_delete_access_token(sender, instance, **kwargs):
+    """
+    Receiver that is called after an AccessToken is deleted. Deletes related SAPDownloadQRLink.
+    """
+    try:
+        SAPDownloadQRLink.objects.get(access_token=instance).delete()
+    except BaseException:
+        pass

@@ -33,7 +33,7 @@
 						<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="label label-info">Upload data</a>
 						{% if sapelli_project.sap_path %}
 						<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="label label-info">Download SAP</a>
-						<div class="label label-info" data-toggle="modal" data-target="#qrDialog-{{ sapelli_project.geokey_project.id }}">SAP QR code</div>
+						<a href="" class="label label-info" data-toggle="modal" data-target="#qrDialog-{{ sapelli_project.geokey_project.id }}">SAP QR code</a>
 						{% endif %}
 						<a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="label label-info">Manage project</a>
 					</h4>
@@ -42,16 +42,22 @@
 						<div class="modal-dialog modal-sm">
 							<div class="modal-content">
 								<div class="modal-header">
-									<button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Close">&times;</button>
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide code">&times;</button>
 									<h6 class="item-info">Sapelli project</h6>
 									<h4 class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
 								</div>
 								<div class="modal-body" style="text-align: center">
+									<h5 class="modal-title" style="text-align: justify; text-justify: auto; padding-bottom: 1em;">To install the project on your Android device, simply scan the QR code below using the <a href="https://play.google.com/store/apps/details?id=uk.ac.ucl.excites.sapelli.collector" target="_blank">Sapelli Collector app</a>.</h5>
 									<h6 class="item-info" id="qrDialogLabel-{{ sapelli_project.geokey_project.id }}">QR link to download SAP file:</h6>
-									<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}">
-										<img src="{% url 'geokey_sapelli:sap_download_qr_link_api' sapelli_project.geokey_project.id %}" title="QR code to download SAP file" style="padding-bottom: 1em;"/>
+									<a href="" id="qr-a-{{ sapelli_project.geokey_project.id }}">
+										<img id="qr-img-{{ sapelli_project.geokey_project.id }}" title="QR code to download SAP file" style="padding-bottom: 1em;"/>
 									</a>
-									<h5 class="modal-title" style="text-align: justify; text-justify: auto;">To install the project on your Android device, simply scan the QR code using the <a href="https://play.google.com/store/apps/details?id=uk.ac.ucl.excites.sapelli.collector" target="_blank">Sapelli Collector app</a>.</h5>
+									<h6 class="item-info">QR code expires in:</h6>
+									<div id="qr-expires-{{ sapelli_project.geokey_project.id }}">&hellip;</div>
+									<h4 style="padding-top: 0.25em;">
+										<a href="" class="label label-info" onClick="hideQRModal({{ sapelli_project.geokey_project.id }}); return false;">Hide code</a>
+										<a href="" id="qr-revoke-{{ sapelli_project.geokey_project.id }}" class="label label-info" style="background-color: #DC7171;">Revoke code</a>
+									</h4>
 								</div>
 							</div>
 						</div>
@@ -71,4 +77,126 @@
 {% endblock %}
 
 {% block libraries %}
+<script src="/static/lib/js-cookie/js.cookie.min.js"></script>
+
+<script>
+	var csrftoken = Cookies.get('csrftoken');
+
+	function csrfSafeMethod(method) {
+		// these HTTP methods do not require CSRF protection
+		return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+	}
+
+	$.ajaxSetup({
+		data: {csrfmiddlewaretoken: csrftoken },
+		beforeSend: function(xhr, settings) {
+			if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+				xhr.setRequestHeader("X-CSRFToken", csrftoken);
+			}
+		}
+	});
+
+	{% for sapelli_project in sapelli_projects %}
+	$('#qrDialog-{{ sapelli_project.geokey_project.id }}').on('shown.bs.modal', function()
+	{
+		setQRImgAndCountdown({{ sapelli_project.geokey_project.id }}, "{% url 'geokey_sapelli:sap_download_qr_link_api' sapelli_project.geokey_project.id %}")
+	});
+	
+	$('#qr-revoke-{{ sapelli_project.geokey_project.id }}').click(function()
+	{
+		clearQR({{ sapelli_project.geokey_project.id }});
+		$.ajax({
+			url: "{% url 'geokey_sapelli:sap_download_qr_link_api' sapelli_project.geokey_project.id %}",
+			type: 'DELETE',
+			success: function(result) { /*console.log(result)*/ }});
+		return false;
+	});
+	{% endfor %}
+
+	var countdowns = {};
+	
+	var hideQRModal = function(projectID)
+	{
+		$('#qrDialog-' + projectID).modal('hide');
+	}
+
+	var getImg = function(projectID)
+	{
+		return $("#qr-img-" + projectID);
+	}
+	
+	var getCountdown = function(projectID)
+	{
+		return $("#qr-expires-" + projectID);
+	}
+	
+	var clearQR = function(projectID)
+	{
+		clearInterval(countdowns[projectID]);
+		getImg(projectID).attr("src", "");
+		getCountdown(projectID).html('&hellip;')
+		hideQRModal(projectID);
+	}
+
+	var setQRImgAndCountdown = function(projectID, imgURL)
+	{
+		var img = getImg(projectID);
+		var a = $("#qr-a-" + projectID);
+		if($.trim(img.attr("src")) == "")
+		{
+			// Use a native XHR so we can use custom responseType
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", imgURL, true);
+
+			// Ask for the result as an ArrayBuffer.
+			xhr.responseType = "arraybuffer";
+
+			xhr.onload = function(e)
+			{
+				// Obtain a blob: URL for the image data to draw it
+				var arrayBufferView = new Uint8Array(this.response);
+				var blob = new Blob([ arrayBufferView ], { type: "image/png" });
+				img.attr("src", URL.createObjectURL(blob));
+
+				// Get the expire time from response:
+				expires = new Date(this.getResponseHeader('X-QR-Access-Token-Expires'))
+				countdowns[projectID] = setInterval(function () { countdown(expires, projectID); }, 1000);
+			
+				// Set hyperlink on QR img to the full url as embedded in QR (so people
+				// copying the link url can pass it to others as they would pass the qr code):
+				a.attr("href", this.getResponseHeader('X-QR-URL'))
+			};
+			xhr.send();
+		}
+	}
+
+	var countdown = function(expires, projectID)
+	{
+		var /*days, */hours, minutes, seconds;
+		var seconds_left = (expires - new Date()) / 1000;
+	
+		if(seconds_left < 0)
+		{
+			clearQR(projectID);
+		}
+		else
+		{
+			//days = parseInt(seconds_left / 86400);
+			seconds_left = seconds_left % 86400;
+		
+			hours = parseInt(seconds_left / 3600);
+			seconds_left = seconds_left % 3600;
+		
+			minutes = parseInt(seconds_left / 60);
+			seconds = parseInt(seconds_left % 60);
+		
+			// format countdown string + set tag value
+			getCountdown(projectID).html( 
+				/*'<span class="days">' + days + ' Days</span> ' +*/
+				'<span class="hours">' + hours + ' Hours</span> ' +
+				'<span class="minutes">' + minutes + ' Minutes</span> ' +
+				'<span class="seconds">' + seconds + ' seconds</span>');
+		}
+	}
+</script>
 {% endblock %}
