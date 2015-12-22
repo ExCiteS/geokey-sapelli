@@ -4,6 +4,7 @@ from django.template.defaultfilters import slugify
 from django.core.files import File
 
 from geokey.projects.models import Project
+from geokey.projects.base import EVERYONE_CONTRIB
 from geokey.categories.models import Category, Field, LookupValue
 
 from ..models import (
@@ -41,16 +42,16 @@ def create_implicit_fields(category, stores_end_time=False):
 
 def create_project(sapelli_project_info, user, sap_file_path=None):
     geokey_project = Project.create(
-        sapelli_project_info.get('display_name'),
-        ('Sapelli project id: %s;\nSapelli project fingerprint: %s;' % (
+        name = sapelli_project_info.get('display_name'),
+        description = ('Sapelli project id: %s;\nSapelli project fingerprint: %s;' % (
             sapelli_project_info.get('sapelli_id'),
             sapelli_project_info.get('sapelli_fingerprint'))),
-        True,
-        False,
-        user
+        isprivate = True,
+        everyone_contributes = EVERYONE_CONTRIB.false,
+        creator = user
     )
 
-    # If anyting below fails the geokey_project will be deleted:
+    # If anything below fails the geokey_project will be deleted:
     try:
         sapelli_project = SapelliProject.objects.create(
             geokey_project=geokey_project,
@@ -119,11 +120,6 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                 if field_type == 'LookupField':
                     # Loop over items:
                     for idx, item in enumerate(field.get('items')):
-                        # Value:
-                        value = LookupValue.objects.create(
-                            name=item.get('value'),
-                            field=geokey_field
-                        )
                         # Image:
                         img_relative_path = item.get('img')
                         img_file = None
@@ -137,12 +133,17 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                             img_file.close()
                         else:
                             img_path = None
+                        # Value:
+                        value = LookupValue.objects.create(
+                            name=item.get('value'),
+                            field=geokey_field,
+                            symbol=img_path #pass the path, not the file (otherwise it may be duplicated)
+                        )
                         # Create SapelliItem:
                         SapelliItem.objects.create(
                             lookup_value=value,
                             sapelli_field=sapelli_field,
-                            number=idx,
-                            image=img_path #pass the path, not the file (otherwise it may be duplicated)
+                            number=idx
                         )
     except BaseException, e:
         try: # delete geokey_project:

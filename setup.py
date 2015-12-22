@@ -4,7 +4,7 @@ from os.path import join
 from setuptools import setup, find_packages
 
 # Change geokey_sapelli version here (and here alone!):
-VERSION_PARTS = (0, 6, 0)
+VERSION_PARTS = (0, 6, 1)
 
 name = 'geokey-sapelli'
 version = '.'.join(map(str, VERSION_PARTS))

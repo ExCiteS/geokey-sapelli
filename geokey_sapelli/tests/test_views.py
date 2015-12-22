@@ -9,23 +9,35 @@ from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.conf import settings
 
 from django.test.client import RequestFactory
 
+from oauth2_provider.models import AccessToken
+
+from rest_framework.test import force_authenticate
+
 from geokey import version
 from geokey.applications.tests.model_factories import ApplicationFactory
-from geokey.users.tests.model_factories import UserFactory, AccessTokenFactory
+from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 
-from .model_factories import GeoKeySapelliApplicationFactory, SapelliProjectFactory, create_horniman_sapelli_project
+from .model_factories import GeoKeySapelliApplicationFactory, SapelliProjectFactory, create_horniman_sapelli_project, create_qr_link
 from .. import __version__
-from ..models import SapelliProject
+from ..models import SapelliProject, SAPDownloadQRLink
 from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
 from ..helper.dynamic_menu import MenuEntry
 
-
 class ProjectListTest(TestCase):
+    def setUp(self):
+        self.view = ProjectList.as_view()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+
+        setattr(self.request, 'session', 'session')
+        setattr(self.request, '_messages', FallbackStorage(self.request))
+        
     def test_url(self):
         self.assertEqual(reverse('geokey_sapelli:index'), '/admin/sapelli/')
 
@@ -34,13 +46,9 @@ class ProjectListTest(TestCase):
 
     def test_get_with_user(self):
         sapelli_project = SapelliProjectFactory.create()
-        view = ProjectList.as_view()
-
-        request = HttpRequest()
-        request.method = 'GET'
-        request.user = sapelli_project.geokey_project.creator
-
-        response = view(request).render()
+        self.request.user = sapelli_project.geokey_project.creator
+        
+        response = self.view(self.request).render()
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
@@ -48,7 +56,8 @@ class ProjectListTest(TestCase):
             {
                 'sapelli_projects': [sapelli_project],
                 'user': sapelli_project.geokey_project.creator,
-                'PLATFORM_NAME': get_current_site(request).name,
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'messages': get_messages(self.request),
                 'GEOKEY_VERSION': version.get_version(),
                 'GEOKEY_SAPELLI_VERSION': __version__,
                 'menu_entries': [
@@ -65,11 +74,8 @@ class ProjectListTest(TestCase):
         self.assertEqual(unicode(response.content), rendered)
 
     def test_get_with_anonymous(self):
-        view = ProjectList.as_view()
-        request = HttpRequest()
-        request.method = 'GET'
-        request.user = AnonymousUser()
-        response = view(request)
+        self.request.user = AnonymousUser()
+        response = self.view(self.request)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'], '/admin/account/login/?next=')
@@ -182,10 +188,8 @@ class DataCSVUploadTest(TestCase):
         self.request.method = 'GET'
         self.request.user = AnonymousUser()
 
-        from django.contrib.messages.storage.fallback import FallbackStorage
         setattr(self.request, 'session', 'session')
-        messages = FallbackStorage(self.request)
-        setattr(self.request, '_messages', messages)
+        setattr(self.request, '_messages', FallbackStorage(self.request))
 
     def test_url(self):
         self.assertEqual(
@@ -380,21 +384,26 @@ class SAPDownloadAPITest(TestCase):
 class SAPDownloadQRLinkAPITest(TestCase):
     def setUp(self):
         self.app = GeoKeySapelliApplicationFactory.create()
+
         self.user = UserFactory.create()
         self.user.set_password('123456')
         self.user.save()
-        AccessTokenFactory.create(user=self.user, application=self.app)
-        
+
         self.view = SAPDownloadQRLinkAPI.as_view()
+
         self.request = HttpRequest()
         self.request.method = 'GET'
-        self.request.user = AnonymousUser()
         # necessary for request.build_absolute_uri() to work:
         self.request.META['SERVER_NAME'] = 'test-server'
         self.request.META['SERVER_PORT'] = '80'
 
     def tearDown(self):
+        # delete tokens:
+        for access_token in AccessToken.objects.filter(user=self.user):
+            access_token.delete()
+        # delete app:
         self.app.delete()
+        # delete user:
         self.user.delete()
 
     def test_url(self):
@@ -411,6 +420,8 @@ class SAPDownloadQRLinkAPITest(TestCase):
 
     def test_get_with_anonymous(self):
         sapelli_project = create_horniman_sapelli_project(self.user)
+        self.request.user = AnonymousUser()
+
         response = self.view(self.request, project_id=sapelli_project.geokey_project.id)
         self.assertEqual(response.status_code, 403)
 
@@ -420,5 +431,24 @@ class SAPDownloadQRLinkAPITest(TestCase):
 
         response = self.view(self.request, project_id=sapelli_project.geokey_project.id)
 
+        qr_link = SAPDownloadQRLink.objects.filter(access_token__user=self.user, sapelli_project=sapelli_project).latest('access_token__expires')
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'image/png')
+        self.assertEqual(response['X-QR-Access-Token'], qr_link.access_token.token)
+        self.assertEqual(response['X-QR-Access-Token-Expires'], qr_link.access_token.expires.isoformat())
+
+    def test_delete_with_user(self):
+        delete_request = HttpRequest()
+        delete_request.method = 'DELETE'
+        delete_request.user = self.user
+        force_authenticate(delete_request, user=self.user)
+
+        sapelli_project = create_horniman_sapelli_project(self.user)
+        qr_link = create_qr_link(self.app, self.user, sapelli_project)
+
+        response = self.view(delete_request, project_id=sapelli_project.geokey_project.id).render()
+        response_json = json.loads(response.content)
+
+        self.assertTrue(response_json.get('deleted'))
+        self.assertNotIn(qr_link, SAPDownloadQRLink.objects.all())

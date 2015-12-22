@@ -1,11 +1,11 @@
 import factory
-from StringIO import StringIO
-from PIL import Image
+
+from datetime import timedelta
 
 from os.path import dirname, normpath, abspath, join
 
-from django.core.files.base import ContentFile
 from django.conf import settings
+from django.utils import timezone
 
 from geokey.applications.tests.model_factories import ApplicationFactory
 from geokey.projects.tests.model_factories import ProjectFactory
@@ -16,26 +16,16 @@ from geokey.categories.tests.model_factories import (
     LookupValueFactory,
     TextFieldFactory
 )
+from geokey.users.tests.model_factories import AccessTokenFactory
 
 from ..models import (
     SapelliProject,
     SapelliForm,
     SapelliField,
     SapelliItem,
-    LocationField
+    LocationField,
+    SAPDownloadQRLink,
 )
-
-
-def get_image(file_name='test.png', width=200, height=200):
-    image_file = StringIO()
-    image = Image.new('RGBA', size=(width, height), color=(255, 0, 255))
-    image.save(image_file, 'png')
-    image_file.seek(0)
-
-    the_file = ContentFile(image_file.read(), file_name)
-    the_file.content_type = 'image/png'
-
-    return the_file
 
 
 class GeoKeySapelliApplicationFactory(ApplicationFactory):
@@ -83,7 +73,6 @@ class SapelliChoiceFactory(factory.django.DjangoModelFactory):
         model = SapelliItem
 
     lookup_value = factory.SubFactory(LookupValueFactory)
-    image = get_image()
     number = factory.Sequence(lambda n: n)
     sapelli_field = factory.SubFactory(SapelliFieldFactory)
 
@@ -104,59 +93,73 @@ def create_horniman_sapelli_project(user):
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Red Flowers'
+        'name': 'Red Flowers',
+        'symbol': 'red flowers.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Blue Flowers'
+        'name': 'Blue Flowers',
+        'symbol': 'blue flowers.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Yellow Flowers'
+        'name': 'Yellow Flowers',
+        'symbol': 'yellow flowers.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Edible Plants'
+        'name': 'Edible Plants',
+        'symbol': 'BeenTold.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Medicinal Plants'
+        'name': 'Medicinal Plants',
+        'symbol': 'Medicine.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Two Legged Animal'
+        'name': 'Two Legged Animal',
+        'symbol': 'Chicken.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Four Legged Animal'
+        'name': 'Four Legged Animal',
+        'symbol': 'Sheep.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Old Bench With Memorial'
+        'name': 'Old Bench With Memorial',
+        'symbol': 'memorial.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Old Bench with No Memorial'
+        'name': 'Old Bench with No Memorial',
+        'symbol': 'no memorial'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'New Bench With Memorial'
+        'name': 'New Bench With Memorial',
+        'symbol': 'memorial.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'New Bench with No Memorial'
+        'name': 'New Bench with No Memorial',
+        'symbol': 'no memorial.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Covered Bin'
+        'name': 'Covered Bin',
+        'symbol': 'covered bin.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Uncovered Bin'
+        'name': 'Uncovered Bin',
+        'symbol': 'uncovered bin.png'
     })
     LookupValueFactory.create(**{
         'field': select_field,
-        'name': 'Dog Bin'
+        'name': 'Dog Bin',
+        'symbol': 'dog bin.png'
     })
 
     sapelli_project = SapelliProjectFactory.create(**{
@@ -238,3 +241,28 @@ def create_textunicode_sapelli_project(user):
     })
 
     return sapelli_project
+
+
+class SAPDownloadQRLinkFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SAPDownloadQRLink
+
+    access_token = factory.SubFactory(AccessTokenFactory)
+    sapelli_project = factory.SubFactory(SapelliProjectFactory)
+
+
+def create_qr_link(app, user, project):
+    access_token = AccessTokenFactory.create(**{
+        'user': user,
+        'application': app,
+        'expires': timezone.now() + timedelta(days=1),
+        'token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+        'scope': 'read'
+    })
+    
+    qr_link = SAPDownloadQRLinkFactory.create(**{
+        'access_token': access_token,
+        'sapelli_project': project
+    })
+    
+    return qr_link
