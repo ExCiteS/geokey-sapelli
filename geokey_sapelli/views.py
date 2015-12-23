@@ -285,7 +285,7 @@ class LoginAPI(TokenView):
             try:
                 request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
             except AttributeError, e:
-                raise SapelliException('geokey-sapelli is not properly configured an application on the server: ' + str(e))
+                raise SapelliException('geokey-sapelli is not properly configured as an application on the server: ' + str(e))
             request.POST['grant_type'] = 'password'
             
             return super(LoginAPI, self).post(request, *args, **kwargs)
