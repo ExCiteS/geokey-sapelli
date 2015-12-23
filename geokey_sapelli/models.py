@@ -18,7 +18,7 @@ from oauthlib.common import generate_token
 
 from .manager import SapelliProjectManager
 
-from .helper.sapelli_exceptions import SapelliCSVException
+from .helper.sapelli_exceptions import SapelliException, SapelliCSVException
 
 from .helper.csv_helpers import UnicodeDictReader
 
@@ -378,17 +378,48 @@ class SapelliItem(models.Model):
 
 
 class SAPDownloadQRLink(models.Model):
+    """
+    Represents a temporary link (embedded in a QR image) that
+    allows one to download the SAP file of a SapelliProject.
+    The link (or rather the AccessToken it contains) remains valid
+    for a default term of 1 day.
+    """
     access_token = models.OneToOneField('oauth2_provider.AccessToken', primary_key=True)
     sapelli_project = models.ForeignKey(SapelliProject)
     
     @classmethod
     def create(cls, user, sapelli_project, days_valid=1):
-        a_t = AccessToken.objects.create(
-            user=user,
-            application=Application.objects.get(client_id=settings.SAPELLI_CLIENT_ID),
-            expires=timezone.now() + timedelta(days=days_valid),
-            token=generate_token(),
-            scope='read')
+        """
+        Creates and saves a new SAPDownloadQRLink instance.
+
+        Parameter
+        ---------
+        user : geokey.users.models.User
+            User who requests the QR code.
+        sapelli_project : SapelliProject:
+            The project we want to offer the SAP download link for.
+        days_valid : int
+            the number of days the link will remain usable.
+
+        Returns
+        -------
+        SAPDownloadQRLink
+            The SAPDownloadQRLink instance
+            
+        Raises
+        ------
+        SapelliException:
+            In case of a configuration problem.
+        """
+        try:
+            a_t = AccessToken.objects.create(
+                user=user,
+                application=Application.objects.get(client_id=settings.SAPELLI_CLIENT_ID),
+                expires=timezone.now() + timedelta(days=days_valid),
+                token=generate_token(),
+                scope='read')
+        except (AttributeError, Application.DoesNotExist) as e:
+            raise SapelliException('geokey-sapelli is not properly configured as an application on the server: ' + str(e))
         qr_link = cls(access_token = a_t, sapelli_project = sapelli_project)
         qr_link.save()
         return qr_link
