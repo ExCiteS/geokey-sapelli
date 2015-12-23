@@ -43,9 +43,7 @@ def create_implicit_fields(category, stores_end_time=False):
 def create_project(sapelli_project_info, user, sap_file_path=None):
     geokey_project = Project.create(
         name = sapelli_project_info.get('display_name'),
-        description = ('Sapelli project id: %s;\nSapelli project fingerprint: %s;' % (
-            sapelli_project_info.get('sapelli_id'),
-            sapelli_project_info.get('sapelli_fingerprint'))),
+        description = '',
         isprivate = True,
         everyone_contributes = EVERYONE_CONTRIB.false,
         creator = user

@@ -26,10 +26,15 @@
 			{% for sapelli_project in sapelli_projects %}
 				<li>
 					<h4>{{ sapelli_project.geokey_project.name }}</h4>
-					{% if sapelli_project.geokey_project.description %}
-					<p>{{sapelli_project.geokey_project.description|linebreaks}}</p>
-					{% endif %}
+					<p>
+						{% if sapelli_project.geokey_project.description %}
+							{{sapelli_project.geokey_project.description|linebreaks}}
+						{% else %}
+							<br/>
+						{% endif %}
+					</p>
 					<h4>
+						<a href="" class="label label-info" data-toggle="modal" data-target="#info-dialog-{{ sapelli_project.geokey_project.id }}">Info</a>
 						<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="label label-info">Upload data</a>
 						{% if sapelli_project.sap_path %}
 						<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="label label-info">Download SAP</a>
@@ -57,6 +62,54 @@
 									<h4 style="padding-top: 0.25em;">
 										<a href="" class="label label-info" onClick="hideQRDialog({{ sapelli_project.geokey_project.id }}); return false;">Hide code</a>
 										<a href="" class="label label-info" onClick="revokeQR({{ sapelli_project.geokey_project.id }}); return false;" style="background-color: #DC7171;">Revoke code</a>
+									</h4>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="modal fade" id="info-dialog-{{ sapelli_project.geokey_project.id }}" tabindex="-1" role="dialog" aria-labelledby="infoDialogLabel-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
+						<div class="modal-dialog modal-sm">
+							<div class="modal-content">
+								<div class="modal-header">
+									<button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide code">&times;</button>
+									<h6 class="item-info">Sapelli project</h6>
+									<h4 id="infoDialogLabel-{{ sapelli_project.geokey_project.id }}" class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
+								</div>
+								<div class="modal-body">
+									<table class="table-striped">
+										<tbody>
+											<tr>
+												<td><b>Name:&nbsp;</b></td>
+												<td>{{ sapelli_project.name }}</td>
+											</tr>
+											<tr>
+												<td><b>Variant:&nbsp;</b></td>
+												<td>{% if sapelli_project.variant %}{{ sapelli_project.variant }}{% endif %}</td>
+											</tr>
+											<tr>
+												<td><b>Version:&nbsp;</b></td>
+												<td>{{ sapelli_project.version }}</td>
+											</tr>
+											<tr>
+												<td><b>Geokey ID:&nbsp;</b></td>
+												<td>{{ sapelli_project.geokey_project.id }}</td>
+											</tr>
+											<tr>
+												<td><b>Sapelli ID:&nbsp;</b></td>
+												<td>{{ sapelli_project.sapelli_id }}</td>
+											</tr>
+											<tr>
+												<td><b>Fingerprint:&nbsp;</b></td>
+												<td>{{ sapelli_project.sapelli_fingerprint }}</td>
+											</tr>
+											<tr>
+												<td><b>Model ID:&nbsp;</b></td>
+												<td>{{ sapelli_project.sapelli_model_id }}</td>
+											</tr>
+										</tbody>
+									</table>
+									<h4 style="padding-top: 0.25em; text-align: center">
+										<a href="" class="label label-info" onClick="$('#info-dialog-' + projectID).modal('hide'); return false;">Close</a>
 									</h4>
 								</div>
 							</div>
