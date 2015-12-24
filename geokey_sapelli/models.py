@@ -42,21 +42,6 @@ class SapelliProject(models.Model):
     
     objects = SapelliProjectManager()
 
-    def __init__(self, *args, **kwargs):
-        super(SapelliProject, self).__init__(*args, **kwargs)
-        # set missing values (haven't found a way to do this at migration time):
-        if self.name == '':
-            self.name = self.geokey_project.name
-        if self.sapelli_model_id == -1:
-            # see: https://github.com/ExCiteS/Sapelli/blob/master/Library/src/uk/ac/ucl/excites/sapelli/collector/CollectorClient.java
-            self.sapelli_model_id = ((self.sapelli_fingerprint & 0xffffffffl) << 24) + self.sapelli_id
-        # set missing sapelli_model_schema_number values on forms:
-        if self.forms.values():
-            min_category_id = min(map(lambda (f): f['category_id'], self.forms.values()))
-            for form in self.forms.all():
-                if form.sapelli_model_schema_number == -1:
-                    form.sapelli_model_schema_number = form.category.id - min_category_id + 1 #(due to Heartbeat Schema)
-
     def delete(self):
         # Remove SAP file:
         try:
