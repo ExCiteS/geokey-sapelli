@@ -1,11 +1,14 @@
+import shutil
 import time
 import copy
 import xml.etree.ElementTree as ET
 from os.path import dirname, normpath, abspath, join, exists, isfile
 from unittest import TestCase
 
+from django.core.files.storage import default_storage
 from django.core.files import File
 from django.conf import settings
+from django.template.defaultfilters import slugify
 
 from geokey.users.tests.model_factories import UserFactory
 from geokey.categories.tests.model_factories import CategoryFactory
@@ -108,6 +111,9 @@ def with_stacktrace(func, *args):
             raise e
 
 class TestSapelliLoader(TestCase):
+    def setUp(self):
+        self.user = UserFactory.create()
+
     def tearDown(self):
         # delete project(s):
         for sapelli_project in SapelliProject.objects.filter(sapelli_id__in=[horniman_sapelli_project_info['sapelli_id'], 1337]):
@@ -115,10 +121,29 @@ class TestSapelliLoader(TestCase):
                 sapelli_project.geokey_project.delete() # will also delete sapelli_project
             except BaseException, e:
                 pass
+        # delete sapelli/user folder
+        try:
+            shutil.rmtree(join(default_storage.path('sapelli'), slugify(str(self.user.id) + '_' + self.user.display_name), ''))
+        except BaseException, e:
+            pass
+        # delete user:
+        try:
+            self.user.delete()
+        except BaseException, e:
+            pass
 
     def test_get_sapelli_dir_path(self):
-        self.assertTrue(exists(get_sapelli_dir_path()))
+        sapelli_dir_path = get_sapelli_dir_path()
 
+        self.assertEqual(sapelli_dir_path, join(default_storage.path('sapelli'), ''))
+        self.assertTrue(exists(sapelli_dir_path))
+        
+    def test_get_sapelli_dir_path_for_user(self):
+        sapelli_user_dir_path = get_sapelli_dir_path(self.user)
+
+        self.assertEqual(sapelli_user_dir_path, join(default_storage.path('sapelli'), slugify(str(self.user.id) + '_' + self.user.display_name), ''))
+        self.assertTrue(exists(sapelli_user_dir_path))
+        
     def test_check_sap_file_non_existing(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/' + str(time.time())))
         self.assertRaises(SapelliSAPException, check_sap_file, path)
@@ -137,7 +162,7 @@ class TestSapelliLoader(TestCase):
         
     def test_get_sapelli_project_info_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
-        sapelli_project_info = with_stacktrace(get_sapelli_project_info, path)
+        sapelli_project_info = with_stacktrace(get_sapelli_project_info, path, self.user)
         sapelli_project_info.pop('installation_path', None)
         self.assertEquals(sapelli_project_info, horniman_sapelli_project_info)
 
@@ -147,7 +172,7 @@ class TestSapelliLoader(TestCase):
     def test_load_from_sap_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         file = File(open(path, 'rb'))
-        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
+        sapelli_project = with_stacktrace(load_from_sap, file, self.user)
         self.assertEqual(sapelli_project.name, horniman_sapelli_project_info['name'])
         self.assertEqual(sapelli_project.version, horniman_sapelli_project_info['version'])
         self.assertEqual(sapelli_project.geokey_project.name, horniman_sapelli_project_info['display_name'])
@@ -158,7 +183,7 @@ class TestSapelliLoader(TestCase):
     def test_load_from_sap_complex(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Complex.sap'))
         file = File(open(path, 'rb'))
-        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
+        sapelli_project = with_stacktrace(load_from_sap, file, self.user)
         self.assertEqual(sapelli_project.name, horniman_sapelli_project_info['name'])
         self.assertEqual(sapelli_project.variant, '[Test]')
         self.assertEqual(sapelli_project.version, '2.0')
@@ -169,7 +194,7 @@ class TestSapelliLoader(TestCase):
     def test_load_from_sap_unicode(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.sap'))
         file = File(open(path, 'rb'))
-        sapelli_project = with_stacktrace(load_from_sap, file, UserFactory.create())
+        sapelli_project = with_stacktrace(load_from_sap, file, self.user)
         self.assertEqual(sapelli_project.name, 'TextUnicode')
         self.assertEqual(sapelli_project.variant, u'\u6d4b\u8bd5')
         self.assertEqual(sapelli_project.version, '0.23')
@@ -180,7 +205,7 @@ class TestSapelliLoader(TestCase):
     def test_load_from_sap_no_location(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/NoLocation.sap'))
         file = File(open(path, 'rb'))
-        self.assertRaises(SapelliSAPException, load_from_sap, file, UserFactory.create())
+        self.assertRaises(SapelliSAPException, load_from_sap, file, self.user)
 
 
 class TestProjectMapper(TestCase):

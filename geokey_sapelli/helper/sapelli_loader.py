@@ -8,6 +8,7 @@ from zipfile import ZipFile, BadZipfile
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
+from django.template.defaultfilters import slugify
 
 from ..models import SapelliProject
 from .project_mapper import create_project
@@ -21,10 +22,15 @@ from .sapelli_exceptions import (
 import geokey_sapelli
 
 
-def get_sapelli_dir_path():
+def get_sapelli_dir_path(user=None):
     """
     Creates the Sapelli working directory.
 
+    Parameters
+    ----------
+    user : geokey.users.models.User
+        User who uploaded the project (optional).
+    
     Returns
     -------
     str:
@@ -35,7 +41,9 @@ def get_sapelli_dir_path():
     SapelliException:
         When the working directory could not be created.
     """
-    sapelli_dir_path = default_storage.path(os.path.join('sapelli', '')) # joining with '' adds the trailing / or \
+    sapelli_dir_path = os.path.join(default_storage.path('sapelli'), '') # joining with '' adds the trailing / or \
+    if user:
+        sapelli_dir_path = os.path.join(sapelli_dir_path, slugify(str(user.id) + '_' + user.display_name), '')
     if not os.path.exists(sapelli_dir_path):
         # Create the directory if it doesn't exist:
         try:
@@ -53,7 +61,9 @@ def load_from_sap(sap_file, user):
     ----------
     sap_file : django.core.files.File
         Uploaded (suspected) SAP file.
-
+    user : geokey.users.models.User
+        User who uploaded the project.
+        
     Returns
     -------
     SapelliProject:
@@ -75,7 +85,7 @@ def load_from_sap(sap_file, user):
     # Store copy of file on disk (as it probably is an "in memory" file uploaded in an HTTP request):
     try:
         filename, extension = os.path.splitext(os.path.basename(sap_file.name))
-        relative_sap_file_path = default_storage.save(os.path.join(get_sapelli_dir_path(), 'SAPs', '') + filename + extension, ContentFile(sap_file.read()))
+        relative_sap_file_path = default_storage.save(os.path.join(get_sapelli_dir_path(user), 'SAPs', '') + filename + extension, ContentFile(sap_file.read()))
         sap_file_path = default_storage.path(relative_sap_file_path)
     except BaseException, e:
         raise SapelliSAPException('Failed to store uploaded file: ' + str(e))
@@ -85,7 +95,7 @@ def load_from_sap(sap_file, user):
         # Check if it is a valid SAP file:
         check_sap_file(sap_file_path)
         # Load Sapelli project (extract+parse) using SapColCmdLn Java program:
-        sapelli_project_info = get_sapelli_project_info(sap_file_path)
+        sapelli_project_info = get_sapelli_project_info(sap_file_path, user)
         
         # Check for duplicates:
         if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
@@ -176,7 +186,7 @@ def get_sapelli_jar_path():
     return sapelli_jar_path
             
 
-def get_sapelli_project_info(sap_file_path):
+def get_sapelli_project_info(sap_file_path, user):
     """
     Uses the Sapelli Collector cmdlnd client (Java) to extract the SAP file and parse the PROJECT.xml.
 
@@ -184,7 +194,9 @@ def get_sapelli_project_info(sap_file_path):
     ----------
     sap_file_path : str
         Path to Sapelli project file.
-
+    user : geokey.users.models.User
+        User who uploaded the project (optional).
+    
     Returns
     -------
     dict:
@@ -204,7 +216,7 @@ def get_sapelli_project_info(sap_file_path):
     try:
         command = 'java -cp %s uk.ac.ucl.excites.sapelli.collector.SapColCmdLn -p %s -load "%s" -geokey' % (
             get_sapelli_jar_path(),
-            get_sapelli_dir_path(),
+            get_sapelli_dir_path(user),
             sap_file_path
         )
         std_output = commands.getstatusoutput(command)[1] # may fail if we somehow can't run java at all(?)
