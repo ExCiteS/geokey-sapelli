@@ -22,7 +22,7 @@ Extension for `GeoKey <https://github.com/ExCiteS/geokey>`_ to add support for `
 Installation instructions
 -------------------------
 
-*Note:* This guide assumes you have a working `GeoKey <https://github.com/ExCiteS/geokey>`_ installation, and also have `Java <http://www.oracle.com/technetwork/java/javase/downloads>`_ (JRE or JSK, version 7 or up) installed.
+*Note:* This guide assumes you have a working `GeoKey <https://github.com/ExCiteS/geokey>`_ installation, and also have `Java <http://www.oracle.com/technetwork/java/javase/downloads>`_ (JRE or JDK, version 7 or up) installed.
 
 
 1. Clone the repository:
