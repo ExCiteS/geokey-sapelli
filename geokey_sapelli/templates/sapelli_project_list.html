@@ -67,6 +67,7 @@
 							</div>
 						</div>
 					</div>
+					{% endif %}
 					<div class="modal fade" id="info-dialog-{{ sapelli_project.geokey_project.id }}" tabindex="-1" role="dialog" aria-labelledby="infoDialogLabel-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
 						<div class="modal-dialog modal-sm">
 							<div class="modal-content">
@@ -115,7 +116,6 @@
 							</div>
 						</div>
 					</div>
-					{% endif %}
 			{% endfor %}
 				<li>
 					{% if not sapelli_projects %}
