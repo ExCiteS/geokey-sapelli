@@ -18,7 +18,7 @@ def set_missing_field_values(apps, schema_editor):
         # set missing sapelli_model_schema_number values on forms:
         if sapelli_project.forms.values():
             min_category_id = min(map(lambda (f): f['category_id'], sapelli_project.forms.values()))
-            for form in self.forms.all():
+            for form in sapelli_project.forms.all():
                 if form.sapelli_model_schema_number == -1:
                     form.sapelli_model_schema_number = form.category.id - min_category_id + 1 #(due to Heartbeat Schema)
                     form.save()
