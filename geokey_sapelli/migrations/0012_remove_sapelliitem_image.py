@@ -14,12 +14,12 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('geokey_sapelli', '0011_dir_path_sap_path'),
-        ('categories', '0014_category_symbol_lookupvalue_symbol'),
+        ('categories', '0015_lookupvalue_symbol'),
     ]
-    
+
     operations = [
         migrations.RunPython(copy_image_to_lookup_field),
-        
+
         migrations.RemoveField(
             model_name='sapelliitem',
             name='image',
