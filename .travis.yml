@@ -26,9 +26,9 @@ before_script:
   - psql template1 postgres -c 'create extension hstore;'
   - psql -c 'create database geokey;' -U postgres
   - psql -U postgres -d geokey -c "create extension postgis;"
+  - pip install https://github.com/ExCiteS/geokey/archive/lookupvalue-symbology.zip
   - pip install -r travis/requirements.txt
   - pip install -e .
-  - pip install https://github.com/ExCiteS/geokey/archive/lookupvalue-symbology.zip
   - python travis/manage.py migrate
 
 script:
