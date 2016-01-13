@@ -20,7 +20,7 @@ install:
   - export CPLUS_INCLUDE_PATH=/usr/include/gdal
   - pip install --upgrade pip
   - sudo apt-get update && sudo apt-get install oracle-java8-installer
-  - wget https://github.com/ExCiteS/Sapelli/releases/download/v2.0.0-beta-16.5/sapelli-collector-cmdln-2.0.0-beta-16.5-jar-with-dependencies.jar -O lib/sapelli-collector-cmdln-with-dependencies.jar
+  - wget https://github.com/ExCiteS/Sapelli/releases/download/v2.0.0-beta-17/sapelli-collector-cmdln-2.0.0-beta-17-jar-with-dependencies.jar -O lib/sapelli-collector-cmdln-with-dependencies.jar
 
 before_script:
   - psql template1 postgres -c 'create extension hstore;'
