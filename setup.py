@@ -10,6 +10,7 @@ name = 'geokey-sapelli'
 version = '.'.join(map(str, VERSION_PARTS))
 repository = join('https://github.com/ExCiteS', name)
 
+
 def get_install_requires():
     """
     parse requirements.txt, ignore links, exclude comments
