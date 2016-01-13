@@ -17,7 +17,7 @@ def get_install_requires():
     """
     requirements = list()
     for line in open('requirements.txt').readlines():
-        # skip to next iteration if comment or empty line
+        # skip to next iteration if comment, Git repository or empty line
         if line.startswith('#') or line.startswith('git+https') or line == '':
             continue
         # add line to requirements
