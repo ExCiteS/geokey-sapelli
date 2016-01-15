@@ -104,7 +104,7 @@ class SapelliProject(models.Model):
         csv_file : django.core.files.File
             The file that was uploaded.
         form_category_id : int
-            optioanlly identifies the GeoKey category backing the SapelliForm
+            optionally identifies the GeoKey category backing the SapelliForm
             which generated the data in the CSV file. This is only really used
             if the CSV file header does not contain Form identification info
             (i.e. modelID & modelSchemaNumber).
