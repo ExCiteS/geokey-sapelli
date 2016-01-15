@@ -39,7 +39,7 @@ urlpatterns = patterns(
         ProjectUploadAPI.as_view(),
         name='project_upload_api'),
     url(
-        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/csv_upload/(?P<category_id>[0-9]+)/$',
+        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/csv_upload/$',
         DataCSVUploadAPI.as_view(),
         name='data_csv_upload_api'),
     url(
