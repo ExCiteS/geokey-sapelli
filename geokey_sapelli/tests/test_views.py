@@ -337,6 +337,7 @@ class LoginAPITest(TestCase):
         factory = RequestFactory()
         request = factory.post(url, data)
         response = view(request)
+        response.render()
 
         response_json = json.loads(response.content)
         self.assertEqual(response_json.get('token_type'), 'Bearer')
@@ -354,6 +355,7 @@ class LoginAPITest(TestCase):
         request.method = 'GET'
         request.user = AnonymousUser()
         response = view(request)
+        response.render()
         
         response_json = json.loads(response.content)
         self.assertFalse(response_json.get('logged_in'))
@@ -366,6 +368,7 @@ class LoginAPITest(TestCase):
         request.method = 'GET'
         request.user = self.user
         response = view(request)
+        response.render()
         
         response_json = json.loads(response.content)
         self.assertTrue(response_json.get('logged_in'))
