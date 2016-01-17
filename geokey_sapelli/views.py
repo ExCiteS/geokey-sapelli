@@ -1,4 +1,5 @@
 import os
+import json
 import qrcode
 
 from StringIO import StringIO
@@ -10,13 +11,14 @@ from django.core.urlresolvers import reverse
 from django.core.servers.basehttp import FileWrapper
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 
 from braces.views import LoginRequiredMixin
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from oauth2_provider.models import AccessToken
 from oauth2_provider.views.base import TokenView
 
 from geokey.core.decorators import (
@@ -244,7 +246,7 @@ class DataCSVUpload(AbstractSapelliView):
 #
 # ############################################################################
 
-class LoginAPI(TokenView):
+class LoginAPI(TokenView, APIView):
     """
     This API allows Sapelli Collector instances (running on smartphones) to
     login to the GeoKey server without the need for full OAuth-style
@@ -256,7 +258,7 @@ class LoginAPI(TokenView):
     GeoKey servers. Instead we let the geokey-sapelli extension play the role
     of the application/client (registered to the GeoKey server, as explained in
     README.rst) and let the smartphone app authenticate users through this API.
-    """    
+    """
     def post(self, request, *args, **kwargs):
         """
         Handles POST requests for user authentication.
@@ -271,26 +273,58 @@ class LoginAPI(TokenView):
         -------
         If username (which is actually an email address) and password are
         correct/authorised, the response is a JSON object containing the OAuth
-        access_token, if not the response is a JSON object containing error information.
-
-        Raises
-        ------
-        TODO
+        access_token (+ 'expires_at' timestamp), if not the response is a JSON object
+        containing error information.
         """
-        # ensure POST request is mutable:
-        # (this isn't always the case, see http://stackoverflow.com/q/12611345)
         try:
-            if not (request.POST._mutable):
-                request.POST = request.POST.copy()
+            # Create new POST HttpRequest (the request we got is a rest_framework.request.Request) and copy the POST parameters:
+            httpRequest = HttpRequest()
+            httpRequest.method = 'POST'
+            httpRequest.POST = request.POST.copy()
+
+            # Add client_id & grant_type parameters:
             try:
-                request.POST['client_id'] = settings.SAPELLI_CLIENT_ID
+                httpRequest.POST['client_id'] = settings.SAPELLI_CLIENT_ID
             except AttributeError, e:
                 raise SapelliException('geokey-sapelli is not properly configured as an application on the server: ' + str(e))
-            request.POST['grant_type'] = 'password'
+            httpRequest.POST['grant_type'] = 'password'
             
-            return super(LoginAPI, self).post(request, *args, **kwargs)
+            # Use super class to perform actual login:
+            response = super(LoginAPI, self).post(httpRequest, *args, **kwargs)
+            
+            # Check response:
+            if response.status_code != 200:
+                # return response as-is:
+                return response
+            try:
+                # add expires time:
+                response_json = json.loads(response.content)
+                access_token = AccessToken.objects.get(token=response_json.get('access_token'))
+                response_json['expires_at'] = access_token.expires.isoformat()
+                return Response(response_json)
+            except BaseException, e:
+                # return response as-is:
+                return response
         except BaseException, e:
             return Response({'error': str(e)})
+
+    def get(self, request):
+        """
+        Handles GET requests which are used to checked if the user is (still) logged in
+        (i.e. if the access_token he/she has is still valid).
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+
+        Returns
+        -------
+        JSON object with boolean 'logged_in' value indicating
+        whether the user is logged in or not.
+        """
+        return Response({'logged_in': (not request.user.is_anonymous())})
+
 
 class ProjectDescriptionAPI(APIView):
     """
@@ -377,7 +411,7 @@ class ProjectUploadAPI(APIView):
 class DataCSVUploadAPI(APIView):
     """
     API Endpoint for uploading Sapelli records as CSV.
-    api/sapelli/projects/xxxx/csv_upload/
+    api/sapelli/projects/pppp/csv_upload/
     """
     @handle_exceptions_for_ajax
     def post(self, request, project_id):
@@ -418,12 +452,14 @@ class DataCSVUploadAPI(APIView):
 
 class FindObservationAPI(APIView):
     """
-    TODO
+    API Endpoint for requesting the observation_id of a Sapelli record that is
+    assumed to exist on the server.
+    api/sapelli/projects/pppp/find_observation/cccc/ssss/dddd/
     """
     @handle_exceptions_for_ajax
     def get(self, request, project_id, category_id, sapelli_record_start_time, sapelli_record_device_id):
         """
-        TODO
+        GET request handler to look-up the Observation matching the given parameters.
 
         Parameter
         ---------
@@ -434,17 +470,14 @@ class FindObservationAPI(APIView):
         category_id : int
             Identifies the category on the data base
         sapelli_record_start_time : string
-            ISO 8601 timestamp with ms accuracy and UTC offset
+            the "StartTime" of the Sapelli record, formatted as an
+            ISO 8601 timestamp with ms accuracy and UTC offset.
         sapelli_record_device_id : int
-            Sapelli-generated device id
+            Sapelli-generated device id (unsigned 32 bit integer)
 
         Returns
         -------
-        TODO
-
-        Raises
-        ------
-        TODO
+        the id of the Observation or an error.
         """
         if request.user.is_anonymous():
             raise PermissionDenied('API access not authorised, please login.')

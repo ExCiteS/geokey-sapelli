@@ -342,8 +342,33 @@ class LoginAPITest(TestCase):
         self.assertEqual(response_json.get('token_type'), 'Bearer')
         self.assertEqual(response_json.get('scope'), 'read write')
         self.assertEqual(response_json.get('expires_in'), 36000)
+        self.assertIsNotNone(response_json.get('expires_at'))
         self.assertIsNotNone(response_json.get('access_token'))
         self.assertIsNotNone(response_json.get('refresh_token'))
+        
+    def test_get_with_anonymous(self):
+        view = LoginAPI.as_view()
+        url = reverse('geokey_sapelli:login_api')
+
+        request = HttpRequest()
+        request.method = 'GET'
+        request.user = AnonymousUser()
+        response = view(request)
+        
+        response_json = json.loads(response.content)
+        self.assertFalse(response_json.get('logged_in'))
+
+    def test_get_with_user(self):
+        view = LoginAPI.as_view()
+        url = reverse('geokey_sapelli:login_api')
+
+        request = HttpRequest()
+        request.method = 'GET'
+        request.user = self.user
+        response = view(request)
+        
+        response_json = json.loads(response.content)
+        self.assertTrue(response_json.get('logged_in'))
 
 
 class SAPDownloadAPITest(TestCase):
