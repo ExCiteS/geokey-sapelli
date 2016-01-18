@@ -92,7 +92,7 @@
 												<td>{{ sapelli_project.version }}</td>
 											</tr>
 											<tr>
-												<td><b>Geokey ID:&nbsp;</b></td>
+												<td><b>GeoKey ID:&nbsp;</b></td>
 												<td>{{ sapelli_project.geokey_project.id }}</td>
 											</tr>
 											<tr>
@@ -106,6 +106,22 @@
 											<tr>
 												<td><b>Model ID:&nbsp;</b></td>
 												<td>{{ sapelli_project.sapelli_model_id }}</td>
+											</tr>
+											<tr>
+												<td><b>Forms:</b></td>
+												<td><ul>
+													{% for form in sapelli_project.forms.all %}
+													<li>{{ form.sapelli_id }} (GeoKey category ID: {{ form.category.id }})</li>
+													{% endfor %}
+												</ul></td>
+											</tr>
+											<tr>
+												<td><b>Upload at:&nbsp;</b></td>
+												<td>{{ sapelli_project.geokey_project.created_at }}</td>
+											</tr>
+											<tr>
+												<td><b>Upload by:&nbsp;</b></td>
+												<td>{{ sapelli_project.geokey_project.creator.display_name }}</td>
 											</tr>
 										</tbody>
 									</table>
