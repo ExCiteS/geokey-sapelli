@@ -18,7 +18,7 @@
     {% include 'snippets/messages.html' %}
 
     <div class="row">
-		{% include 'snippets/sapelli_menu.html' %}
+        {% include 'snippets/sapelli_menu.html' %}
 
         <div class="col-sm-8">
             <h3 class="header">Upload data to project {{ sapelli_project.geokey_project.name }}</h3>
@@ -28,12 +28,12 @@
                 <div class="form-group">
                     <label for="form_id" class="control-label">Select form for data upload</label>
                     <select name="form_category_id" id="form_id" class="form-control">
-                        {% for form in sapelli_project.forms.all %}
                         <option value="">(none)</option>
+                        {% for form in sapelli_project.forms.all %}
                         <option value="{{ form.category.id }}">{{ form.sapelli_id }}</option>
                         {% endfor %}
                     </select>
-					Not required if CSV file header contains form identification (modelID &amp; modelSchemaNumber).
+                    Not required if CSV file header contains form identification (modelID &amp; modelSchemaNumber).
                 </div>
 
                 <div class="form-group">
