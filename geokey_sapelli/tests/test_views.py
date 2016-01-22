@@ -10,7 +10,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage.fallback import FallbackStorage
-from django.conf import settings
 
 from django.test.client import RequestFactory
 
@@ -19,7 +18,6 @@ from oauth2_provider.models import AccessToken
 from rest_framework.test import force_authenticate
 
 from geokey import version
-from geokey.applications.tests.model_factories import ApplicationFactory
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 
@@ -28,6 +26,7 @@ from .. import __version__
 from ..models import SapelliProject, SAPDownloadQRLink
 from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
 from ..helper.dynamic_menu import MenuEntry
+
 
 class ProjectListTest(TestCase):
     def setUp(self):
@@ -97,7 +96,7 @@ class ProjectUploadTest(TestCase):
         # delete project(s):
         for sapelli_project in SapelliProject.objects.filter(sapelli_id=1111):
             try:
-                sapelli_project.geokey_project.delete() # will also delete sapelli_project
+                sapelli_project.geokey_project.delete()  # will also delete sapelli_project
             except BaseException:
                 pass
 

@@ -1,13 +1,10 @@
 import shutil
 import time
-import copy
-import xml.etree.ElementTree as ET
 from os.path import dirname, normpath, abspath, join, exists, isfile
 from unittest import TestCase
 
 from django.core.files.storage import default_storage
 from django.core.files import File
-from django.conf import settings
 from django.template.defaultfilters import slugify
 
 from geokey.users.tests.model_factories import UserFactory
@@ -17,7 +14,7 @@ from geokey.categories.models import Category, NumericField, DateTimeField
 from ..helper.sapelli_loader import get_sapelli_dir_path, get_sapelli_jar_path, load_from_sap, check_sap_file, get_sapelli_project_info
 from ..models import SapelliProject
 from ..helper.project_mapper import create_project, create_implicit_fields
-from ..helper.sapelli_exceptions import SapelliException, SapelliSAPException, SapelliXMLException, SapelliDuplicateException
+from ..helper.sapelli_exceptions import SapelliSAPException, SapelliXMLException, SapelliDuplicateException
 
 """
 Output of get_sapelli_project_info() for Horniman.sap,
@@ -109,6 +106,7 @@ def with_stacktrace(func, *args):
             raise SapelliSAPException(str(e) + '\n' + e.java_stacktrace)
         else:
             raise e
+
 
 class TestSapelliLoader(TestCase):
     def setUp(self):

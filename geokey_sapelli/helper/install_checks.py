@@ -10,6 +10,7 @@ from .sapelli_loader import get_sapelli_dir_path, get_sapelli_jar_path
 
 MINIMAL_JAVA_VERSION = '1.7.0'
 
+
 def check_extension():
     # Check if SAPELLI_CLIENT_ID value is set in settings.py:
     try:
@@ -32,6 +33,6 @@ def check_extension():
     except BaseException, e:
         raise SapelliException('could not run java command (%s).' % str(e))
     # Check if there is a sapelli working directory:
-    get_sapelli_dir_path() # raises SapelliException
+    get_sapelli_dir_path()  # raises SapelliException
     # Check if we have the sapelli JAR:
-    get_sapelli_jar_path() # raises SapelliException
+    get_sapelli_jar_path()  # raises SapelliException
