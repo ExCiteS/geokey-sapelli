@@ -1,7 +1,6 @@
 import commands
 import json
 import os
-import xml.etree.ElementTree as ET
 
 from zipfile import ZipFile, BadZipfile
 
@@ -15,7 +14,6 @@ from .project_mapper import create_project
 from .sapelli_exceptions import (
     SapelliException,
     SapelliSAPException,
-    SapelliXMLException,
     SapelliDuplicateException
 )
 
@@ -30,18 +28,18 @@ def get_sapelli_dir_path(user=None):
     ----------
     user : geokey.users.models.User
         User who uploaded the project (optional).
-    
+
     Returns
     -------
     str:
         Absolute path to the Sapelli working directory.
-    
+
     Raises
     ------
     SapelliException:
         When the working directory could not be created.
     """
-    sapelli_dir_path = os.path.join(default_storage.path('sapelli'), '') # joining with '' adds the trailing / or \
+    sapelli_dir_path = os.path.join(default_storage.path('sapelli'), '')  # joining with '' adds the trailing / or \
     if user:
         sapelli_dir_path = os.path.join(sapelli_dir_path, slugify(str(user.id) + '_' + user.display_name), '')
     if not os.path.exists(sapelli_dir_path):
@@ -63,12 +61,12 @@ def load_from_sap(sap_file, user):
         Uploaded (suspected) SAP file.
     user : geokey.users.models.User
         User who uploaded the project.
-        
+
     Returns
     -------
     SapelliProject:
         SapelliProject instance for the parsed project.
-    
+
     Raises
     ------
     SapelliException:
@@ -81,7 +79,7 @@ def load_from_sap(sap_file, user):
     # Check if we got a file at all:
     if sap_file is None:
         raise SapelliSAPException('No file provided.')
-    
+
     # Store copy of file on disk (as it probably is an "in memory" file uploaded in an HTTP request):
     try:
         filename, extension = os.path.splitext(os.path.basename(sap_file.name))
@@ -96,7 +94,7 @@ def load_from_sap(sap_file, user):
         check_sap_file(sap_file_path)
         # Load Sapelli project (extract+parse) using SapColCmdLn Java program:
         sapelli_project_info = get_sapelli_project_info(sap_file_path, user)
-        
+
         # Check for duplicates:
         if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
                 user,
@@ -110,7 +108,7 @@ def load_from_sap(sap_file, user):
         except BaseException, e:
             raise SapelliSAPException(str(e))
     except BaseException, e:
-        try: # Remove file:
+        try:  # Remove file:
             os.remove(sap_file_path)
         except BaseException:
             pass
@@ -119,7 +117,7 @@ def load_from_sap(sap_file, user):
     # When successful return the SapelliProject object:
     return geokey_project.sapelli_project
 
-    
+
 def check_sap_file(sap_file_path):
     """
     Checks if the file at the given path is a valid Sapelli project file.
@@ -138,9 +136,9 @@ def check_sap_file(sap_file_path):
         if not os.path.isfile(sap_file_path):
             raise SapelliSAPException('The file does not exist.')
         # Check if it is a ZIP file:
-        zip = ZipFile(sap_file_path) # throws BadZipfile
+        zip = ZipFile(sap_file_path)  # throws BadZipfile
         # Check if it contains PROJECT.xml:
-        zip.getinfo('PROJECT.xml') # throws KeyError
+        zip.getinfo('PROJECT.xml')  # throws KeyError
     except BadZipfile:
         raise SapelliSAPException('The file is not a valid Sapelli project file (*.sap, *.excites or *.zip).')
     except KeyError:
@@ -160,7 +158,7 @@ def get_sapelli_jar_path():
     -------
     str:
         Absolute path to the Sapelli jar file.
-    
+
     Raises
     ------
     SapelliException:
@@ -177,14 +175,14 @@ def get_sapelli_jar_path():
                 os.path.dirname(os.path.abspath(geokey_sapelli.__path__[0])),
                 'lib',
                 'sapelli-collector-cmdln-with-dependencies.jar'))
-    
+
     # Check if the Sapelli jar is actually there:
     if not os.path.isfile(sapelli_jar_path):
         raise SapelliException('Cannot find Sapelli jar file at path: %s' % sapelli_jar_path)
-        
+
     # Return path:
     return sapelli_jar_path
-            
+
 
 def get_sapelli_project_info(sap_file_path, user):
     """
@@ -196,12 +194,12 @@ def get_sapelli_project_info(sap_file_path, user):
         Path to Sapelli project file.
     user : geokey.users.models.User
         User who uploaded the project (optional).
-    
+
     Returns
     -------
     dict:
         the "sapelli_project_info" dictionary describing the loaded project.
-    
+
     Raises
     ------
     SapelliException:
@@ -219,9 +217,9 @@ def get_sapelli_project_info(sap_file_path, user):
             get_sapelli_dir_path(user),
             sap_file_path
         )
-        std_output = commands.getstatusoutput(command)[1] # may fail if we somehow can't run java at all(?)
-        return json.loads(std_output) #fails if java/SapColCmdLn output is not valid JSON
-    except SapelliException, se: # coming from get_sapelli_jar_path or get_sapelli_dir_path
+        std_output = commands.getstatusoutput(command)[1]  # may fail if we somehow can't run java at all(?)
+        return json.loads(std_output)  #fails if java/SapColCmdLn output is not valid JSON
+    except SapelliException, se:  # coming from get_sapelli_jar_path or get_sapelli_dir_path
         raise se
     except BaseException, e:
         if std_output is not None:

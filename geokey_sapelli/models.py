@@ -22,6 +22,7 @@ from .helper.sapelli_exceptions import SapelliException, SapelliCSVException
 
 from .helper.csv_helpers import UnicodeDictReader
 
+
 class SapelliProject(models.Model):
     """
     Represents a Sapelli project.
@@ -31,15 +32,15 @@ class SapelliProject(models.Model):
         primary_key=True,
         related_name='sapelli_project'
     )
-    name = models.CharField(max_length=255,default='')
-    variant = models.CharField(max_length=63,null=True)
-    version = models.CharField(max_length=63,default='0')
+    name = models.CharField(max_length=255, default='')
+    variant = models.CharField(max_length=63, null=True)
+    version = models.CharField(max_length=63, default='0')
     sapelli_id = models.IntegerField()
     sapelli_fingerprint = models.IntegerField()
     sapelli_model_id = models.BigIntegerField(default=-1)
-    dir_path = models.CharField(max_length=511,null=True)
-    sap_path = models.CharField(max_length=511,null=True)
-    
+    dir_path = models.CharField(max_length=511, null=True)
+    sap_path = models.CharField(max_length=511, null=True)
+
     objects = SapelliProjectManager()
 
     def delete(self):
@@ -55,11 +56,11 @@ class SapelliProject(models.Model):
             pass
         # Call super delete method:
         super(SapelliProject, self).delete()
-    
+
     def get_description(self):
         """
         Generates a dictionary with all identifying information about the Sapelli/GeoKey project.
-        
+
         Returns
         -------
         dict
@@ -119,7 +120,7 @@ class SapelliProject(models.Model):
             The number of contributions ignored due to being duplicates
         int
             The number of contributions ignored due to lacking location coordinates
-            
+
         Raises
         ------
         SapelliCSVException
@@ -131,24 +132,24 @@ class SapelliProject(models.Model):
             form_category_id = None
         else:
             form_category_id = int(form_category_id)
-        
+
         # Check if we got a file at all:
         if csv_file is None:
             raise SapelliCSVException('No file provided')
 
         # Sapelli Collector produces CSV files in 'utf-8-sig' encoding (= UTF8 with BOM):
         reader = UnicodeDictReader(csv_file, encoding='utf-8-sig')
-        
+
         # Parse modelID & modelSchemaNumber from header row:
         model_id = None
         model_schema_number = None
         try:
             model_id = int(re.match(
-                r"modelID=(?P<model_id_str>[0-9]+)", 
+                r"modelID=(?P<model_id_str>[0-9]+)",
                 [fn for fn in reader.fieldnames if fn.startswith('modelID=')][0])
                 .group('model_id_str'))
             model_schema_number = int(re.match(
-                r"modelSchemaNumber=(?P<model_schema_number_str>[0-9]+)", 
+                r"modelSchemaNumber=(?P<model_schema_number_str>[0-9]+)",
                 [fn for fn in reader.fieldnames if fn.startswith('modelSchemaNumber=')][0])
                 .group('model_schema_number_str'))
         except BaseException:
@@ -181,20 +182,20 @@ class SapelliProject(models.Model):
         else:
             # No Form identification found in CSV header row, nor in request...
             raise SapelliCSVException('No Form identification found in CSV header row, please select appropriate form.')
-        
+
         # Note: only 1 (the first) location field supported:
         location = form.location_fields.all()[0].sapelli_id
-        
+
         imported = 0
         updated = 0
         ignored_duplicate = 0
         ignored_no_loc = 0
-        
+
         for row in reader:
             if not row['%s.Longitude' % location]:
                 ignored_no_loc += 1
                 continue
-            
+
             feature = {
                 "location": {
                     "geometry": '{ "type": "Point", "coordinates": '
@@ -216,7 +217,7 @@ class SapelliProject(models.Model):
                 key = sapelli_field.field.key
 
                 value = row[sapelli_field.sapelli_id]
-                
+
                 if sapelli_field.truefalse:
                     value = 0 if value == 'false' else 1
 
@@ -371,7 +372,7 @@ class SAPDownloadQRLink(models.Model):
     """
     access_token = models.OneToOneField('oauth2_provider.AccessToken', primary_key=True)
     sapelli_project = models.ForeignKey(SapelliProject)
-    
+
     @classmethod
     def create(cls, user, sapelli_project, days_valid=1):
         """
@@ -390,7 +391,7 @@ class SAPDownloadQRLink(models.Model):
         -------
         SAPDownloadQRLink
             The SAPDownloadQRLink instance
-            
+
         Raises
         ------
         SapelliException:
@@ -405,7 +406,7 @@ class SAPDownloadQRLink(models.Model):
                 scope='read')
         except (AttributeError, Application.DoesNotExist) as e:
             raise SapelliException('geokey-sapelli is not properly configured as an application on the server: ' + str(e))
-        qr_link = cls(access_token = a_t, sapelli_project = sapelli_project)
+        qr_link = cls(access_token=a_t, sapelli_project=sapelli_project)
         qr_link.save()
         return qr_link
 

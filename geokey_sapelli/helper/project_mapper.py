@@ -42,11 +42,12 @@ def create_implicit_fields(category, stores_end_time=False):
 
 def create_project(sapelli_project_info, user, sap_file_path=None):
     geokey_project = Project.create(
-        name = sapelli_project_info.get('display_name'),
-        description = '',
-        isprivate = True,
-        everyone_contributes = EVERYONE_CONTRIB.false,
-        creator = user
+        name=sapelli_project_info.get('display_name'),
+        description='',
+        isprivate=True,
+        islocked=True,
+        everyone_contributes=EVERYONE_CONTRIB.false,
+        creator=user
     )
 
     # If anything below fails the geokey_project will be deleted:
@@ -77,7 +78,7 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                 sapelli_id=form.get('sapelli_id'),
                 sapelli_model_schema_number=form.get('sapelli_model_schema_number')
             )
-            
+
             create_implicit_fields(category, stores_end_time=form.get('stores_end_time'))
 
             if not form.get('locations'):
@@ -114,7 +115,7 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                     field=geokey_field,
                     truefalse=field.get('truefalse')
                 )
-                
+
                 if field_type == 'LookupField':
                     # Loop over items:
                     for idx, item in enumerate(field.get('items')):
@@ -144,7 +145,7 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                             number=idx
                         )
     except BaseException, e:
-        try: # delete geokey_project:
+        try:  # delete geokey_project:
             geokey_project.delete()
         except BaseException:
             pass

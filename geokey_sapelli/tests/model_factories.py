@@ -232,7 +232,7 @@ def create_textunicode_sapelli_project(user):
     })
     SapelliLocationFactory.create(**{
         'sapelli_form': form,
-        'sapelli_id':  u'\u4f4d\u7f6e'
+        'sapelli_id': u'\u4f4d\u7f6e'
     })
     sap_text_field = SapelliFieldFactory.create(**{
         'sapelli_form': form,
@@ -259,10 +259,10 @@ def create_qr_link(app, user, project):
         'token': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
         'scope': 'read'
     })
-    
+
     qr_link = SAPDownloadQRLinkFactory.create(**{
         'access_token': access_token,
         'sapelli_project': project
     })
-    
+
     return qr_link

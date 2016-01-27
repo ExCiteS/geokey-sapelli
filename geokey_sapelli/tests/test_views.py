@@ -10,7 +10,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.messages import get_messages
 from django.contrib.messages.storage.fallback import FallbackStorage
-from django.conf import settings
 
 from django.test.client import RequestFactory
 
@@ -19,7 +18,6 @@ from oauth2_provider.models import AccessToken
 from rest_framework.test import force_authenticate
 
 from geokey import version
-from geokey.applications.tests.model_factories import ApplicationFactory
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 
@@ -29,6 +27,7 @@ from ..models import SapelliProject, SAPDownloadQRLink
 from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
 from ..helper.dynamic_menu import MenuEntry
 
+
 class ProjectListTest(TestCase):
     def setUp(self):
         self.view = ProjectList.as_view()
@@ -37,7 +36,7 @@ class ProjectListTest(TestCase):
 
         setattr(self.request, 'session', 'session')
         setattr(self.request, '_messages', FallbackStorage(self.request))
-        
+
     def test_url(self):
         self.assertEqual(reverse('geokey_sapelli:index'), '/admin/sapelli/')
 
@@ -47,7 +46,7 @@ class ProjectListTest(TestCase):
     def test_get_with_user(self):
         sapelli_project = SapelliProjectFactory.create()
         self.request.user = sapelli_project.geokey_project.creator
-        
+
         response = self.view(self.request).render()
         self.assertEqual(response.status_code, 200)
 
@@ -97,10 +96,10 @@ class ProjectUploadTest(TestCase):
         # delete project(s):
         for sapelli_project in SapelliProject.objects.filter(sapelli_id=1111):
             try:
-                sapelli_project.geokey_project.delete() # will also delete sapelli_project
+                sapelli_project.geokey_project.delete()  # will also delete sapelli_project
             except BaseException:
                 pass
-            
+
     def test_url(self):
         self.assertEqual(
             reverse('geokey_sapelli:project_upload'),
@@ -155,6 +154,7 @@ class ProjectUploadTest(TestCase):
         response = self.view(self.request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'], '/admin/account/login/?next=')
+        self.assertEqual(Project.objects.count(), 0)
 
     def test_post_with_user(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
@@ -178,6 +178,8 @@ class ProjectUploadTest(TestCase):
                 kwargs={'project_id': geokey_project.id}
             )
         )
+        self.assertEqual(Project.objects.count(), 1)
+        self.assertEqual(geokey_project.islocked, True)
 
 
 class DataCSVUploadTest(TestCase):
@@ -346,7 +348,7 @@ class LoginAPITest(TestCase):
         self.assertIsNotNone(response_json.get('expires_at'))
         self.assertIsNotNone(response_json.get('access_token'))
         self.assertIsNotNone(response_json.get('refresh_token'))
-        
+
     def test_get_with_anonymous(self):
         view = LoginAPI.as_view()
         url = reverse('geokey_sapelli:login_api')
@@ -356,7 +358,7 @@ class LoginAPITest(TestCase):
         request.user = AnonymousUser()
         response = view(request)
         response.render()
-        
+
         response_json = json.loads(response.content)
         self.assertFalse(response_json.get('logged_in'))
 
@@ -369,7 +371,7 @@ class LoginAPITest(TestCase):
         request.user = self.user
         response = view(request)
         response.render()
-        
+
         response_json = json.loads(response.content)
         self.assertTrue(response_json.get('logged_in'))
 

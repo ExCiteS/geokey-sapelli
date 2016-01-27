@@ -25,13 +25,14 @@ class UnicodeCsvReader(object):
 
     def next(self):
         # read and split the csv row into fields
-        row = self.csv_reader.next() 
+        row = self.csv_reader.next()
         # now decode
         return [unicode(cell, self.encoding) for cell in row]
 
     @property
     def line_num(self):
         return self.csv_reader.line_num
+
 
 class UnicodeDictReader(csv.DictReader):
     def __init__(self, csv_file, encoding='utf-8', fieldnames=None, **kwds):

@@ -1,13 +1,10 @@
 import shutil
 import time
-import copy
-import xml.etree.ElementTree as ET
 from os.path import dirname, normpath, abspath, join, exists, isfile
 from unittest import TestCase
 
 from django.core.files.storage import default_storage
 from django.core.files import File
-from django.conf import settings
 from django.template.defaultfilters import slugify
 
 from geokey.users.tests.model_factories import UserFactory
@@ -17,7 +14,7 @@ from geokey.categories.models import Category, NumericField, DateTimeField
 from ..helper.sapelli_loader import get_sapelli_dir_path, get_sapelli_jar_path, load_from_sap, check_sap_file, get_sapelli_project_info
 from ..models import SapelliProject
 from ..helper.project_mapper import create_project, create_implicit_fields
-from ..helper.sapelli_exceptions import SapelliException, SapelliSAPException, SapelliXMLException, SapelliDuplicateException
+from ..helper.sapelli_exceptions import SapelliSAPException, SapelliXMLException, SapelliDuplicateException
 
 """
 Output of get_sapelli_project_info() for Horniman.sap,
@@ -110,6 +107,7 @@ def with_stacktrace(func, *args):
         else:
             raise e
 
+
 class TestSapelliLoader(TestCase):
     def setUp(self):
         self.user = UserFactory.create()
@@ -137,13 +135,13 @@ class TestSapelliLoader(TestCase):
 
         self.assertEqual(sapelli_dir_path, join(default_storage.path('sapelli'), ''))
         self.assertTrue(exists(sapelli_dir_path))
-        
+
     def test_get_sapelli_dir_path_for_user(self):
         sapelli_user_dir_path = get_sapelli_dir_path(self.user)
 
         self.assertEqual(sapelli_user_dir_path, join(default_storage.path('sapelli'), slugify(str(self.user.id) + '_' + self.user.display_name), ''))
         self.assertTrue(exists(sapelli_user_dir_path))
-        
+
     def test_check_sap_file_non_existing(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/' + str(time.time())))
         self.assertRaises(SapelliSAPException, check_sap_file, path)
@@ -151,7 +149,7 @@ class TestSapelliLoader(TestCase):
     def test_check_sap_file_non_zip(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/img/ok.svg'))
         self.assertRaises(SapelliSAPException, check_sap_file, path)
-        
+
     def test_check_sap_file_no_xml(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Empty.zip'))
         self.assertRaises(SapelliSAPException, check_sap_file, path)
@@ -159,7 +157,7 @@ class TestSapelliLoader(TestCase):
     def test_check_sap_file_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         check_sap_file(path)
-        
+
     def test_get_sapelli_project_info_horniman(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
         sapelli_project_info = with_stacktrace(get_sapelli_project_info, path, self.user)
@@ -179,7 +177,7 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])
         self.assertEqual(sapelli_project.sapelli_fingerprint, horniman_sapelli_project_info['sapelli_fingerprint'])
         self.assertEqual(sapelli_project.sapelli_model_id, horniman_sapelli_project_info['sapelli_model_id'])
-        
+
     def test_load_from_sap_complex(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Complex.sap'))
         file = File(open(path, 'rb'))
@@ -190,7 +188,7 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])
         self.assertEqual(sapelli_project.sapelli_fingerprint, -421056405)
         self.assertEqual(sapelli_project.forms.count(), 2)
-        
+
     def test_load_from_sap_unicode(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.sap'))
         file = File(open(path, 'rb'))
@@ -226,6 +224,7 @@ class TestProjectMapper(TestCase):
     def test_create_project(self):
         geokey_project = create_project(horniman_sapelli_project_info, UserFactory.create())
         self.assertEqual(geokey_project.name, horniman_sapelli_project_info['display_name'])
+        self.assertEqual(geokey_project.islocked, True)
         self.assertEqual(geokey_project.sapelli_project.name, horniman_sapelli_project_info['name'])
         self.assertEqual(geokey_project.sapelli_project.version, horniman_sapelli_project_info['version'])
         self.assertEqual(geokey_project.sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])

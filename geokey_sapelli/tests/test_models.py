@@ -1,4 +1,4 @@
-from os.path import dirname, normpath, abspath, join, exists
+from os.path import dirname, normpath, abspath, join
 
 from django.core.files import File
 from django.test import TestCase
@@ -48,7 +48,7 @@ class SapelliProjectTest(TestCase):
         self.assertEqual(ignored_dup, 1)
         self.assertEqual(ignored_no_loc, 0)
         self.assertEqual(sapelli_project.geokey_project.observations.count(), 5)
-        
+
         # Process CSV without form identification info in header, with user-selected form:
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman_updated_no_form_ident.csv'))
         file = File(open(path, 'rb'))
@@ -68,7 +68,7 @@ class SapelliProjectTest(TestCase):
         sapelli_project = create_horniman_sapelli_project(user)
 
         form = sapelli_project.forms.all()[0]
-        
+
         # Call import with an invalid form_category_id (must fail):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.csv'))
         file = File(open(path, 'rb'))
@@ -91,7 +91,7 @@ class SapelliProjectTest(TestCase):
         sapelli_project = create_textunicode_sapelli_project(user)
 
         form = sapelli_project.forms.all()[0]
-        
+
         # Import records with unicode characters:
         path = normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.csv'))
         file = File(open(path, 'rb'))
