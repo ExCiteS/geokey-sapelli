@@ -83,7 +83,7 @@ class SapelliProjectManager(Manager):
                 if sapelli_project.geokey_project.can_contribute(user):
                     return sapelli_project
                 else:
-                    raise PermissionDenied('User cannot contribute to project (id: %s).' % sapelli_project.geokey_project.id)
+                    raise PermissionDenied('User cannot contribute to project')
         raise self.model.DoesNotExist
 
     def get_single_for_administration(self, user, project_id):

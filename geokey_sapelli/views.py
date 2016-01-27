@@ -350,16 +350,12 @@ class ProjectDescriptionAPI(APIView):
 
         Returns
         -------
-        JSON with information about the GeoKey project and its categories (corresponding to Sapelli Forms).
-
-        Raises
-        ------
-        TODO
+        JSON with information about the GeoKey project and its categories (corresponding to Sapelli Forms),
+        or one of these error messages: 'User cannot contribute to project', 'No such project'.
         """
-        if request.user.is_anonymous():
-            raise PermissionDenied('API access not authorised, please login.')
         try:
             sapelli_project = SapelliProject.objects.get_single_for_contribution_by_sapelli_info(request.user, sapelli_project_id, sapelli_project_fingerprint)
+            # may throw PermissionDenied, which is handled by the @handle_exceptions_for_ajax decorator
         except SapelliProject.DoesNotExist:
             return Response({'error': 'No such project'}, status=404)
         else:
@@ -435,10 +431,8 @@ class DataCSVUploadAPI(APIView):
         JSON with feedback about record import (i.e. number of 'added', 'updated', 'ignored_duplicates' and 'ignored_no_loc' records),
         or an 'error' message.
         """
-        if request.user.is_anonymous():
-            raise PermissionDenied('API access not authorised, please login.')
         try:
-            sapelli_project = SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(request.user, project_id)
         except SapelliProject.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         else:
@@ -479,11 +473,9 @@ class FindObservationAPI(APIView):
         -------
         the id of the Observation or an error.
         """
-        if request.user.is_anonymous():
-            raise PermissionDenied('API access not authorised, please login.')
         try:
-            geokey_project = Project.objects.get(pk=project_id)
-            observation = geokey_project.observations.get(
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(request.user, project_id)
+            observation = sapelli_project.geokey_project.observations.get(
                 category_id=category_id,
                 properties__at_StartTime=sapelli_record_start_time,
                 properties__at_DeviceId=sapelli_record_device_id)
