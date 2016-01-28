@@ -127,11 +127,6 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                                 img_file = File(open(os.path.join(sapelli_project.dir_path, 'img/', img_relative_path), 'rb'))
                             except IOError:
                                 pass
-                        if img_file is not None:
-                            img_path = img_file.name
-                            img_file.close()
-                        else:
-                            img_path = None
                         # Value:
                         value = LookupValue.objects.create(
                             name=item.get('value'),
