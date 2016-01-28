@@ -136,7 +136,7 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                         value = LookupValue.objects.create(
                             name=item.get('value'),
                             field=geokey_field,
-                            symbol=img_path #pass the path, not the file (otherwise it may be duplicated)
+                            symbol=img_file
                         )
                         # Create SapelliItem:
                         SapelliItem.objects.create(
