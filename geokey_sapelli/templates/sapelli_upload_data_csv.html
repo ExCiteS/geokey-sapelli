@@ -51,12 +51,16 @@
 {% endblock %}
 
 {% block libraries %}
-        <script src="/static/js/admin.ui.forms.validate.js"></script>
-        <link rel="stylesheet" href="/static/lib/file-upload/css/fileinput.min.css">
-        <script src="/static/lib/file-upload/js/fileinput.min.js"></script>
-        <script>
-            $('input#csv_file').fileinput({
-                'showUpload': false
-            });
-        </script>
+<link rel="stylesheet" href="/static/lib/bootstrap-fileinput/css/bootstrap-fileinput.min.css">
+<script src="/static/lib/bootstrap-fileinput/js/bootstrap-fileinput.min.js"></script>
+
+<script src="/static/js/admin.ui.fileinput.js"></script>
+<script src="/static/js/admin.ui.forms.validate.js"></script>
+
+<script>
+// Initialise file upload
+$('input:file').each(function() {
+    Ui.FileInput.init($(this));
+});
+</script>
 {% endblock %}
