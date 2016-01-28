@@ -21,6 +21,7 @@ from rest_framework.response import Response
 from oauth2_provider.models import AccessToken
 from oauth2_provider.views.base import TokenView
 
+from geokey.users.models import User
 from geokey.core.decorators import (
     handle_exceptions_for_ajax,
     handle_exceptions_for_admin
@@ -431,14 +432,17 @@ class DataCSVUploadAPI(APIView):
         JSON with feedback about record import (i.e. number of 'added', 'updated', 'ignored_duplicates' and 'ignored_no_loc' records),
         or an 'error' message.
         """
+        user = request.user
+        if user.is_anonymous():
+            user = User.objects.get(display_name='AnonymousUser')
         try:
-            sapelli_project = SapelliProject.objects.get_single_for_contribution(request.user, project_id)
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(user, project_id)
         except SapelliProject.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         else:
             try:
                 csv_file = request.FILES.get('csv_file')
-                imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, csv_file)
+                imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(user, csv_file)
                 return Response({'added': imported, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
             except BaseException, e:
                 return Response({'error': str(e)})
