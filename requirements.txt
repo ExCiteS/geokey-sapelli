@@ -1,2 +1,2 @@
-qrcode==5.1
 geokey>=0.9
+qrcode==5.2.2
