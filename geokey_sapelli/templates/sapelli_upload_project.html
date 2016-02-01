@@ -26,7 +26,7 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="sap_file" class="control-label">Sapelli Project file:</label>
-                    <input type="file" name="sap_file" id="sap_file" required>
+                    <input type="file" name="sap_file" id="sap_file" required />
 					Typically the file has extension .sap, .sapelli, .excites, or .zip.
                 </div>
 
@@ -40,12 +40,18 @@
 {% endblock %}
 
 {% block libraries %}
-        <script src="/static/js/admin.ui.forms.validate.js"></script>
-        <link rel="stylesheet" href="/static/lib/file-upload/css/fileinput.min.css">
-        <script src="/static/lib/file-upload/js/fileinput.min.js"></script>
-        <script>
-            $('input#sap_file').fileinput({
-                'showUpload': false
-            });
-        </script>
+<link rel="stylesheet" href="/static/lib/bootstrap-fileinput/css/bootstrap-fileinput.min.css">
+<script src="/static/lib/bootstrap-fileinput/js/bootstrap-fileinput.min.js"></script>
+
+<script src="/static/js/admin.ui.fileinput.js"></script>
+<script src="/static/js/admin.ui.forms.validate.js"></script>
+
+<script>
+// Initialise file upload
+$('input:file').each(function() {
+    Ui.FileInput.init($(this), {
+        showUpload: false
+    });
+});
+</script>
 {% endblock %}
