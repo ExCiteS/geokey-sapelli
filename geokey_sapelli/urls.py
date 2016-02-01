@@ -43,7 +43,7 @@ urlpatterns = patterns(
         DataCSVUploadAPI.as_view(),
         name='data_csv_upload_api'),
     url(
-        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/find_observation/(?P<category_id>[0-9]+)/(?P<sapelli_record_start_time>[0-9Tt:\-\.+Zz]+)/(?P<sapelli_record_device_id>[0-9]+)/$',
+        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/find_observation/(?P<category_id>[0-9]+)/$',
         FindObservationAPI.as_view(),
         name='find_observation_api'),
     url(

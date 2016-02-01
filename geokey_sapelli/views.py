@@ -455,34 +455,36 @@ class FindObservationAPI(APIView):
     api/sapelli/projects/pppp/find_observation/cccc/ssss/dddd/
     """
     @handle_exceptions_for_ajax
-    def get(self, request, project_id, category_id, sapelli_record_start_time, sapelli_record_device_id):
+    def post(self, request, project_id, category_id):
         """
-        GET request handler to look-up the Observation matching the given parameters.
+        POST request handler to look-up the Observation matching the given parameters.
 
         Parameter
         ---------
         request : rest_framework.request.Request
-            Object representing the request.
+            Object representing the request, expected to contain POST parameters
+            'sap_rec_StartTime' (the "StartTime" of the Sapelli record, formatted as an
+            ISO 8601 timestamp with ms accuracy and UTC offset) and 'sap_rec_DeviceID'
+            (a Sapelli-generated device id, unsigned 32 bit integer, encoded as a string).
         project_id : int
             Identifies the GeoKey project on the data base
         category_id : int
             Identifies the category on the data base
-        sapelli_record_start_time : string
-            the "StartTime" of the Sapelli record, formatted as an
-            ISO 8601 timestamp with ms accuracy and UTC offset.
-        sapelli_record_device_id : int
-            Sapelli-generated device id (unsigned 32 bit integer)
 
         Returns
         -------
         the id of the Observation or an error.
         """
+        sap_rec_start_time = request.POST.get('sap_rec_StartTime')
+        sap_rec_device_id = request.POST.get('sap_rec_DeviceID')
+        if sap_rec_start_time is None or sap_rec_device_id is None:
+            return Response({'error': 'sap_rec_StartTime or sap_rec_DeviceID parameter missing'})
         try:
             sapelli_project = SapelliProject.objects.get_single_for_contribution(request.user, project_id)
             observation = sapelli_project.geokey_project.observations.get(
                 category_id=category_id,
-                properties__at_StartTime=sapelli_record_start_time,
-                properties__at_DeviceId=sapelli_record_device_id)
+                properties__at_StartTime=sap_rec_start_time,
+                properties__at_DeviceId=sap_rec_device_id)
         except Project.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         except BaseException, e:
