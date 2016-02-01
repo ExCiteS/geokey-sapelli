@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block title %} | Extension: Sapelli{% endblock %}
 
@@ -10,7 +10,6 @@
                 <h1 class="smaller"><a href="{% url 'geokey_sapelli:index' %}">Sapelli</a></h1>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -38,7 +37,7 @@
 
                 <div class="form-group">
                     <label for="csv_file" class="control-label">CSV file</label>
-                    <input type="file" name="csv_file" id="csv_file" required>
+                    <input type="file" name="csv_file" id="csv_file" required />
                 </div>
 
                 <div class="form-group">
@@ -60,7 +59,11 @@
 <script>
 // Initialise file upload
 $('input:file').each(function() {
-    Ui.FileInput.init($(this));
+    Ui.FileInput.init($(this), {
+        showUpload: false,
+        showRemove: false,
+        showPreview: false
+    });
 });
 </script>
 {% endblock %}
