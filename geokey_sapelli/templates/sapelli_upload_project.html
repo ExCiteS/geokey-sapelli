@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block title %} | Extension: Sapelli{% endblock %}
 
@@ -10,7 +10,6 @@
                 <h1 class="smaller"><a href="{% url 'geokey_sapelli:index' %}">Sapelli</a></h1>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -19,6 +18,7 @@
 
     <div class="row">
         {% include 'snippets/sapelli_menu.html' %}
+
         <div class="col-sm-8">
             <h3 class="header">Upload new Sapelli project</h3>
 
@@ -27,7 +27,7 @@
                 <div class="form-group">
                     <label for="sap_file" class="control-label">Sapelli Project file:</label>
                     <input type="file" name="sap_file" id="sap_file" required />
-					Typically the file has extension .sap, .sapelli, .excites, or .zip.
+					<p class="help-block">Typically the file has extension .sap, .sapelli, .excites, or .zip.</p>
                 </div>
 
                 <div class="form-group">
@@ -50,7 +50,9 @@
 // Initialise file upload
 $('input:file').each(function() {
     Ui.FileInput.init($(this), {
-        showUpload: false
+        showUpload: false,
+        showRemove: false,
+        showPreview: false
     });
 });
 </script>
