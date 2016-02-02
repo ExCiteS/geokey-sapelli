@@ -26,8 +26,8 @@
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="sap_file" class="control-label">Sapelli Project file:</label>
-                    <input type="file" name="sap_file" id="sap_file" required />
-					<p class="help-block">Typically the file has extension .sap, .sapelli, .excites, or .zip.</p>
+                    <input type="file" name="sap_file" id="sap_file" accept=".sap,.sapelli,.excites,.zip" required/>
+                    <p class="help-block">Typically the file has extension .sap, .sapelli, .excites, or .zip.</p>
                 </div>
 
                 <div class="form-group">
