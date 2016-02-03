@@ -8,7 +8,6 @@ from django.views.generic import TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
-from django.core.servers.basehttp import FileWrapper
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
@@ -43,6 +42,13 @@ from .helper.install_checks import check_extension
 
 
 from helper.dynamic_menu import MenuEntry
+
+try:
+    #  Django 1.9+
+    from wsgiref.util import FileWrapper
+except:
+    # Django 1.8
+    from django.core.servers.basehttp import FileWrapper
 
 
 # ############################################################################
