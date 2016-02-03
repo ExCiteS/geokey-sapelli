@@ -3,11 +3,9 @@
 from os.path import join
 from setuptools import setup, find_packages
 
-# Change geokey_sapelli version here (and here alone!):
-VERSION_PARTS = (0, 7, 1)
 
 name = 'geokey-sapelli'
-version = '.'.join(map(str, VERSION_PARTS))
+version = __import__(name.replace('-', '_')).__version__
 repository = join('https://github.com/ExCiteS', name)
 
 
