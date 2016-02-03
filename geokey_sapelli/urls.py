@@ -1,6 +1,10 @@
 from django.conf.urls import url
 
-from views import ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI, ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
+from views import (
+    ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI,
+    ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI, SAPDownloadAPI,
+    SAPDownloadQRLinkAPI
+)
 
 urlpatterns = [
     #
