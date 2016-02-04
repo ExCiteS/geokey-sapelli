@@ -103,7 +103,7 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
                 geokey_field = Field.create(
                     name,
                     slugify(name),
-                    field.get('description') if field.get('description') else '',
+                    field.get('description', ''),
                     False,
                     category,
                     field_type
