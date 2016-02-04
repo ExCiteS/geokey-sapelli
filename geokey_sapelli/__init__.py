@@ -1,11 +1,9 @@
-from geokey.extensions.base import register
-
-
 VERSION_PARTS = (0, 7, 1)
 __version__ = '.'.join(map(str, VERSION_PARTS))
 
 
 try:
+    from geokey.extensions.base import register
     register(
         'geokey_sapelli',
         'Sapelli',
