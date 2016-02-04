@@ -18,6 +18,7 @@ from oauth2_provider.models import AccessToken
 from rest_framework.test import force_authenticate
 
 from geokey import version
+from geokey.core.tests.helpers import render_helpers
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 
@@ -70,7 +71,8 @@ class ProjectListTest(TestCase):
                         active=False)]
             }
         )
-        self.assertEqual(unicode(response.content), rendered)
+        response = render_helpers.remove_csrf(unicode(response.content))
+        self.assertEqual(response, rendered)
 
     def test_get_with_anonymous(self):
         self.request.user = AnonymousUser()
@@ -140,7 +142,8 @@ class ProjectUploadTest(TestCase):
                         active=True)]
             }
         )
-        self.assertEqual(unicode(response.content), rendered)
+        response = render_helpers.remove_csrf(unicode(response.content))
+        self.assertEqual(response, rendered)
 
     def test_post_with_anonymous(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.sap'))
@@ -242,7 +245,8 @@ class DataCSVUploadTest(TestCase):
                         active=False)]
             }
         )
-        self.assertEqual(unicode(response.content), rendered)
+        response = render_helpers.remove_csrf(unicode(response.content))
+        self.assertEqual(response, rendered)
 
     def test_post_with_anonymous(self):
         sapelli_project = create_horniman_sapelli_project(self.user)
@@ -303,7 +307,8 @@ class DataCSVUploadTest(TestCase):
             response,
             '4 records have been added as project contributions'
         )
-        self.assertEqual(unicode(response.content), rendered)
+        response = render_helpers.remove_csrf(unicode(response.content))
+        self.assertEqual(response, rendered)
         self.assertEqual(sapelli_project.geokey_project.observations.count(), 4)
 
 

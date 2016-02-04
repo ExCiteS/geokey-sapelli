@@ -1,10 +1,12 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-from views import ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI, ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
+from views import (
+    ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI,
+    ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI, SAPDownloadAPI,
+    SAPDownloadQRLinkAPI
+)
 
-urlpatterns = patterns(
-    '',
-
+urlpatterns = [
     #
     # ADMIN PAGES
     #
@@ -54,4 +56,4 @@ urlpatterns = patterns(
         r'^api/sapelli/projects/(?P<project_id>[0-9]+)/sap_qr_link.png$',
         SAPDownloadQRLinkAPI.as_view(),
         name='sap_download_qr_link_api'),
-)
+]
