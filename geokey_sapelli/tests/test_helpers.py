@@ -224,6 +224,7 @@ class TestProjectMapper(TestCase):
     def test_create_project(self):
         geokey_project = create_project(horniman_sapelli_project_info, UserFactory.create())
         self.assertEqual(geokey_project.name, horniman_sapelli_project_info['display_name'])
+        self.assertEqual(geokey_project.description, '')
         self.assertEqual(geokey_project.islocked, True)
         self.assertEqual(geokey_project.sapelli_project.name, horniman_sapelli_project_info['name'])
         self.assertEqual(geokey_project.sapelli_project.version, horniman_sapelli_project_info['version'])
@@ -234,10 +235,19 @@ class TestProjectMapper(TestCase):
 
         category = geokey_project.categories.all()[0]
         self.assertEqual(category.name, horniman_sapelli_project_info['forms'][0]['sapelli_id'])
+        self.assertEqual(category.description, '')
         self.assertEqual(category.sapelli_form.location_fields.count(), len(horniman_sapelli_project_info['forms'][0]['locations']))
-        self.assertEqual(category.fields.count(),
+        self.assertEqual(
+            category.fields.count(),
             len(horniman_sapelli_project_info['forms'][0]['fields']) +
-            (3 if horniman_sapelli_project_info['forms'][0]['stores_end_time'] else 2))
+            (3 if horniman_sapelli_project_info['forms'][0]['stores_end_time'] else 2)
+        )
+
+        for category in geokey_project.categories.all():
+            self.assertEqual(category.description, '')
+
+        for field in category.fields.all():
+            self.assertEqual(field.description, '')
 
         field = category.fields.get(key='garden_feature')
         self.assertEqual(field.lookupvalues.count(), 14)
