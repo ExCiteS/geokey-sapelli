@@ -4,7 +4,7 @@ from django.template.defaultfilters import slugify
 from django.core.files import File
 
 from geokey.projects.models import Project
-from geokey.projects.base import EVERYONE_CONTRIB
+from geokey.projects.base import EVERYONE_CONTRIBUTES
 from geokey.categories.models import Category, Field, LookupValue
 
 from ..models import (
@@ -46,7 +46,7 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
         description='',
         isprivate=True,
         islocked=True,
-        everyone_contributes=EVERYONE_CONTRIB.false,
+        everyone_contributes=EVERYONE_CONTRIBUTES.false,
         creator=user
     )
 
