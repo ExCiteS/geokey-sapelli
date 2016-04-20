@@ -13,52 +13,87 @@
 geokey-sapelli
 ==============
 
-Extension for `GeoKey <https://github.com/ExCiteS/geokey>`_ to add support for `Sapelli <https://github.com/ExCiteS/Sapelli>`_. This extension enables users to upload `Sapelli project files <http://wiki.sapelli.org/index.php/Overview>`_ (resulting in corresponding GeoKey projects), and Sapelli-produced data via the admin interfaces.
+Extension for `GeoKey <https://github.com/ExCiteS/geokey>`_ to add support for `Sapelli <https://github.com/ExCiteS/Sapelli>`_. This extension enables users to upload `Sapelli project files <http://wiki.sapelli.org/index.php/Overview>`_ (resulting in corresponding GeoKey projects), and Sapelli-produced data via the admin interface.
 
-Installation instructions
--------------------------
+Install
+-------
 
-*Note:* This guide assumes you have a working `GeoKey <https://github.com/ExCiteS/geokey>`_ installation (0.9 or greater), and also have `Java <http://www.oracle.com/technetwork/java/javase/downloads>`_ (JRE or JDK, version 7 or up) installed.
+geokey-sapelli requires:
 
+- Python version 2.7
+- `Java <http://www.oracle.com/technetwork/java/javase/downloads>`_ (JRE or JDK) version 7 or up
+- GeoKey versions 0.9, 0.10, or 1.0
 
-1. Clone the repository:
-
-.. code-block:: console
-
-  git clone https://github.com/ExCiteS/geokey-sapelli.git
-
-2. Install the package:
+Install the geokey-sapelli from PyPI:
 
 .. code-block:: console
 
-  cd geokey-sapelli
-  pip install -e .
+    pip install geokey-sapelli
 
-3. Go to your GeoKey installation and edit ``settings.py`` file (usually in ``local_settings\``) to add ``'geokey_sapelli',`` to the ``INSTALLED_APPS`` list.
+Or from cloned repository:
 
-4. Download the latest available version of the `Sapelli Collector CmdLn front-end <https://github.com/ExCiteS/Sapelli/releases>`_. The file you want looks like ``sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar``. You have 2 options regarding the installation of this ``jar`` file:
+.. code-block:: console
 
- - Rename the file to ``sapelli-collector-cmdln-with-dependencies.jar`` and place it in the ``geokey-sapelli/lib`` folder;
- - or, place the file in a folder of your choice (you can rename it as well if you want) and again edit the above-mentioned ``settings.py`` file to add the *absolute* path to the file, like so: ``SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar'``.
+    cd geokey-sapelli
+    pip install -e .
 
-5. To use the extension via the API, first register a new OAuth application with Authorisation type *password*. You will then get the Client ID. Add the Client ID to your ``settings.py`` (usually in ``local_settings\``) as follows:
+Add the package to installed apps:
+
+.. code-block:: console
+
+    INSTALLED_APPS += (
+        ...
+        'geokey_sapelli',
+    )
+
+Download the latest available version of the `Sapelli Collector CmdLn front-end <https://github.com/ExCiteS/Sapelli/releases>`_ (the file you need looks like ``sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar``). Place the file in a folder of your choice (you can rename it as well if you want) and edit the `settings.py` file to add the *absolute* path to the file:
+
+.. code-block:: console
+
+    SAPELLI_JAR = '/path/to/sapelli-collector-cmdln-X.X.X-XXXXXX-with-dependencies.jar'
+
+Register a new application (using the GeoKey admin interface) with authorisation type *password*. Add the generated Client ID to your `settings.py`:
 
 .. code-block:: console
 
   SAPELLI_CLIENT_ID = 'YOUR_CLIENT_ID'
 
-6. Add the database tables:
+Migrate the models into the database:
 
 .. code-block:: console
 
-  python manage.py migrate geokey_sapelli
+    python manage.py migrate geokey_sapelli
 
-7. Run tests specific to this extension to ensure everything is correctly installed. Go to your GeoKey installation folder and run:
+You're now ready to go!
+
+Update
+------
+
+Update the geokey-sapelli from PyPI:
 
 .. code-block:: console
 
-  python manage.py test geokey_sapelli
+    pip install -U geokey-sapelli
 
-8. Restart the server.
+Migrate the new models into the database:
 
-9. Open a browser and go to the ``/admin/sapelli/`` path on your GeoKey server (e.g. ``http://localhost:8080``). If you see a page titled "**Sapelli**" you have correctly installed the `geokey-sapelli extension <https://github.com/ExCiteS/geokey-sapelli>`_.
+.. code-block:: console
+
+    python manage.py migrate geokey_sapelli
+
+Test
+----
+
+Run tests:
+
+.. code-block:: console
+
+    python manage.py test geokey_sapelli
+
+Check code coverage:
+
+.. code-block:: console
+
+    pip install coverage
+    coverage run --source=geokey_sapelli manage.py test geokey_sapelli
+    coverage report -m --omit=*/tests/*,*/migrations/*
