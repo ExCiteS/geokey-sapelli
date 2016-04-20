@@ -23,7 +23,7 @@ install:
   - export C_INCLUDE_PATH=/usr/include/gdal
   - export CPLUS_INCLUDE_PATH=/usr/include/gdal
   - pip install --upgrade pip
-  - wget https://github.com/ExCiteS/Sapelli/releases/download/v2.0.0-beta-18/sapelli-collector-cmdln-2.0.0-beta-18-jar-with-dependencies.jar -O sapelli-collector-cmdln-with-dependencies.jar
+  - wget https://github.com/ExCiteS/Sapelli/releases/download/v2.0.0-beta-18/sapelli-collector-cmdln-2.0.0-beta-19-jar-with-dependencies.jar -O sapelli-collector-cmdln-with-dependencies.jar
 
 before_script:
   - psql template1 postgres -c 'create extension hstore;'
