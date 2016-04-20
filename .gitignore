@@ -20,5 +20,5 @@ Thumbs.db
 .Spotlight-V100
 .Trashes
 
-# Don't commit the Sapelli library:
+# Exclude the Sapelli library
 *.jar
