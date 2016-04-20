@@ -10,10 +10,8 @@ addons:
   postgresql: '9.4'
 
 env:
-  - GEOKEY='>=0.9,<0.10' DJANGO='>=1.8,<1.9'
-  - GEOKEY='>=0.9,<0.10' DJANGO='>=1.9,<1.10'
-  - GEOKEY='>=0.10,<0.11' DJANGO='>=1.8,<1.9'
-  - GEOKEY='>=0.10,<0.11' DJANGO='>=1.9,<1.10'
+  - GEOKEY='>=1.0,<1.1' DJANGO='>=1.8,<1.9'
+  - GEOKEY='>=1.0,<1.1' DJANGO='>=1.9,<1.10'
 
 virtualenv:
   system_site_packages: true
@@ -21,23 +19,22 @@ virtualenv:
 install:
   - sudo rm /etc/apt/sources.list.d/ubuntugis-stable-source.list
   - sudo apt-get update -y
-  - sudo apt-get install python-gdal gdal-bin binutils
+  - sudo apt-get install python-gdal gdal-bin binutils libav-tools libavcodec-extra-53 oracle-java8-installer
   - export C_INCLUDE_PATH=/usr/include/gdal
   - export CPLUS_INCLUDE_PATH=/usr/include/gdal
   - pip install --upgrade pip
-  - sudo apt-get update && sudo apt-get install oracle-java8-installer
-  - wget https://github.com/ExCiteS/Sapelli/releases/download/v2.0.0-beta-18/sapelli-collector-cmdln-2.0.0-beta-18-jar-with-dependencies.jar -O lib/sapelli-collector-cmdln-with-dependencies.jar
+  - wget https://github.com/ExCiteS/Sapelli/releases/download/v2.0.0-beta-18/sapelli-collector-cmdln-2.0.0-beta-18-jar-with-dependencies.jar -O sapelli-collector-cmdln-with-dependencies.jar
 
 before_script:
   - psql template1 postgres -c 'create extension hstore;'
   - psql -c 'create database geokey;' -U postgres
-  - psql -U postgres -d geokey -c "create extension postgis;"
-  - pip install -r travis/requirements.txt
-  - pip install django$DJANGO
+  - psql -U postgres -d geokey -c 'create extension postgis;'
   - pip install geokey$GEOKEY
-  - pip install -e .
+  - pip install django$DJANGO
   - python -c "import django; print('DJANGO %s ' % django.get_version())"
   - python -c "from geokey.version import get_version; print('GEOKEY %s' % get_version())"
+  - pip install -r travis/requirements.txt
+  - pip install -e .
   - python travis/manage.py migrate
 
 script:
