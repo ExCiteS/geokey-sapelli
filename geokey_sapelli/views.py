@@ -150,7 +150,6 @@ class ProjectUpload(AbstractSapelliView):
             sapelli_project = load_from_sap(request.FILES.get('sap_file'), request.user)
 
             messages.success(self.request, 'The project has been created.')
-
             return redirect(
                 'geokey_sapelli:data_csv_upload',
                 project_id=sapelli_project.geokey_project.id
@@ -172,10 +171,12 @@ class ProjectUpload(AbstractSapelliView):
                 'Failed to parse PROJECT.xml file, due to:\n\n' + str(e)
             )
         except SapelliDuplicateException:
-            messages.warning(
+            messages.error(
                 self.request,
                 'This Sapelli project has already been uploaded by you or '
-                'someone else on the platform.'
+                'someone else on the platform. Please make sure you\'re '
+                'allowed to access and contribute to it, otherwise try to '
+                'change the Sapelli project ID.'
             )
         except SapelliException, e:
             messages.warning(
