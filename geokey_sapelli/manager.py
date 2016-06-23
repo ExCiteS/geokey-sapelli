@@ -37,25 +37,24 @@ class SapelliProjectManager(Manager):
         """
         return [sapelli_project for sapelli_project in self.get_queryset() if sapelli_project.geokey_project.can_contribute(user)]
 
-    def exists_for_contribution_by_sapelli_info(self, user, sapelli_project_id, sapelli_project_fingerprint):
+    def exists_for_contribution_by_sapelli_info(self, sapelli_project_id, sapelli_project_fingerprint):
         """
-        Checks whether or not there is a SapelliProject with the given sapelli_project_id and
-        sapelli_project_fingerprint which the user can access and contribute to.
+        Checks whether or not there is a Sapelli project with the given
+        sapelli_project_id and sapelli_project_fingerprint.
 
         Parameter
         ---------
-        user : geokey.users.models.User
-            User projects are filtered for
         sapelli_project_id : int
             Together with sapelli_project_fingerprint this uniquely identifies a SapelliProject
         sapelli_project_fingerprint : int
             Together with sapelli_project_id this uniquely identifies a SapelliProject
+
         Returns
         -------
         bool
         """
         try:
-            self.get_single_for_contribution_by_sapelli_info(user, sapelli_project_id, sapelli_project_fingerprint)
+            self.get_single_for_contribution_by_sapelli_info(None, sapelli_project_id, sapelli_project_fingerprint)
         except (PermissionDenied, self.model.DoesNotExist):
             return False
         else:
@@ -63,8 +62,9 @@ class SapelliProjectManager(Manager):
 
     def get_single_for_contribution_by_sapelli_info(self, user, sapelli_project_id, sapelli_project_fingerprint):
         """
-        Returns a single Sapelli project, identified by the given sapelli_project_id and
-        sapelli_project_fingerprint which the user can the user can access and contribute to.
+        Returns a single Sapelli project, identified by the given
+        sapelli_project_id and sapelli_project_fingerprint, that the user can
+        access and contribute to (if user is provided).
 
         Parameter
         ---------
@@ -74,13 +74,14 @@ class SapelliProjectManager(Manager):
             Together with sapelli_project_fingerprint this uniquely identifies a SapelliProject
         sapelli_project_fingerprint : int
             Together with sapelli_project_id this uniquely identifies a SapelliProject
+
         Returns
         -------
         geokey_sapelli.SapelliProject
         """
         for sapelli_project in self.get_queryset():
             if sapelli_project.sapelli_id == int(sapelli_project_id) and sapelli_project.sapelli_fingerprint == int(sapelli_project_fingerprint):
-                if sapelli_project.geokey_project.can_contribute(user):
+                if not user or sapelli_project.geokey_project.can_contribute(user):
                     return sapelli_project
                 else:
                     raise PermissionDenied('User cannot contribute to project')

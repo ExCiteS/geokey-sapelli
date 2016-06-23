@@ -174,7 +174,8 @@ class ProjectUpload(AbstractSapelliView):
         except SapelliDuplicateException:
             messages.warning(
                 self.request,
-                'You already have access to a matching Sapelli project.'
+                'This Sapelli project has already been uploaded by you or '
+                'someone else on the platform.'
             )
         except SapelliException, e:
             messages.warning(

@@ -74,7 +74,7 @@ def load_from_sap(sap_file, user):
     SapelliSAPException:
         When project loading fails.
     SapelliDuplicateException:
-        When the user already has access to the same project.
+        When the project has already been uploaded.
     """
     # Check if we got a file at all:
     if sap_file is None:
@@ -97,7 +97,6 @@ def load_from_sap(sap_file, user):
 
         # Check for duplicates:
         if SapelliProject.objects.exists_for_contribution_by_sapelli_info(
-                user,
                 sapelli_project_info['sapelli_id'],
                 sapelli_project_info['sapelli_fingerprint']):
             raise SapelliDuplicateException
