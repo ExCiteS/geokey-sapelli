@@ -22,7 +22,7 @@ geokey-sapelli requires:
 
 - Python version 2.7
 - `Java <http://www.oracle.com/technetwork/java/javase/downloads>`_ (JRE or JDK) version 7 or up
-- GeoKey version 1.0
+- GeoKey version 1.0 or greater
 
 Install the geokey-sapelli from PyPI:
 
