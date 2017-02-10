@@ -2,4 +2,4 @@ include README.rst
 include LICENSE
 recursive-include geokey_sapelli/static *
 recursive-include geokey_sapelli/templates *
-recursive-exclude travis *
+recursive-exclude travis_ci *
