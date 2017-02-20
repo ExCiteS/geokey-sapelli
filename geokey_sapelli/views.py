@@ -21,7 +21,6 @@ from rest_framework.response import Response
 from oauth2_provider.models import AccessToken
 from oauth2_provider.views.base import TokenView
 
-from geokey.core.exceptions import MalformedRequestData
 from geokey.users.models import User
 from geokey.core.decorators import (
     handle_exceptions_for_ajax,
@@ -671,7 +670,7 @@ class SapelliLogsAbstractAPIView(APIView):
         file = self.request.FILES.get('file')
 
         if file is None:
-            raise MalformedRequestData('No file attached.')
+            return Response({'error': 'No file attached.'}, status=406)
 
         log_file = SapelliLogFile.create(
             name=name,
