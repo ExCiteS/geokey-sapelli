@@ -711,7 +711,7 @@ class SapelliLogsViaPersonalInfo(SapelliLogsAbstractAPIView):
                 sapelli_id=sapelli_project_id,
                 sapelli_fingerprint=sapelli_project_fingerprint)
         except SapelliProject.DoesNotExist:
-            return Response({'error': 'No such project'}, status=404)
+            return Response({'error': 'No such project.'}, status=404)
 
         return self.create_and_respond(request, sapelli_project)
 
@@ -741,6 +741,6 @@ class SapelliLogsViaGeoKeyInfo(SapelliLogsAbstractAPIView):
             sapelli_project = SapelliProject.objects.get(
                 geokey_project__id=project_id)
         except SapelliProject.DoesNotExist:
-            return Response({'error': 'No such project'}, status=404)
+            return Response({'error': 'No such project.'}, status=404)
 
         return self.create_and_respond(request, sapelli_project)
