@@ -188,29 +188,40 @@ class ProjectUpload(AbstractSapelliView):
         return self.render_to_response({})
 
 
-class DataCSVUpload(AbstractSapelliView):
-    """
-    Presents a form to upload CSV files to create contributions.
-    """
-    template_name = 'sapelli_upload_data_csv.html'
+class SapelliProjectAbstractView(AbstractSapelliView):
+    """Abstract view for Sapelli project."""
 
     @handle_exceptions_for_admin
     def get_context_data(self, project_id):
         """
-        Returns the context to render the view. Contains a Sapelli project.
+        Return the context to render the view. Contains Sapelli project.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         project_id : int
-            Identifies the GeoKey project on the data base
+            Identifies the GeoKey project in the database.
 
         Returns
         -------
         dict
         """
-        project = SapelliProject.objects.get_single_for_contribution(self.request.user, project_id)
-        context = {'sapelli_project': project}
-        return self.add_menu(context)
+        try:
+            sapelli_project = SapelliProject.objects.get_single_for_contribution(
+                self.request.user,
+                project_id)
+            return self.add_menu({'sapelli_project': sapelli_project})
+        except SapelliProject.DoesNotExist:
+            return {
+                'error_description': 'Sapelli project not found.',
+                'error': 'Not found'
+            }
+
+
+class DataCSVUpload(SapelliProjectAbstractView):
+    """
+    Presents a form to upload CSV files to create contributions.
+    """
+    template_name = 'sapelli_upload_data_csv.html'
 
     def post(self, request, project_id):
         """
@@ -249,6 +260,12 @@ class DataCSVUpload(AbstractSapelliView):
                 messages.error(self.request, 'Failed to process CSV file, due to:\n\n' + str(e))
 
         return self.render_to_response(context)
+
+
+class DataLogsDownload(SapelliProjectAbstractView):
+    """Admin page for downloading logs."""
+
+    template_name = 'sapelli_download_data_logs.html'
 
 
 # ############################################################################

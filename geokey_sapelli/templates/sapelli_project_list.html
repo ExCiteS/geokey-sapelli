@@ -36,6 +36,7 @@
 					<h4>
 						<a href="" class="label label-info" data-toggle="modal" data-target="#info-dialog-{{ sapelli_project.geokey_project.id }}">Info</a>
 						<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="label label-info">Upload data</a>
+                        <a href="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="label label-info">Download logs</a>
 						{% if sapelli_project.sap_path %}
 						<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="label label-info">Download SAP</a>
 						<a href="" class="label label-info" data-toggle="modal" data-target="#qr-dialog-{{ sapelli_project.geokey_project.id }}">SAP QR code</a>

@@ -1,8 +1,16 @@
 from django.conf.urls import url
 
 from views import (
-    ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI,
-    ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI, SAPDownloadAPI,
+    ProjectUpload,
+    DataCSVUpload,
+    ProjectList,
+    LoginAPI,
+    ProjectDescriptionAPI,
+    ProjectUploadAPI,
+    DataCSVUploadAPI,
+    DataLogsDownload,
+    FindObservationAPI,
+    SAPDownloadAPI,
     SAPDownloadQRLinkAPI,
     SapelliLogsViaPersonalInfo, SapelliLogsViaGeoKeyInfo,
 )
@@ -24,6 +32,10 @@ urlpatterns = [
         r'^admin/sapelli/projects/(?P<project_id>[0-9]+)/csv_upload/$',
         DataCSVUpload.as_view(),
         name='data_csv_upload'),
+    url(
+        r'^admin/sapelli/projects/(?P<project_id>[0-9]+)/logs_download/$',
+        DataLogsDownload.as_view(),
+        name='data_logs_download'),
 
     #
     # API ENDPOINTS

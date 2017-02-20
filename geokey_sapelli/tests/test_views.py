@@ -36,6 +36,7 @@ from ..views import (
     ProjectList,
     ProjectUpload,
     DataCSVUpload,
+    DataLogsDownload,
     LoginAPI,
     SAPDownloadAPI,
     SAPDownloadQRLinkAPI,
@@ -326,6 +327,97 @@ class DataCSVUploadTest(TestCase):
         response = render_helpers.remove_csrf(unicode(response.content))
         self.assertEqual(response, rendered)
         self.assertEqual(sapelli_project.geokey_project.observations.count(), 4)
+
+
+class DataLogsDownloadTest(TestCase):
+    """Test page for data logs download."""
+
+    def setUp(self):
+        """Set up test."""
+        self.admin = UserFactory.create()
+        self.regular_user = UserFactory.create()
+        self.anonymous_user = AnonymousUser()
+        self.sapelli_project = create_horniman_sapelli_project(self.admin)
+
+        self.view = DataLogsDownload.as_view()
+        self.request = HttpRequest()
+        self.request.method = 'GET'
+
+        setattr(self.request, 'session', 'session')
+        setattr(self.request, '_messages', FallbackStorage(self.request))
+
+    def test_url(self):
+        """Test URL."""
+        self.assertEqual(
+            reverse(
+                'geokey_sapelli:data_logs_download',
+                kwargs={'project_id': 1}
+            ),
+            '/admin/sapelli/projects/1/logs_download/')
+
+        resolved = resolve('/admin/sapelli/projects/1/logs_download/')
+        self.assertEqual(resolved.kwargs['project_id'], '1')
+        self.assertEqual(resolved.func.func_name, DataLogsDownload.__name__)
+
+    def test_get_with_anonymous_user(self):
+        """Test GET with anonymous user."""
+        self.request.user = self.anonymous_user
+        response = self.view(
+            self.request,
+            project_id=self.sapelli_project.geokey_project.id)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/admin/account/login/?next=')
+
+    def test_get_with_regular_user(self):
+        """Test GET with regular user."""
+        self.request.user = self.regular_user
+        response = self.view(
+            self.request,
+            project_id=self.sapelli_project.geokey_project.id).render()
+        self.assertEqual(response.status_code, 200)
+
+        rendered = render_to_string(
+            'sapelli_download_data_logs.html',
+            {
+                'user': self.request.user,
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'GEOKEY_VERSION': version.get_version(),
+                'error': 'Not found',
+                'error_description': 'Sapelli project not found.'
+            }
+        )
+        response = render_helpers.remove_csrf(unicode(response.content))
+        self.assertEqual(response, rendered)
+
+    def test_get_with_admin(self):
+        """Test GET with admin."""
+        self.request.user = self.admin
+        response = self.view(
+            self.request,
+            project_id=self.sapelli_project.geokey_project.id).render()
+        self.assertEqual(response.status_code, 200)
+
+        rendered = render_to_string(
+            'sapelli_download_data_logs.html',
+            {
+                'sapelli_project': self.sapelli_project,
+                'user': self.request.user,
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'GEOKEY_VERSION': version.get_version(),
+                'GEOKEY_SAPELLI_VERSION': __version__,
+                'menu_entries': [
+                    MenuEntry(
+                        label='Project list',
+                        url='geokey_sapelli:index',
+                        active=False),
+                    MenuEntry(
+                        label='Add project',
+                        url='geokey_sapelli:project_upload',
+                        active=False)],
+            }
+        )
+        response = render_helpers.remove_csrf(unicode(response.content))
+        self.assertEqual(response, rendered)
 
 
 class LoginAPITest(TestCase):

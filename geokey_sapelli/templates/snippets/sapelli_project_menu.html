@@ -8,6 +8,9 @@
 					<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="list-group-item">
 						Upload data
 					</a>
+                    <a href="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="list-group-item">
+                        Download logs
+                    </a>
 					<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="list-group-item">
 						Download SAP
 					</a>

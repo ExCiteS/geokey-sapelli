@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %} | Extension: Sapelli{% endblock %}
+
+{% block main %}
+<div class="page-header">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <h1 class="smaller"><a href="{% url 'geokey_sapelli:index' %}">Sapelli</a></h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% include 'snippets/messages.html' %}
+
+    <div class="row">
+        {% include 'snippets/sapelli_menu.html' %}
+
+        <div class="col-sm-8 clearfix">
+            <h2 class="header">Download logs: {{ sapelli_project.geokey_project.name }}</h2>
+
+            {% for log in sapelli_project.logs.all %}
+                {% if forloop.first %}
+                    <ol class="list-unstyled1 overview-list">
+                {% endif %}
+
+                <li>
+                    <a href="{{ log.file.url }}" download>{{ log.name }}</a><br />
+                    <small>Created {{ log.created_at|timesince }} ago | Uploaded {{ log.uploaded_at|timesince }} ago by {% if log.creator.display_name == 'AnonymousUser' %}Anonymous User{% else %}{{ log.creator.display_name }}{% endif %}</small>
+                </li>
+
+                {% if forloop.last %}
+                    </ol>
+                {% endif %}
+            {% empty %}
+                <div class="well empty-list">
+                    <p class="lead">We couldn't find any logs uploaded for this project.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
