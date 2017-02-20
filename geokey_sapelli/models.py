@@ -2,7 +2,9 @@ import json
 import re
 import os
 import shutil
-from datetime import timedelta
+
+from datetime import timedelta, datetime
+from pytz import utc
 
 from django.db import models
 from django.dispatch import receiver
@@ -361,6 +363,53 @@ class SapelliItem(models.Model):
         'SapelliField',
         related_name='items'
     )
+
+
+class SapelliLogFile(models.Model):
+    """Represents a Sapelli log file."""
+
+    name = models.CharField(max_length=100)
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL)
+    created_at = models.DateTimeField(auto_now_add=False)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    file = models.FileField(upload_to='sapelli/logs/%Y/%m/%d/')
+    sapelli_project = models.ForeignKey(
+        'SapelliProject',
+        related_name='logs')
+
+    class Meta:
+        """Class meta information."""
+
+        ordering = ['created_at', 'id']
+
+    @property
+    def type_name(self):
+        """Return file type name."""
+        return 'SapelliLogFile'
+
+    @classmethod
+    def create(cls, name, creator, sapelli_project, file):
+        """Create Sapelli log file."""
+        try:
+            date_string = re.search('Collector_(.+).log', file.name).group(1)
+            created_at = datetime.strptime(date_string, '%Y-%m-%dT%H.%M.%S')
+        except:
+            created_at = datetime.utcnow()
+
+        instance = cls(
+            name=name or file.name,
+            creator=creator,
+            created_at=created_at.replace(tzinfo=utc),
+            file=file,
+            sapelli_project=sapelli_project)
+        instance.save()
+
+        return instance
+
+    def delete(self):
+        """Delete Sapelli log file with the actual file attached."""
+        self.file.delete()
+        super(SapelliLogFile, self).delete()
 
 
 class SAPDownloadQRLink(models.Model):

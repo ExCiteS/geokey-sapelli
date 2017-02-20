@@ -3,7 +3,8 @@ from django.conf.urls import url
 from views import (
     ProjectUpload, DataCSVUpload, ProjectList, LoginAPI, ProjectDescriptionAPI,
     ProjectUploadAPI, DataCSVUploadAPI, FindObservationAPI, SAPDownloadAPI,
-    SAPDownloadQRLinkAPI
+    SAPDownloadQRLinkAPI,
+    SapelliLogsViaPersonalInfo, SapelliLogsViaGeoKeyInfo,
 )
 
 urlpatterns = [
@@ -37,6 +38,10 @@ urlpatterns = [
         ProjectDescriptionAPI.as_view(),
         name='project_description_api'),
     url(
+        r'^api/sapelli/projects/description/(?P<sapelli_project_id>[0-9]+)/(?P<sapelli_project_fingerprint>-?[0-9]+)/logs/$',
+        SapelliLogsViaPersonalInfo.as_view(),
+        name='project_logs_api_via_personal_info'),
+    url(
         r'^api/sapelli/projects/new/$',
         ProjectUploadAPI.as_view(),
         name='project_upload_api'),
@@ -56,4 +61,8 @@ urlpatterns = [
         r'^api/sapelli/projects/(?P<project_id>[0-9]+)/sap_qr_link.png$',
         SAPDownloadQRLinkAPI.as_view(),
         name='sap_download_qr_link_api'),
+    url(
+        r'^api/sapelli/projects/(?P<project_id>[0-9]+)/logs/$',
+        SapelliLogsViaGeoKeyInfo.as_view(),
+        name='project_logs_api_via_gk_info'),
 ]

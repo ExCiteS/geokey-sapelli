@@ -1,6 +1,7 @@
 import factory
 
-from datetime import timedelta
+from datetime import datetime, timedelta
+from pytz import utc
 
 from os.path import dirname, normpath, abspath, join
 
@@ -16,13 +17,14 @@ from geokey.categories.tests.model_factories import (
     LookupValueFactory,
     TextFieldFactory
 )
-from geokey.users.tests.model_factories import AccessTokenFactory
+from geokey.users.tests.model_factories import UserFactory, AccessTokenFactory
 
 from ..models import (
     SapelliProject,
     SapelliForm,
     SapelliField,
     SapelliItem,
+    SapelliLogFile,
     LocationField,
     SAPDownloadQRLink,
 )
@@ -241,6 +243,23 @@ def create_textunicode_sapelli_project(user):
     })
 
     return sapelli_project
+
+
+class SapelliLogFileFactory(factory.django.DjangoModelFactory):
+    """An instance factory for SapelliLogFile model."""
+
+    name = 'Collector_2015-01-20T18.02.12.log'
+    creator = factory.SubFactory(UserFactory)
+    created_at = datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc)
+    sapelli_project = factory.SubFactory(SapelliProjectFactory)
+    file = normpath(join(
+        dirname(abspath(__file__)),
+        'files/Collector_2015-01-20T18.02.12.log'))
+
+    class Meta:
+        """Class meta information."""
+
+        model = SapelliLogFile
 
 
 class SAPDownloadQRLinkFactory(factory.django.DjangoModelFactory):

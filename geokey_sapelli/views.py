@@ -14,12 +14,14 @@ from django.http import HttpRequest, HttpResponse
 
 from braces.views import LoginRequiredMixin
 
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from oauth2_provider.models import AccessToken
 from oauth2_provider.views.base import TokenView
 
+from geokey.core.exceptions import MalformedRequestData
 from geokey.users.models import User
 from geokey.core.decorators import (
     handle_exceptions_for_ajax,
@@ -29,7 +31,7 @@ from geokey.projects.models import Project
 
 from . import __version__
 
-from .models import SapelliProject, SAPDownloadQRLink
+from .models import SapelliProject, SAPDownloadQRLink, SapelliLogFile
 from .helper.sapelli_loader import load_from_sap
 from .helper.sapelli_exceptions import (
     SapelliException,
@@ -42,6 +44,7 @@ from .helper.install_checks import check_extension
 
 
 from helper.dynamic_menu import MenuEntry
+from geokey_sapelli.serializers import SapelliLogFileSerializer
 
 try:
     #  Django 1.9+
@@ -613,3 +616,131 @@ class SAPDownloadQRLinkAPI(APIView):
         except BaseException, e:
             return Response({'error': str(e)})
         return Response({'deleted': True})
+
+
+class SapelliLogsAbstractAPIView(APIView):
+    """Abstract API for Sapelli logs."""
+
+    def get_user(self, request):
+        """
+        Get user of a request.
+
+        Parameters
+        ----------
+        request : rest_framework.request.Request
+            Object representing the request.
+
+        Returns
+        -------
+        geokey.users.models.User
+            User of a request.
+        """
+        user = request.user
+
+        if user.is_anonymous():
+            user = User.objects.get(display_name='AnonymousUser')
+
+        return user
+
+    def create_and_respond(self, request, sapelli_project):
+        """
+        Respond to a POST request by creating a log file.
+
+        Parameters
+        ----------
+        request : rest_framework.request.Request
+            Object representing the request.
+        sapelli_project : geokey_sapelli.models.SapelliProject
+            Sapelli project the log file should be added to.
+
+        Returns
+        -------
+        rest_framework.response.Respone
+            Contains the serialized log file.
+
+        Raises
+        ------
+        MalformedRequestData
+            When name is not set or file is not attached.
+        PermissionDenied
+            When user is not allowed to contribute to the project.
+        """
+        user = self.get_user(request)
+
+        name = self.request.POST.get('name')
+        file = self.request.FILES.get('file')
+
+        if file is None:
+            raise MalformedRequestData('No file attached.')
+
+        log_file = SapelliLogFile.create(
+            name=name,
+            creator=user,
+            sapelli_project=sapelli_project,
+            file=file)
+
+        serializer = SapelliLogFileSerializer(log_file, context={'user': user})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class SapelliLogsViaPersonalInfo(SapelliLogsAbstractAPIView):
+    """Public API for Sapelli logs via the personal (GeoKey) info."""
+
+    def post(self, request, sapelli_project_id, sapelli_project_fingerprint):
+        """
+        Handle POST request.
+
+        Add a new log file to the Sapelli project.
+
+        Parameter
+        ---------
+        request : rest_framework.request.Request
+            Object representing the request.
+        sapelli_project_id : string
+            Identifies the Sapelli project ID in the database.
+        sapelli_project_fingerprint : string
+            Identifies the Sapelli project fingerprint in the database.
+
+        Returns
+        -------
+        rest_framework.response.Respone
+            Contains the serialised log file.
+        """
+        try:
+            sapelli_project = SapelliProject.objects.get(
+                sapelli_id=sapelli_project_id,
+                sapelli_fingerprint=sapelli_project_fingerprint)
+        except SapelliProject.DoesNotExist:
+            return Response({'error': 'No such project'}, status=404)
+
+        return self.create_and_respond(request, sapelli_project)
+
+
+class SapelliLogsViaGeoKeyInfo(SapelliLogsAbstractAPIView):
+    """Public API for Sapelli logs via the Sapelli info."""
+
+    def post(self, request, project_id):
+        """
+        Handle POST request.
+
+        Add a new log file to the Sapelli project.
+
+        Parameters
+        ----------
+        request : rest_framework.request.Request
+            Object representing the request.
+        project_id : int
+            Identifies the GeoKey project in the database.
+
+        Returns
+        -------
+        rest_framework.response.Respone
+            Contains the serialised log file.
+        """
+        try:
+            sapelli_project = SapelliProject.objects.get(
+                geokey_project__id=project_id)
+        except SapelliProject.DoesNotExist:
+            return Response({'error': 'No such project'}, status=404)
+
+        return self.create_and_respond(request, sapelli_project)

@@ -1,5 +1,7 @@
 import json
 from os.path import dirname, normpath, abspath, join
+from datetime import datetime
+from pytz import utc
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse, resolve
@@ -15,17 +17,31 @@ from django.test.client import RequestFactory
 
 from oauth2_provider.models import AccessToken
 
-from rest_framework.test import force_authenticate
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 from geokey import version
 from geokey.core.tests.helpers import render_helpers
 from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
+from geokey.projects.tests.model_factories import ProjectFactory
 
 from .model_factories import GeoKeySapelliApplicationFactory, SapelliProjectFactory, create_horniman_sapelli_project, create_qr_link
 from .. import __version__
-from ..models import SapelliProject, SAPDownloadQRLink
-from ..views import ProjectList, ProjectUpload, DataCSVUpload, LoginAPI, SAPDownloadAPI, SAPDownloadQRLinkAPI
+from ..models import (
+    SapelliProject,
+    SAPDownloadQRLink,
+    SapelliLogFile,
+)
+from ..views import (
+    ProjectList,
+    ProjectUpload,
+    DataCSVUpload,
+    LoginAPI,
+    SAPDownloadAPI,
+    SAPDownloadQRLinkAPI,
+    SapelliLogsViaPersonalInfo,
+    SapelliLogsViaGeoKeyInfo,
+)
 from ..helper.dynamic_menu import MenuEntry
 
 
@@ -487,3 +503,237 @@ class SAPDownloadQRLinkAPITest(TestCase):
 
         self.assertTrue(response_json.get('deleted'))
         self.assertNotIn(qr_link, SAPDownloadQRLink.objects.all())
+
+
+class SapelliLogsViaPersonalInfoTest(TestCase):
+    """Test public API for Sapelli logs via the personal (GeoKey) info."""
+
+    def setUp(self):
+        """Set up test."""
+        self.factory = APIRequestFactory()
+        self.admin = UserFactory.create()
+        self.regular_user = UserFactory.create()
+        self.anonymous_user = AnonymousUser()
+        self.project = ProjectFactory(add_admins=[self.admin])
+        self.sapelli_project = SapelliProjectFactory.create(
+            **{'geokey_project': self.project})
+
+        self.file_name = 'Collector_2015-01-20T18.02.12.log'
+        path = normpath(join(
+            dirname(abspath(__file__)),
+            'files/%s' % self.file_name))
+        self.file = File(open(path, 'rb'))
+
+    def tearDown(self):
+        """Tear down test."""
+        for sapelli_log_file in SapelliLogFile.objects.all():
+            sapelli_log_file.delete()
+
+    def post(self, user, data=None):
+        """Custom method for testing POST."""
+        if data is None:
+            data = {'file': self.file}
+
+        url = reverse(
+            'geokey_sapelli:project_logs_api_via_personal_info',
+            kwargs={
+                'sapelli_project_id': self.sapelli_project.sapelli_id,
+                'sapelli_project_fingerprint': self.sapelli_project.sapelli_fingerprint,
+            })
+
+        request = self.factory.post(url, data)
+        force_authenticate(request, user)
+        view = SapelliLogsViaPersonalInfo.as_view()
+        return view(
+            request,
+            sapelli_project_id=self.sapelli_project.sapelli_id,
+            sapelli_project_fingerprint=self.sapelli_project.sapelli_fingerprint,
+        ).render()
+
+    def test_post_with_admin(self):
+        """Test POST with admin."""
+        response = self.post(self.admin)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            self.file_name)
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
+
+    def test_post_with_regular_user(self):
+        """Test POST with regular user."""
+        response = self.post(self.regular_user)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            self.file_name)
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
+
+    def test_post_with_anonymous(self):
+        """Test POST with anonymous user."""
+        response = self.post(self.anonymous_user)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            self.file_name)
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
+
+    def test_post_when_assigning_name(self):
+        """Test POST when assigning name."""
+        data = {'name': 'Test Name', 'file': self.file}
+        response = self.post(self.admin, data)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            'Test Name')
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
+
+
+class SapelliLogsViaGeoKeyInfoTest(TestCase):
+    """Test public API for Sapelli logs via the Sapelli info."""
+
+    def setUp(self):
+        """Set up test."""
+        self.factory = APIRequestFactory()
+        self.admin = UserFactory.create()
+        self.regular_user = UserFactory.create()
+        self.anonymous_user = AnonymousUser()
+        self.project = ProjectFactory(add_admins=[self.admin])
+        self.sapelli_project = SapelliProjectFactory.create(
+            **{'geokey_project': self.project})
+
+        self.file_name = 'Collector_2015-01-20T18.02.12.log'
+        path = normpath(join(
+            dirname(abspath(__file__)),
+            'files/%s' % self.file_name))
+        self.file = File(open(path, 'rb'))
+
+    def tearDown(self):
+        """Tear down test."""
+        for sapelli_log_file in SapelliLogFile.objects.all():
+            sapelli_log_file.delete()
+
+    def post(self, user, data=None):
+        """Custom method for testing POST."""
+        if data is None:
+            data = {'file': self.file}
+
+        url = reverse(
+            'geokey_sapelli:project_logs_api_via_gk_info',
+            kwargs={'project_id': self.project.id})
+
+        request = self.factory.post(url, data)
+        force_authenticate(request, user)
+        view = SapelliLogsViaGeoKeyInfo.as_view()
+        return view(
+            request,
+            project_id=self.project.id,
+        ).render()
+
+    def test_post_with_admin(self):
+        """Test POST with admin."""
+        response = self.post(self.admin)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            self.file_name)
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
+
+    def test_post_with_regular_user(self):
+        """Test POST with regular user."""
+        response = self.post(self.regular_user)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            self.file_name)
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
+
+    def test_post_with_anonymous(self):
+        """Test POST with anonymous user."""
+        response = self.post(self.anonymous_user)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            self.file_name)
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
+
+    def test_post_when_assigning_name(self):
+        """Test POST when assigning name."""
+        data = {'name': 'Test Name', 'file': self.file}
+        response = self.post(self.admin, data)
+        self.assertEqual(response.status_code, 201)
+        reference = SapelliLogFile.objects.latest('pk')
+        self.assertEqual(
+            reference.name,
+            'Test Name')
+        self.assertEqual(
+            reference.created_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertNotEqual(
+            reference.uploaded_at,
+            datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc))
+        self.assertEqual(
+            reference.sapelli_project,
+            self.sapelli_project)
