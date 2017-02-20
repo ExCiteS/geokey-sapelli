@@ -165,27 +165,27 @@
 			}
 		}
 	});
-	
+
 	var getQRImg = function(projectID)
 	{
 		return $("#qr-img-" + projectID);
 	}
-	
+
 	var getQRLink = function(projectID)
 	{
 		return $("#qr-a-" + projectID);
 	}
-	
+
 	var getQRCountdown = function(projectID)
 	{
 		return $("#qr-expires-" + projectID);
 	}
-	
+
 	var getQRDialog = function(projectID)
 	{
 		return $('#qr-dialog-' + projectID);
 	}
-	
+
 	var setupQRDialogEvents = function(projectID)
 	{
 		// On showing of QR dialog:
@@ -193,14 +193,14 @@
 		{
 			setQRDialogContent(projectID);
 		});
-		
+
 		// On hiding of QR dialog:
 		getQRDialog(projectID).on('hidden.bs.modal', function()
 		{
 			clearQRDialogContent(projectID);
 		});
 	}
-	
+
 	var qrs = {};
 
 {% for sapelli_project in sapelli_projects %}
@@ -214,7 +214,7 @@
 	setupQRDialogEvents({{ sapelli_project.geokey_project.id }});
 {% endif %}
 {% endfor %}
-	
+
 	var setQRDialogContent = function(projectID)
 	{
 		if(!qrs[projectID].imageURLBlob)
@@ -232,7 +232,7 @@
 			qrs[projectID].countdown = setInterval(function () { countdown(projectID); }, 1000);
 		}
 	}
-	
+
 	var requestQR = function(projectID)
 	{
 		// Use a native XHR so we can use custom responseType
@@ -255,7 +255,7 @@
 		};
 		xhr.send();
 	}
-	
+
 	var clearQRDialogContent = function(projectID)
 	{
 		clearInterval(qrs[projectID].countdown);
@@ -264,40 +264,40 @@
 		getQRLink(projectID).attr("href", "");
 		getQRCountdown(projectID).html("&hellip;");
 	}
-	
+
 	var hideQRDialog = function(projectID)
 	{
 		getQRDialog(projectID).modal('hide'); // -> clearQRDialogContent() will also be called
 	}
-	
+
 	var forgetQRImg = function(projectID)
 	{
 		// Hide dialog (clearQRDialogContent() will also be called):
 		hideQRDialog(projectID);
-		
+
 		// Forget the QR img, expires, link:
 		qrs[projectID].imageURLBlob = undefined;
 		qrs[projectID].link = undefined;
 		qrs[projectID].expires = undefined;
 	}
-	
+
 	var revokeQR = function(projectID)
 	{
 		// Forget about the QR img:
 		forgetQRImg(projectID); // will also hide the dialog, stop the countdown, etc.
-		
+
 		// Tell server to throw away QR link/access_token:
 		$.ajax({
 			url: qrs[projectID].imgURL,
 			type: 'DELETE',
 			success: function(result) { /*console.log(result)*/ }});
 	}
-	
+
 	var countdown = function(projectID)
 	{
 		var /*days, */hours, minutes, seconds;
 		var seconds_left = (qrs[projectID].expires - new Date()) / 1000;
-	
+
 		if(seconds_left < 0)
 		{
 			// Forget about the QR img:
@@ -307,13 +307,13 @@
 		{
 			//days = parseInt(seconds_left / 86400);
 			//seconds_left = seconds_left % 86400;
-		
+
 			hours = parseInt(seconds_left / 3600);
 			seconds_left = seconds_left % 3600;
-		
+
 			minutes = parseInt(seconds_left / 60);
 			seconds = parseInt(seconds_left % 60);
-		
+
 			// format countdown string + set tag value
 			getQRCountdown(projectID).html(
 				/*'<span class="days">' + days + ' Days</span> ' +*/
