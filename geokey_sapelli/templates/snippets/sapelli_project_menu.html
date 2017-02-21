@@ -4,11 +4,12 @@
 					<h6 class="item-info">Project</h6>
 					<h4>{{ sapelli_project.geokey_project.name }}</h4>
 				</div>
+
 				<div class="list-group">
-					<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="list-group-item">
+					<a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'data_csv_upload' %}active{% endif %}">
 						Upload data
 					</a>
-                    <a href="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="list-group-item">
+                    <a href="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'data_logs_download' %}active{% endif %}">
                         Download logs
                     </a>
 					<a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="list-group-item">
