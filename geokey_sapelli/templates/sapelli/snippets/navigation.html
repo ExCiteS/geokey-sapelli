@@ -6,7 +6,7 @@
     </div>
 
     <div class="list-group">
-        <a href="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'logs' %}active{% endif %}">Logs</a>
+        <a href="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'logs' %}active{% endif %}">Log files</a>
         <a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'data_csv_upload' %}active{% endif %}">Data upload</a>
         <a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="list-group-item" download>Download SAP</a>
         <a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="list-group-item">Manage GeoKey project</a>
