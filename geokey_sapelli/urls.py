@@ -15,6 +15,7 @@ from views import (
     SapelliLogsViaPersonalInfo, SapelliLogsViaGeoKeyInfo,
 )
 
+
 urlpatterns = [
     #
     # ADMIN PAGES
@@ -33,9 +34,9 @@ urlpatterns = [
         DataCSVUpload.as_view(),
         name='data_csv_upload'),
     url(
-        r'^admin/sapelli/projects/(?P<project_id>[0-9]+)/logs_download/$',
+        r'^admin/sapelli/projects/(?P<project_id>[0-9]+)/logs/$',
         DataLogsDownload.as_view(),
-        name='data_logs_download'),
+        name='logs'),
 
     #
     # API ENDPOINTS

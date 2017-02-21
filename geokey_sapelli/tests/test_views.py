@@ -315,12 +315,12 @@ class DataLogsDownloadTest(TestCase):
         """Test URL."""
         self.assertEqual(
             reverse(
-                'geokey_sapelli:data_logs_download',
+                'geokey_sapelli:logs',
                 kwargs={'project_id': 1}
             ),
-            '/admin/sapelli/projects/1/logs_download/')
+            '/admin/sapelli/projects/1/logs/')
 
-        resolved = resolve('/admin/sapelli/projects/1/logs_download/')
+        resolved = resolve('/admin/sapelli/projects/1/logs/')
         self.assertEqual(resolved.kwargs['project_id'], '1')
         self.assertEqual(resolved.func.func_name, DataLogsDownload.__name__)
 
