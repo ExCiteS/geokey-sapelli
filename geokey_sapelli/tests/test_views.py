@@ -379,11 +379,11 @@ class DataLogsDownloadTest(TestCase):
         rendered = render_to_string(
             'sapelli_download_data_logs.html',
             {
-                'user': self.request.user,
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),
+                'user': self.request.user,
                 'error': 'Not found',
-                'error_description': 'Sapelli project not found.'
+                'error_description': 'Sapelli project not found.',
             }
         )
         response = render_helpers.remove_csrf(unicode(response.content))
@@ -400,20 +400,10 @@ class DataLogsDownloadTest(TestCase):
         rendered = render_to_string(
             'sapelli_download_data_logs.html',
             {
-                'sapelli_project': self.sapelli_project,
-                'user': self.request.user,
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),
-                'GEOKEY_SAPELLI_VERSION': __version__,
-                'menu_entries': [
-                    MenuEntry(
-                        label='Project list',
-                        url='geokey_sapelli:index',
-                        active=False),
-                    MenuEntry(
-                        label='Add project',
-                        url='geokey_sapelli:project_upload',
-                        active=False)],
+                'user': self.request.user,
+                'sapelli_project': self.sapelli_project,
             }
         )
         response = render_helpers.remove_csrf(unicode(response.content))

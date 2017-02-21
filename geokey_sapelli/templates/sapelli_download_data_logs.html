@@ -16,14 +16,35 @@
     {% include 'snippets/messages.html' %}
 
     <div class="row">
-        {% include 'snippets/sapelli_menu.html' %}
+        <div class="col-sm-4">
+            {% include 'snippets/sapelli_project_menu.html' %}
+        </div>
 
-        <div class="col-sm-8 clearfix">
-            <h2 class="header">Download logs: {{ sapelli_project.geokey_project.name }}</h2>
+        <div class="col-sm-8">
+            <h2 class="header">Logs</h2>
 
-            {% for log in sapelli_project.logs.all %}
+            <form role="form" method="POST" action="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="row" novalidate>
+                {% csrf_token %}
+
+                <div class="form-group col-md-6">
+                    <label for="date-from">Created from</label>
+                    <input type="text" class="form-control date" id="date-from" name="date-from" data-date-format="YYYY-MM-DD" value="{{ date_from }}" />
+                </div>
+
+                <div class="form-group col-md-6">
+                    <label for="date-to">Created until</label>
+                    <input type="text" class="form-control date" id="date-to" name="date-to" data-date-format="YYYY-MM-DD" value="{{ date_to }}" />
+                </div>
+
+                <div class="form-group col-md-12">
+                    <button type="submit" class="btn btn-primary">Filter logs</button>
+                    <button type="reset" class="btn btn-link">Clear</button>
+                </div>
+            </form>
+
+            {% for log in logs %}
                 {% if forloop.first %}
-                    <ol class="list-unstyled1 overview-list">
+                    <ol class="list-unstyled overview-list">
                 {% endif %}
 
                 <li>
@@ -33,6 +54,22 @@
 
                 {% if forloop.last %}
                     </ol>
+
+                    <nav>
+                        <ul class="pager">
+                            {% if logs.has_next %}
+                                <li class="previous">
+                                    <a href="?page={{ logs.next_page_number }}{% if date_from  %}&date_from={{ date_from }}{% endif %}{% if date_to  %}&date_to={{ date_to }}{% endif %}"><span aria-hidden="true">&larr;</span> Older</a>
+                                </li>
+                            {% endif %}
+
+                            {% if logs.has_previous %}
+                                <li class="next">
+                                    <a href="?page={{ logs.previous_page_number }}{% if date_from  %}&date_from={{ date_from }}{% endif %}{% if date_to  %}&date_to={{ date_to }}{% endif %}">Newer <span aria-hidden="true">&rarr;</span></a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
                 {% endif %}
             {% empty %}
                 <div class="well empty-list">
@@ -42,4 +79,11 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block libraries %}
+<script src="/static/lib/moment/moment.min.js"></script>
+<link rel="stylesheet" type="text/css" href="/static/lib/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css">
+<script src="/static/lib/bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+<script src="/static/js/admin.ui.filters.data.js"></script>
 {% endblock %}

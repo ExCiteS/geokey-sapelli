@@ -3,12 +3,14 @@ import json
 import qrcode
 
 from StringIO import StringIO
+from dateutil import parser
 
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 
@@ -188,6 +190,54 @@ class ProjectUpload(AbstractSapelliView):
         return self.render_to_response({})
 
 
+class SapelliProjectMixin(LoginRequiredMixin):
+    """Sapelli project mixin (requires a user to be logged in)."""
+
+    def get_object(self, user, sapelli_project_id):
+        """
+        Return the object.
+
+        Parameters
+        ----------
+        sapelli_project_id : int
+            Identifies the Sapelli project in the database.
+
+        Returns
+        -------
+        geokey_sapelli.models.SapelliProject
+            Object found by ID, only if user is administrator.
+        """
+        return SapelliProject.objects.get_single_for_administration(
+            user,
+            sapelli_project_id)
+
+    def get_context_data(self, sapelli_project_id, *args, **kwargs):
+        """
+        Return the context to render the view.
+
+        Parameters
+        ----------
+        sapelli_project_id : int
+            Identifies the Sapelli project in the database.
+
+        Returns
+        -------
+        dict
+            Context with Sapelli project or an error message.
+        """
+        user = self.request.user
+
+        try:
+            return {
+                'sapelli_project': self.get_object(user, sapelli_project_id),
+            }
+        except SapelliProject.DoesNotExist:
+            return {
+                'error': 'Not found',
+                'error_description': 'Sapelli project not found.',
+            }
+
+
 class SapelliProjectAbstractView(AbstractSapelliView):
     """Abstract view for Sapelli project."""
 
@@ -262,10 +312,100 @@ class DataCSVUpload(SapelliProjectAbstractView):
         return self.render_to_response(context)
 
 
-class DataLogsDownload(SapelliProjectAbstractView):
-    """Admin page for downloading logs."""
+class DataLogsDownload(SapelliProjectMixin, TemplateView):
+    """Admin page for all Sapelli logs."""
 
     template_name = 'sapelli_download_data_logs.html'
+
+    def get_context_data(self, project_id, *args, **kwargs):
+        """
+        Return the context to render the view.
+
+        Parameters
+        ----------
+        project_id : int
+            Identifies the GeoKey project in the database.
+
+        Returns
+        -------
+        dict
+            Context with Sapelli project, filtered and paged logs.
+        """
+        context = super(DataLogsDownload, self).get_context_data(
+            project_id,
+            *args,
+            **kwargs)
+
+        sapelli_project = context.get('sapelli_project')
+        if sapelli_project:
+            data = self.request.GET
+
+            logs = SapelliLogFile.objects.filter(
+                sapelli_project=sapelli_project)
+
+            date_from = kwargs.get('date_from') or data.get('date_from')
+            if date_from:
+                try:
+                    context['date_from'] = date_from
+                    date_from = parser.parse(date_from)
+                except ValueError:
+                    messages.error(self.request, 'Invalid `from` date.')
+                    context['date_from'] = None
+                    date_from = None
+            date_to = kwargs.get('date_to') or data.get('date_to')
+            if date_to:
+                try:
+                    context['date_to'] = date_to
+                    date_to = parser.parse(date_to)
+                except ValueError:
+                    messages.error(self.request, 'Invalid `to` date.')
+                    context['date_to'] = None
+                    date_to = None
+
+            if date_from and date_to and date_to < date_from:
+                messages.error(self.request, 'Invalid date range.')
+            else:
+                if date_from:
+                    logs = logs.filter(created_at__gte=date_from)
+                if date_to:
+                    logs = logs.filter(created_at__lt=date_to)
+
+            paginator = Paginator(logs.order_by('-created_at'), 50)
+            page = self.request.GET.get('page')
+
+            try:
+                logs = paginator.page(page)
+            except PageNotAnInteger:
+                logs = paginator.page(1)
+            except EmptyPage:
+                logs = paginator.page(paginator.num_pages)
+
+            context['logs'] = logs
+
+        return context
+
+    def post(self, request, project_id, *args, **kwargs):
+        """
+        Handle POST request.
+
+        Parameters
+        ----------
+        request : django.http.HttpRequest
+            Object representing the request.
+        project_id : int
+            Identifies the GeoKey project in the database.
+
+        Returns
+        -------
+        django.http.HttpResponse
+            Rendered template.
+        """
+        context = self.get_context_data(
+            project_id,
+            date_from=request.POST.get('date-from'),
+            date_to=request.POST.get('date-to'))
+
+        return self.render_to_response(context)
 
 
 # ############################################################################
