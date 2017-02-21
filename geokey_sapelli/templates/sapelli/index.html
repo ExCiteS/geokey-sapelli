@@ -27,7 +27,7 @@
                     <h3><a href="#" data-toggle="modal" data-target="#info-dialog-{{ sapelli_project.geokey_project.id }}">{{ sapelli_project.geokey_project.name }}</a></h3>
 
                     <p>
-                        <a role="button" href="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Logs</a>
+                        <a role="button" href="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Logs</a>
                         <a role="button" href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Data upload</a>
                         <a role="button" href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}"  class="btn btn-sm btn-default">Manage GeoKey project</a>
                     </p>
