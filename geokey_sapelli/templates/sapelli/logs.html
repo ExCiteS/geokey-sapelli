@@ -48,13 +48,13 @@
                         <ul class="pager">
                             {% if logs.has_next %}
                                 <li class="previous">
-                                    <a href="?page={{ logs.next_page_number }}{% if date_from  %}&date_from={{ date_from }}{% endif %}{% if date_to  %}&date_to={{ date_to }}{% endif %}"><span aria-hidden="true">&larr;</span> Older</a>
+                                    <a href="?page={{ logs.next_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}"><span aria-hidden="true">&larr;</span> Older</a>
                                 </li>
                             {% endif %}
 
                             {% if logs.has_previous %}
                                 <li class="next">
-                                    <a href="?page={{ logs.previous_page_number }}{% if date_from  %}&date_from={{ date_from }}{% endif %}{% if date_to  %}&date_to={{ date_to }}{% endif %}">Newer <span aria-hidden="true">&rarr;</span></a>
+                                    <a href="?page={{ logs.previous_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Newer <span aria-hidden="true">&rarr;</span></a>
                                 </li>
                             {% endif %}
                         </ul>
