@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import json
 from os.path import dirname, normpath, abspath, join
 from datetime import datetime
@@ -80,7 +83,7 @@ class ProjectListTest(TestCase):
                 'sapelli_projects': [sapelli_project],
             }
         )
-        response = render_helpers.remove_csrf(unicode(response.content))
+        response = render_helpers.remove_csrf(response.content.decode('utf-8'))
         self.assertEqual(response, rendered)
 
     def test_get_with_anonymous(self):
@@ -141,7 +144,7 @@ class ProjectUploadTest(TestCase):
                 'user': user,
             }
         )
-        response = render_helpers.remove_csrf(unicode(response.content))
+        response = render_helpers.remove_csrf(response.content.decode('utf-8'))
         self.assertEqual(response, rendered)
 
     def test_post_with_anonymous(self):
@@ -234,7 +237,7 @@ class DataCSVUploadTest(TestCase):
                 'sapelli_project': sapelli_project,
             }
         )
-        response = render_helpers.remove_csrf(unicode(response.content))
+        response = render_helpers.remove_csrf(response.content.decode('utf-8'))
         self.assertEqual(response, rendered)
 
     def test_post_with_anonymous(self):
@@ -286,7 +289,7 @@ class DataCSVUploadTest(TestCase):
             response,
             '4 records have been added as project contributions'
         )
-        response = render_helpers.remove_csrf(unicode(response.content))
+        response = render_helpers.remove_csrf(response.content.decode('utf-8'))
         self.assertEqual(response, rendered)
         self.assertEqual(sapelli_project.geokey_project.observations.count(), 4)
 
@@ -348,7 +351,7 @@ class DataLogsDownloadTest(TestCase):
                 'error_description': 'Sapelli project not found.',
             }
         )
-        response = render_helpers.remove_csrf(unicode(response.content))
+        response = render_helpers.remove_csrf(response.content.decode('utf-8'))
         self.assertEqual(response, rendered)
 
     def test_get_with_admin(self):
@@ -368,7 +371,7 @@ class DataLogsDownloadTest(TestCase):
                 'sapelli_project': self.sapelli_project,
             }
         )
-        response = render_helpers.remove_csrf(unicode(response.content))
+        response = render_helpers.remove_csrf(response.content.decode('utf-8'))
         self.assertEqual(response, rendered)
 
 
