@@ -54,7 +54,7 @@
                                     </div>
 
                                     <div class="modal-footer">
-                                        <a role="button" href="#" onClick="revokeQR({{ sapelli_project.geokey_project.id }}); return false;" class="btn btn-sm btn-default">Revoke</a>
+                                        <a role="button" href="#" onClick="revokeQR({{ sapelli_project.geokey_project.id }}); return false;" class="btn btn-md btn-default">Revoke</a>
                                     </div>
                                 </div>
                             </div>
@@ -131,8 +131,8 @@
                                     </table>
 
                                     <div class="modal-footer">
-                                        {% if sapelli_project.sap_path %}<a role="button" href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default" download>Download SAP</a>{% endif %}
-                                        <a role="button" href="#" data-dismiss="modal" data-toggle="modal" data-target="#qr-dialog-{{ sapelli_project.geokey_project.id }}" class="btn btn-sm btn-default">SAP QR code</a>
+                                        {% if sapelli_project.sap_path %}<a role="button" href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="btn btn-md btn-default" download>Download SAP</a>{% endif %}
+                                        <a role="button" href="#" data-dismiss="modal" data-toggle="modal" data-target="#qr-dialog-{{ sapelli_project.geokey_project.id }}" class="btn btn-md btn-default">SAP QR code</a>
                                     </div>
                                 </div>
                             </div>
