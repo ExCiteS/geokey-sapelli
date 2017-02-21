@@ -13,7 +13,7 @@
         <div class="col-sm-8">
             <h2 class="header">Logs</h2>
 
-            <form role="form" method="POST" action="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="row" novalidate>
+            <form role="form" method="POST" action="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="row" novalidate>
                 {% csrf_token %}
 
                 <div class="form-group col-md-6">
