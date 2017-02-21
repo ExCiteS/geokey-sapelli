@@ -102,7 +102,10 @@ class SapelliProjectManager(Manager):
         -------
         geokey_sapelli.SapelliProject
         """
-        return self.get_list_for_administration(user).get(pk=project_id)
+        for sapelli_project in self.get_list_for_administration(user):
+            if sapelli_project.geokey_project.id == int(project_id):
+                return sapelli_project
+        raise self.model.DoesNotExist
 
     def get_single_for_contribution(self, user, project_id):
         """
