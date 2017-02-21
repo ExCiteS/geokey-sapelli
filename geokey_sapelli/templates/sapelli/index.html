@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% block title %} | Sapelli{% endblock %}
+
+{% block main %}
+{% include 'sapelli/snippets/header.html' %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <h2 class="header">
+                <span>Manage Sapelli projects</span>
+
+                {% if sapelli_projects %}
+                    <a role="button" href="{% url 'geokey_sapelli:project_upload' %}" class="btn btn-md btn-success pull-right">
+                        <span class="glyphicon glyphicon-plus"></span>
+                        <span>Upload new project</span>
+                    </a>
+                {% endif %}
+            </h2>
+
+            {% for sapelli_project in sapelli_projects %}
+                {% if forloop.first %}
+                    <ul class="list-unstyled overview-list">
+                {% endif %}
+
+                <li>
+                    <h3><a href="#" data-toggle="modal" data-target="#info-dialog-{{ sapelli_project.geokey_project.id }}">{{ sapelli_project.geokey_project.name }}</a></h3>
+
+                    <p>
+                        <a role="button" href="{% url 'geokey_sapelli:data_logs_download' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Logs</a>
+                        <a role="button" href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Data upload</a>
+                        <a role="button" href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}"  class="btn btn-sm btn-default">Manage GeoKey project</a>
+                    </p>
+
+                    <p class="meta">Uploaded by {{ sapelli_project.geokey_project.creator.display_name }} {{ sapelli_project.geokey_project.created_at|timesince }} ago</p>
+
+                    {% if sapelli_project.sap_path %}
+                        <div role="dialog" class="modal fade" id="qr-dialog-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide SAP QR code">&times;</button>
+                                        <h4 class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <p>To install the project on your Android device, simply scan the QR code below using the <a href="https://play.google.com/store/apps/details?id=uk.ac.ucl.excites.sapelli.collector" target="_blank">Sapelli Collector app</a>.</p>
+
+                                        <div class="text-center">
+                                            <a href="#" id="qr-a-{{ sapelli_project.geokey_project.id }}">
+                                                <img id="qr-img-{{ sapelli_project.geokey_project.id }}" title="QR code to download SAP file" />
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <a role="button" href="#" onClick="revokeQR({{ sapelli_project.geokey_project.id }}); return false;" class="btn btn-sm btn-default">Revoke</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div role="dialog" class="modal fade" id="info-dialog-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-md">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide Sapelli project info">&times;</button>
+                                    <h4 class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
+                                </div>
+
+                                <div class="modal-body">
+                                    <table class="table">
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-right"><strong>Name</strong></td>
+                                                <td class="text-left">{{ sapelli_project.name }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Variant</strong></td>
+                                                <td class="text-left">{% if sapelli_project.variant %}{{ sapelli_project.variant }}{% else %}<span class="text-muted">none</span>{% endif %}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Version</strong></td>
+                                                <td class="text-left">{{ sapelli_project.version }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>GeoKey project ID</strong></td>
+                                                <td class="text-left">{{ sapelli_project.geokey_project.id }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Sapelli project ID</strong></td>
+                                                <td class="text-left">{{ sapelli_project.sapelli_id }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Fingerprint</strong></td>
+                                                <td class="text-left">{{ sapelli_project.sapelli_fingerprint }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Model ID</strong></td>
+                                                <td class="text-left">{{ sapelli_project.sapelli_model_id }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Forms</strong></td>
+                                                <td class="text-left">
+                                                    <ul class="list-unstyled">
+                                                        {% for form in sapelli_project.forms.all %}
+                                                            <li><a href="{% url 'admin:category_overview' form.category.project.id form.category.id %}">{{ form.sapelli_id }}</a></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Uploaded at</strong></td>
+                                                <td class="text-left">{{ sapelli_project.geokey_project.created_at }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-right"><strong>Uploaded by</strong></td>
+                                                <td class="text-left">{{ sapelli_project.geokey_project.creator.display_name }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="modal-footer">
+                                        {% if sapelli_project.sap_path %}<a role="button" href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default" download>Download SAP</a>{% endif %}
+                                        <a role="button" href="#" data-dismiss="modal" data-toggle="modal" data-target="#qr-dialog-{{ sapelli_project.geokey_project.id }}" class="btn btn-sm btn-default">SAP QR code</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+                {% if forloop.last %}
+                    </ul>
+                {% endif %}
+            {% empty %}
+                <div class="well empty-list">
+                    <p class="lead">We couldn't find any Sapelli projects you are eligible to manage.</p>
+                    <p>You can upload a new project if you want to use it with Sapelli mobile app.</p>
+                    <a href="{% url 'geokey_sapelli:project_upload' %}" class="btn btn-lg btn-success">Upload a new project</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block libraries %}
+<script src="/static/lib/js-cookie/js.cookie.min.js"></script>
+
+<script>
+    var csrftoken = Cookies.get('csrftoken');
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    $.ajaxSetup({
+        data: {csrfmiddlewaretoken: csrftoken },
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    var getQRImg = function(projectID)
+    {
+        return $("#qr-img-" + projectID);
+    }
+
+    var getQRLink = function(projectID)
+    {
+        return $("#qr-a-" + projectID);
+    }
+
+    var getQRCountdown = function(projectID)
+    {
+        return $("#qr-expires-" + projectID);
+    }
+
+    var getQRDialog = function(projectID)
+    {
+        return $('#qr-dialog-' + projectID);
+    }
+
+    var setupQRDialogEvents = function(projectID)
+    {
+        // On showing of QR dialog:
+        getQRDialog(projectID).on('shown.bs.modal', function()
+        {
+            setQRDialogContent(projectID);
+        });
+
+        // On hiding of QR dialog:
+        getQRDialog(projectID).on('hidden.bs.modal', function()
+        {
+            clearQRDialogContent(projectID);
+        });
+    }
+
+    var qrs = {};
+
+{% for sapelli_project in sapelli_projects %}
+{% if sapelli_project.sap_path %}
+    // Project {{ sapelli_project.geokey_project.id }}...
+    //  QR object for project:
+    qrs[{{ sapelli_project.geokey_project.id }}] = {
+        imgURL: "{% url 'geokey_sapelli:sap_download_qr_link_api' sapelli_project.geokey_project.id %}"
+    };
+    //  Set-up dialog events:
+    setupQRDialogEvents({{ sapelli_project.geokey_project.id }});
+{% endif %}
+{% endfor %}
+
+    var setQRDialogContent = function(projectID)
+    {
+        if(!qrs[projectID].imageURLBlob)
+        {
+            requestQR(projectID);
+        }
+        else
+        {
+            // Set QR image:
+            getQRImg(projectID).attr("src", qrs[projectID].imageURLBlob);
+            // Set hyperlink on QR img to the full url as embedded in QR:
+            //  (so people copying the link url can pass it to others as they would pass the qr code)
+            getQRLink(projectID).attr("href", qrs[projectID].link);
+            // Set countdown:
+            qrs[projectID].countdown = setInterval(function () { countdown(projectID); }, 1000);
+        }
+    }
+
+    var requestQR = function(projectID)
+    {
+        // Use a native XHR so we can use custom responseType
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", qrs[projectID].imgURL, true);
+
+        // Ask for the result as an ArrayBuffer.
+        xhr.responseType = "arraybuffer";
+
+        xhr.onload = function(e)
+        {
+            // Obtain a blob-URL for the image data:
+            qrs[projectID].imageURLBlob = URL.createObjectURL(new Blob([ new Uint8Array(this.response) ], { type: "image/png" }));
+            // Get the QR url from response:
+            qrs[projectID].link = this.getResponseHeader('X-QR-URL');
+            // Get the expire time from response:
+            qrs[projectID].expires = new Date(this.getResponseHeader('X-QR-Access-Token-Expires'));
+
+            setQRDialogContent(projectID);
+        };
+        xhr.send();
+    }
+
+    var clearQRDialogContent = function(projectID)
+    {
+        clearInterval(qrs[projectID].countdown);
+        qrs[projectID].countdown = undefined;
+        getQRImg(projectID).attr("src", "");
+        getQRLink(projectID).attr("href", "");
+        getQRCountdown(projectID).html("&hellip;");
+    }
+
+    var hideQRDialog = function(projectID)
+    {
+        getQRDialog(projectID).modal('hide'); // -> clearQRDialogContent() will also be called
+    }
+
+    var forgetQRImg = function(projectID)
+    {
+        // Hide dialog (clearQRDialogContent() will also be called):
+        hideQRDialog(projectID);
+
+        // Forget the QR img, expires, link:
+        qrs[projectID].imageURLBlob = undefined;
+        qrs[projectID].link = undefined;
+        qrs[projectID].expires = undefined;
+    }
+
+    var revokeQR = function(projectID)
+    {
+        // Forget about the QR img:
+        forgetQRImg(projectID); // will also hide the dialog, stop the countdown, etc.
+
+        // Tell server to throw away QR link/access_token:
+        $.ajax({
+            url: qrs[projectID].imgURL,
+            type: 'DELETE',
+            success: function(result) { /*console.log(result)*/ }});
+    }
+
+    var countdown = function(projectID)
+    {
+        var /*days, */hours, minutes, seconds;
+        var seconds_left = (qrs[projectID].expires - new Date()) / 1000;
+
+        if(seconds_left < 0)
+        {
+            // Forget about the QR img:
+            forgetQRImg(projectID); // will also hide the dialog, stop the countdown, etc.
+        }
+        else
+        {
+            //days = parseInt(seconds_left / 86400);
+            //seconds_left = seconds_left % 86400;
+
+            hours = parseInt(seconds_left / 3600);
+            seconds_left = seconds_left % 3600;
+
+            minutes = parseInt(seconds_left / 60);
+            seconds = parseInt(seconds_left % 60);
+
+            // format countdown string + set tag value
+            getQRCountdown(projectID).html(
+                /*'<span class="days">' + days + ' Days</span> ' +*/
+                '<span class="hours">' + hours + ' Hours</span> ' +
+                '<span class="minutes">' + minutes + ' Minutes</span> ' +
+                '<span class="seconds">' + seconds + ' seconds</span>');
+        }
+    }
+</script>
+{% endblock %}

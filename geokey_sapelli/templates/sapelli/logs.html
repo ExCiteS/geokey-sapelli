@@ -1,23 +1,13 @@
 {% extends 'base.html' %}
-{% block title %} | Extension: Sapelli{% endblock %}
+{% block title %} | Sapelli: {{ sapelli_project.geokey_project.name }} - Logs{% endblock %}
 
 {% block main %}
-<div class="page-header">
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-6">
-                <h1 class="smaller"><a href="{% url 'geokey_sapelli:index' %}">Sapelli</a></h1>
-            </div>
-        </div>
-    </div>
-</div>
+{% include 'sapelli/snippets/header.html' %}
 
 <div class="container">
-    {% include 'snippets/messages.html' %}
-
     <div class="row">
         <div class="col-sm-4">
-            {% include 'snippets/sapelli_project_menu.html' %}
+            {% include 'sapelli/snippets/navigation.html' %}
         </div>
 
         <div class="col-sm-8">
@@ -37,14 +27,13 @@
                 </div>
 
                 <div class="form-group col-md-12">
-                    <button type="submit" class="btn btn-primary">Filter logs</button>
-                    <button type="reset" class="btn btn-link">Clear</button>
+                    <button type="submit" class="btn btn-md btn-primary">Filter logs</button>
                 </div>
             </form>
 
             {% for log in logs %}
                 {% if forloop.first %}
-                    <ol class="list-unstyled overview-list">
+                    <ul class="list-unstyled overview-list">
                 {% endif %}
 
                 <li>
@@ -53,7 +42,7 @@
                 </li>
 
                 {% if forloop.last %}
-                    </ol>
+                    </ul>
 
                     <nav>
                         <ul class="pager">
@@ -73,7 +62,11 @@
                 {% endif %}
             {% empty %}
                 <div class="well empty-list">
-                    <p class="lead">We couldn't find any logs uploaded for this project.</p>
+                    {% if date_from or date_to %}
+                        <p class="lead">We couldn't find any logs in this date range for this project.</p>
+                    {% else %}
+                        <p class="lead">We couldn't find any logs uploaded for this project.</p>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>

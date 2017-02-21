@@ -25,8 +25,11 @@ from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 from geokey.projects.tests.model_factories import ProjectFactory
 
-from .model_factories import GeoKeySapelliApplicationFactory, SapelliProjectFactory, create_horniman_sapelli_project, create_qr_link
-from .. import __version__
+from .model_factories import (
+    GeoKeySapelliApplicationFactory,
+    SapelliProjectFactory,
+    create_horniman_sapelli_project, create_qr_link,
+)
 from ..models import (
     SapelliProject,
     SAPDownloadQRLink,
@@ -43,7 +46,6 @@ from ..views import (
     SapelliLogsViaPersonalInfo,
     SapelliLogsViaGeoKeyInfo,
 )
-from ..helper.dynamic_menu import MenuEntry
 
 
 class ProjectListTest(TestCase):
@@ -69,23 +71,13 @@ class ProjectListTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_project_list.html',
+            'sapelli/index.html',
             {
-                'sapelli_projects': [sapelli_project],
-                'user': sapelli_project.geokey_project.creator,
+                'GEOKEY_VERSION': version.get_version(),
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'messages': get_messages(self.request),
-                'GEOKEY_VERSION': version.get_version(),
-                'GEOKEY_SAPELLI_VERSION': __version__,
-                'menu_entries': [
-                    MenuEntry(
-                        label='Project list',
-                        url='geokey_sapelli:index',
-                        active=True),
-                    MenuEntry(
-                        label='Add project',
-                        url='geokey_sapelli:project_upload',
-                        active=False)]
+                'user': sapelli_project.geokey_project.creator,
+                'sapelli_projects': [sapelli_project],
             }
         )
         response = render_helpers.remove_csrf(unicode(response.content))
@@ -142,21 +134,11 @@ class ProjectUploadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_upload_project.html',
+            'sapelli/upload_sapelli_project.html',
             {
-                'user': user,
-                'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),
-                'GEOKEY_SAPELLI_VERSION': __version__,
-                'menu_entries': [
-                    MenuEntry(
-                        label='Project list',
-                        url='geokey_sapelli:index',
-                        active=False),
-                    MenuEntry(
-                        label='Add project',
-                        url='geokey_sapelli:project_upload',
-                        active=True)]
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': user,
             }
         )
         response = render_helpers.remove_csrf(unicode(response.content))
@@ -244,22 +226,12 @@ class DataCSVUploadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_upload_data_csv.html',
+            'sapelli/upload_data_csv.html',
             {
-                'sapelli_project': sapelli_project,
-                'user': self.user,
-                'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),
-                'GEOKEY_SAPELLI_VERSION': __version__,
-                'menu_entries': [
-                    MenuEntry(
-                        label='Project list',
-                        url='geokey_sapelli:index',
-                        active=False),
-                    MenuEntry(
-                        label='Add project',
-                        url='geokey_sapelli:project_upload',
-                        active=False)]
+                'PLATFORM_NAME': get_current_site(self.request).name,
+                'user': self.user,
+                'sapelli_project': sapelli_project,
             }
         )
         response = render_helpers.remove_csrf(unicode(response.content))
@@ -300,23 +272,13 @@ class DataCSVUploadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_upload_data_csv.html',
+            'sapelli/upload_data_csv.html',
             {
-                'sapelli_project': sapelli_project,
-                'user': self.user,
+                'GEOKEY_VERSION': version.get_version(),
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'messages': get_messages(self.request),
-                'GEOKEY_VERSION': version.get_version(),
-                'GEOKEY_SAPELLI_VERSION': __version__,
-                'menu_entries': [
-                    MenuEntry(
-                        label='Project list',
-                        url='geokey_sapelli:index',
-                        active=False),
-                    MenuEntry(
-                        label='Add project',
-                        url='geokey_sapelli:project_upload',
-                        active=False)]
+                'user': self.user,
+                'sapelli_project': sapelli_project,
             }
         )
 
@@ -377,7 +339,7 @@ class DataLogsDownloadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_download_data_logs.html',
+            'sapelli/logs.html',
             {
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),
@@ -398,7 +360,7 @@ class DataLogsDownloadTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         rendered = render_to_string(
-            'sapelli_download_data_logs.html',
+            'sapelli/logs.html',
             {
                 'PLATFORM_NAME': get_current_site(self.request).name,
                 'GEOKEY_VERSION': version.get_version(),

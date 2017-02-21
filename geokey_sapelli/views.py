@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import os
 import json
 import qrcode
@@ -30,8 +33,6 @@ from geokey.core.decorators import (
 )
 from geokey.projects.models import Project
 
-from . import __version__
-
 from .models import SapelliProject, SAPDownloadQRLink, SapelliLogFile
 from .helper.sapelli_loader import load_from_sap
 from .helper.sapelli_exceptions import (
@@ -43,8 +44,6 @@ from .helper.sapelli_exceptions import (
 )
 from .helper.install_checks import check_extension
 
-
-from helper.dynamic_menu import MenuEntry
 from geokey_sapelli.serializers import SapelliLogFileSerializer
 
 try:
@@ -62,32 +61,15 @@ except:
 # ############################################################################
 
 class AbstractSapelliView(LoginRequiredMixin, TemplateView):
-    @staticmethod
-    def get_menu_label():
-        return None
-
-    @staticmethod
-    def get_menu_url():
-        return None
 
     def check(self):
-        """
-        Checks if extension is correctly installed.
-        """
+        """Check if extension is correctly installed."""
         try:
             check_extension()
         except SapelliException, se:
-            messages.error(self.request, 'The Sapelli extension is not properly installed: ' + str(se))
-
-    def add_menu(self, context):
-        menu_entries = []
-        for subclass in AbstractSapelliView.__subclasses__():
-            if subclass.get_menu_label() and subclass.get_menu_url():
-                menu_entries.append(MenuEntry(label=subclass.get_menu_label(), url=subclass.get_menu_url(), active=(self.__class__ == subclass)))
-
-        context['menu_entries'] = menu_entries
-        context['GEOKEY_SAPELLI_VERSION'] = __version__
-        return context
+            messages.error(
+                self.request,
+                'The Sapelli extension is not properly installed: ' + str(se))
 
 
 class ProjectList(AbstractSapelliView):
@@ -95,15 +77,7 @@ class ProjectList(AbstractSapelliView):
     Presents a list of all projects the user can access. Is also the starting
     page for the Sapelli extension.
     """
-    template_name = 'sapelli_project_list.html'
-
-    @staticmethod
-    def get_menu_label():
-        return 'Project list'
-
-    @staticmethod
-    def get_menu_url():
-        return 'geokey_sapelli:index'
+    template_name = 'sapelli/index.html'
 
     def get_context_data(self):
         """
@@ -116,25 +90,14 @@ class ProjectList(AbstractSapelliView):
         """
         context = {'sapelli_projects': SapelliProject.objects.get_list_for_contribution(self.request.user)}
         self.check()
-        return self.add_menu(context)
+        return context
 
 
 class ProjectUpload(AbstractSapelliView):
     """
     Presents a form to upload a .sap file to create a new project.
     """
-    template_name = 'sapelli_upload_project.html'
-
-    @staticmethod
-    def get_menu_label():
-        return 'Add project'
-
-    @staticmethod
-    def get_menu_url():
-        return 'geokey_sapelli:project_upload'
-
-    def get_context_data(self):
-        return self.add_menu({})
+    template_name = 'sapelli/upload_sapelli_project.html'
 
     def post(self, request):
         """
@@ -259,7 +222,7 @@ class SapelliProjectAbstractView(AbstractSapelliView):
             sapelli_project = SapelliProject.objects.get_single_for_contribution(
                 self.request.user,
                 project_id)
-            return self.add_menu({'sapelli_project': sapelli_project})
+            return {'sapelli_project': sapelli_project}
         except SapelliProject.DoesNotExist:
             return {
                 'error_description': 'Sapelli project not found.',
@@ -271,7 +234,7 @@ class DataCSVUpload(SapelliProjectAbstractView):
     """
     Presents a form to upload CSV files to create contributions.
     """
-    template_name = 'sapelli_upload_data_csv.html'
+    template_name = 'sapelli/upload_data_csv.html'
 
     def post(self, request, project_id):
         """
@@ -315,7 +278,7 @@ class DataCSVUpload(SapelliProjectAbstractView):
 class DataLogsDownload(SapelliProjectMixin, TemplateView):
     """Admin page for all Sapelli logs."""
 
-    template_name = 'sapelli_download_data_logs.html'
+    template_name = 'sapelli/logs.html'
 
     def get_context_data(self, project_id, *args, **kwargs):
         """

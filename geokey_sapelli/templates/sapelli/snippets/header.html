@@ -1,0 +1,15 @@
+<div class="page-header">
+    <div class="container">
+        {% if request.resolver_match.url_name == 'index' %}
+            <h1>Sapelli</h1>
+        {% else %}
+            <h1 class="smaller">
+                <a href="{% url 'geokey_sapelli:index' %}">Sapelli</a>
+            </h1>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container">
+    {% include 'sapelli/snippets/messages.html' %}
+</div>

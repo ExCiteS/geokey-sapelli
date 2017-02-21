@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %} | Sapelli - Upload new Sapelli project{% endblock %}
+
+{% block main %}
+{% include 'sapelli/snippets/header.html' %}
+
+<div class="container">
+    <div class="row">
+        <form role="form" id="form" class="col-md-8 col-md-offset-2" method="POST" action="{% url 'geokey_sapelli:project_upload' %}" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <h2 class="header">Upload new Sapelli project</h2>
+
+            <div class="form-group">
+                <label for="sap_file" class="control-label">Sapelli project file (.sap, .sapelli, .excites, .zip)</label>
+                <input type="file" id="sap_file" name="sap_file" accept=".sap,.sapelli,.excites,.zip" required />
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-lg btn-primary">Upload</button>
+                <a role="button" href="{% url 'geokey_sapelli:index' %}" class="btn btn-lg btn-link">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block libraries %}
+<link rel="stylesheet" href="/static/lib/bootstrap-fileinput/css/bootstrap-fileinput.min.css">
+<script src="/static/lib/bootstrap-fileinput/js/bootstrap-fileinput.min.js"></script>
+<script src="/static/js/admin.ui.fileinput.js"></script>
+<script src="/static/js/admin.ui.forms.validate.js"></script>
+
+<script>
+// Initialise file upload
+$('input:file').each(function() {
+    Ui.FileInput.init($(this), {
+        showUpload: false,
+        showRemove: false,
+        showPreview: false
+    });
+});
+
+$('body').on('DOMNodeInserted', 'input#sap_file ~ .help-block', function () {
+    $(this).detach().appendTo('.file-input');
+});
+</script>
+{% endblock %}
