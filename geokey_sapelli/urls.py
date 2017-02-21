@@ -1,9 +1,12 @@
-from django.conf.urls import url
+from django.conf.urls import include, url
 
-from views import (
+from rest_framework.urlpatterns import format_suffix_patterns
+
+from geokey_sapelli.views import (
     ProjectUpload,
     DataCSVUpload,
     ProjectList,
+    LogsZipView,
     LoginAPI,
     ProjectDescriptionAPI,
     ProjectUploadAPI,
@@ -16,7 +19,18 @@ from views import (
 )
 
 
+exportpatterns = [
+    url(
+        r'^admin/sapelli/projects/(?P<project_id>[0-9]+)/logs/(?P<file>[\w-]+)$',
+        LogsZipView.as_view(),
+        name='logs_zip'),
+]
+archivepatterns = format_suffix_patterns(exportpatterns, allowed=['zip'])
+
 urlpatterns = [
+    url(
+        r'^', include(archivepatterns)),
+
     #
     # ADMIN PAGES
     #

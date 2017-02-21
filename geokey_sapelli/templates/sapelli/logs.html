@@ -11,19 +11,28 @@
         </div>
 
         <div class="col-sm-8">
-            <h2 class="header">Logs</h2>
+            <h2 class="header">
+                <span>Logs</span>
+
+                {% if logs.paginator.count > 1 %}
+                    <a role="button" href="{% url 'geokey_sapelli:logs_zip' sapelli_project.geokey_project.id 'Logs' %}.zip{% if date_from or date_to %}?{% endif %}{% if date_from %}date_from={{ date_from }}{% endif %}{% if date_to %}{% if date_from %}&{% endif %}date_to={{ date_to }}{% endif %}" class="btn btn-md btn-primary pull-right">
+                        <span class="glyphicon glyphicon-export"></span>
+                        <span>Download {% if date_from or date_to %}filtered{% else %}all{% endif %}</span>
+                    </a>
+                {% endif %}
+            </h2>
 
             <form role="form" method="POST" action="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="row" novalidate>
                 {% csrf_token %}
 
                 <div class="form-group col-md-6">
                     <label for="date-from">Created from</label>
-                    <input type="text" class="form-control date" id="date-from" name="date-from" data-date-format="YYYY-MM-DD" value="{{ date_from }}" />
+                    <input type="text" class="form-control date" id="date-from" name="date-from" data-date-format="YYYY-MM-DD" value="{% if date_from %}{{ date_from }}{% endif %}" />
                 </div>
 
                 <div class="form-group col-md-6">
                     <label for="date-to">Created until</label>
-                    <input type="text" class="form-control date" id="date-to" name="date-to" data-date-format="YYYY-MM-DD" value="{{ date_to }}" />
+                    <input type="text" class="form-control date" id="date-to" name="date-to" data-date-format="YYYY-MM-DD" value="{% if date_to %}{{ date_to }}{% endif %}" />
                 </div>
 
                 <div class="form-group col-md-12">

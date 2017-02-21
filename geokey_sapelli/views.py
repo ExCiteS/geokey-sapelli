@@ -6,9 +6,10 @@ import json
 import qrcode
 
 from StringIO import StringIO
+from zipfile import ZipFile
 from dateutil import parser
 
-from django.views.generic import TemplateView
+from django.views.generic import View, TemplateView
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
@@ -16,6 +17,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
+from django.utils import timezone, dateformat
 
 from braces.views import LoginRequiredMixin
 
@@ -158,7 +160,7 @@ class SapelliProjectMixin(LoginRequiredMixin):
 
     def get_object(self, user, sapelli_project_id):
         """
-        Return the object.
+        Get the object.
 
         Parameters
         ----------
@@ -173,6 +175,46 @@ class SapelliProjectMixin(LoginRequiredMixin):
         return SapelliProject.objects.get_single_for_administration(
             user,
             sapelli_project_id)
+
+    def get_logs(self, sapelli_project, date_from, date_to):
+        """Get all logs."""
+        logs = SapelliLogFile.objects.filter(sapelli_project=sapelli_project)
+
+        if date_from:
+            try:
+                date_from = parser.parse(date_from)
+            except ValueError:
+                messages.error(self.request, 'Invalid `from` date.')
+                date_from = None
+        if date_to:
+            try:
+                date_to = parser.parse(date_to)
+            except ValueError:
+                messages.error(self.request, 'Invalid `to` date.')
+                date_to = None
+
+        if date_from and date_to and date_to < date_from:
+            messages.error(self.request, 'Invalid date range.')
+        else:
+            if date_from:
+                logs = logs.filter(created_at__gte=date_from)
+            if date_to:
+                logs = logs.filter(created_at__lt=date_to)
+
+        return logs
+
+    def paginate_logs(self, logs, page):
+        """Paginate all logs."""
+        paginator = Paginator(logs.order_by('-created_at'), 50)
+
+        try:
+            logs = paginator.page(page)
+        except PageNotAnInteger:
+            logs = paginator.page(1)
+        except EmptyPage:
+            logs = paginator.page(paginator.num_pages)
+
+        return logs
 
     def get_context_data(self, sapelli_project_id, *args, **kwargs):
         """
@@ -302,48 +344,19 @@ class DataLogsDownload(SapelliProjectMixin, TemplateView):
         sapelli_project = context.get('sapelli_project')
         if sapelli_project:
             data = self.request.GET
-
-            logs = SapelliLogFile.objects.filter(
-                sapelli_project=sapelli_project)
-
             date_from = kwargs.get('date_from') or data.get('date_from')
-            if date_from:
-                try:
-                    context['date_from'] = date_from
-                    date_from = parser.parse(date_from)
-                except ValueError:
-                    messages.error(self.request, 'Invalid `from` date.')
-                    context['date_from'] = None
-                    date_from = None
             date_to = kwargs.get('date_to') or data.get('date_to')
-            if date_to:
-                try:
-                    context['date_to'] = date_to
-                    date_to = parser.parse(date_to)
-                except ValueError:
-                    messages.error(self.request, 'Invalid `to` date.')
-                    context['date_to'] = None
-                    date_to = None
 
-            if date_from and date_to and date_to < date_from:
-                messages.error(self.request, 'Invalid date range.')
-            else:
-                if date_from:
-                    logs = logs.filter(created_at__gte=date_from)
-                if date_to:
-                    logs = logs.filter(created_at__lt=date_to)
+            logs = self.get_logs(
+                sapelli_project,
+                date_from,
+                date_to)
 
-            paginator = Paginator(logs.order_by('-created_at'), 50)
-            page = self.request.GET.get('page')
-
-            try:
-                logs = paginator.page(page)
-            except PageNotAnInteger:
-                logs = paginator.page(1)
-            except EmptyPage:
-                logs = paginator.page(paginator.num_pages)
-
-            context['logs'] = logs
+            context['date_from'] = date_from
+            context['date_to'] = date_to
+            context['logs'] = self.paginate_logs(
+                logs,
+                self.request.GET.get('page'))
 
         return context
 
@@ -369,6 +382,61 @@ class DataLogsDownload(SapelliProjectMixin, TemplateView):
             date_to=request.POST.get('date-to'))
 
         return self.render_to_response(context)
+
+
+class LogsZipView(SapelliProjectMixin, View):
+    """Admin page for downloading all Sapelli logs as ZIP archive."""
+
+    def get(self, request, project_id, file, *args, **kwargs):
+        """
+        Handle GET request.
+
+        Parameters
+        ----------
+        request : django.http.HttpRequest
+            Object representing the request.
+        project_id : int
+            Identifies the GeoKey project in the database.
+        file : str
+            Identifies the file name.
+
+        Returns
+        -------
+        django.http.HttpResponseRedirect
+            When nothing to archive.
+        """
+        context = self.get_context_data(
+            project_id,
+            *args,
+            **kwargs)
+
+        sapelli_project = context.get('sapelli_project')
+        if sapelli_project:
+            data = self.request.GET
+
+            logs = self.get_logs(
+                sapelli_project,
+                data.get('date_from'),
+                data.get('date_to'))
+
+            if len(logs) == 0:
+                messages.error(self.request, 'Nothing to archive.')
+            else:
+                temp_file = StringIO()
+                with ZipFile(temp_file, 'w') as archive:
+                    for log in logs:
+                        archive.write(log.file.path, log.name)
+
+                response = HttpResponse(
+                    temp_file.getvalue(),
+                    content_type='application/x-zip-compressed')
+                response['Content-Disposition'] = 'attachment; filename="%s - %s.zip"' % (
+                    file,
+                    dateformat.format(timezone.now(), 'l, jS \\o\\f F, Y'))
+
+                return response
+
+        return redirect('geokey_sapelli:logs', project_id=project_id)
 
 
 # ############################################################################
