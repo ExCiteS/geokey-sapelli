@@ -210,6 +210,10 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(sapelli_project.sapelli_id, '2222')
         self.assertEqual(sapelli_project.sapelli_fingerprint, None)
         self.assertEqual(sapelli_project.sapelli_model_id, None)
+        self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
+        self.assertEqual(sapelli_project.forms.count(), 1)
+        self.assertEqual(sapelli_project.fields.count(), 2)
+        self.assertEqual(sapelli_project.localtion_fields.count(), 0)
 
 
 class TestProjectMapper(TestCase):
