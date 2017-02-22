@@ -81,12 +81,6 @@ def create_project(sapelli_project_info, user, sap_file_path=None):
 
             create_implicit_fields(category, stores_end_time=form.get('stores_end_time'))
 
-            if not form.get('locations'):
-                try:
-                    geokey_project.delete()
-                except BaseException:
-                    pass
-                raise SapelliSAPException('geokey-sapelli only supports Sapelli Forms which have a Location field.')
             for location in form.get('locations'):
                 LocationField.objects.create(
                     sapelli_form=sapelli_form,
