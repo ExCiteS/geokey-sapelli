@@ -203,7 +203,13 @@ class TestSapelliLoader(TestCase):
     def test_load_from_sap_no_location(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/NoLocation.sap'))
         file = File(open(path, 'rb'))
-        self.assertRaises(SapelliSAPException, load_from_sap, file, self.user)
+        sapelli_project = with_stacktrace(load_from_sap, file, self.user)
+        self.assertEqual(sapelli_project.name, 'NoLocation')
+        self.assertEqual(sapelli_project.version, '1.0')
+        self.assertEqual(sapelli_project.geokey_project.name, 'NoLocation (v1.0)')
+        self.assertEqual(sapelli_project.sapelli_id, '2222')
+        self.assertEqual(sapelli_project.sapelli_fingerprint, None)
+        self.assertEqual(sapelli_project.sapelli_model_id, None)
 
 
 class TestProjectMapper(TestCase):
