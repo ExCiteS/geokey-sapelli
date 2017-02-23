@@ -291,7 +291,7 @@ class DataCSVUploadTest(TestCase):
         )
         response = render_helpers.remove_csrf(response.content.decode('utf-8'))
         self.assertEqual(response, rendered)
-        self.assertEqual(sapelli_project.geokey_project.observations.count(), 4)
+        self.assertEqual(sapelli_project.geokey_project.observations.count(), 5)
 
 
 class DataLogsDownloadTest(TestCase):

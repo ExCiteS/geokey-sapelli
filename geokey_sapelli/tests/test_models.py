@@ -24,44 +24,47 @@ class SapelliProjectTest(TestCase):
         # Import records (4 with loc, 1 without):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman.csv'))
         file = File(open(path, 'rb'))
-        imported, updated, ignored_dup, ignored_no_loc = sapelli_project.import_from_csv(
+        imported, imported_joined_locs, imported_no_loc, updated, ignored_dup = sapelli_project.import_from_csv(
             user,
             file,
             form.category_id
         )
         self.assertEqual(imported, 4)
+        self.assertEqual(imported_joined_locs, 0)
+        self.assertEqual(imported_no_loc, 1)
         self.assertEqual(updated, 0)
         self.assertEqual(ignored_dup, 0)
-        self.assertEqual(ignored_no_loc, 1)
-        self.assertEqual(sapelli_project.geokey_project.observations.count(), 4)
+        self.assertEqual(sapelli_project.geokey_project.observations.count(), 5)
 
         # Some more records (1 new, 2 updated, 1 duplicate), without user-selected form:
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman_updated.csv'))
         file = File(open(path, 'rb'))
-        imported, updated, ignored_dup, ignored_no_loc = sapelli_project.import_from_csv(
+        imported, imported_joined_locs, imported_no_loc, updated, ignored_dup = sapelli_project.import_from_csv(
             user,
             file
             # no form.category_id given!
         )
         self.assertEqual(imported, 1)
+        self.assertEqual(imported_joined_locs, 0)
+        self.assertEqual(imported_no_loc, 0)
         self.assertEqual(updated, 2)
         self.assertEqual(ignored_dup, 1)
-        self.assertEqual(ignored_no_loc, 0)
-        self.assertEqual(sapelli_project.geokey_project.observations.count(), 5)
+        self.assertEqual(sapelli_project.geokey_project.observations.count(), 6)
 
         # Process CSV without form identification info in header, with user-selected form:
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman_updated_no_form_ident.csv'))
         file = File(open(path, 'rb'))
-        imported, updated, ignored_dup, ignored_no_loc = sapelli_project.import_from_csv(
+        imported, imported_joined_locs, imported_no_loc, updated, ignored_dup = sapelli_project.import_from_csv(
             user,
             file,
             form.category_id
         )
         self.assertEqual(imported, 1)
+        self.assertEqual(imported_joined_locs, 0)
+        self.assertEqual(imported_no_loc, 0)
         self.assertEqual(updated, 0)
         self.assertEqual(ignored_dup, 0)
-        self.assertEqual(ignored_no_loc, 0)
-        self.assertEqual(sapelli_project.geokey_project.observations.count(), 6)
+        self.assertEqual(sapelli_project.geokey_project.observations.count(), 7)
 
     def test_import_from_csv_horniman_corrupt(self):
         user = UserFactory.create()
@@ -75,7 +78,7 @@ class SapelliProjectTest(TestCase):
         self.assertRaises(SapelliCSVException, sapelli_project.import_from_csv,
             user,
             file,
-            form.category_id + 1 # invalid!
+            form.category_id + 1  # invalid!
         )
         # Process CSV without form identification info in header, without user-selected form (must fail):
         path = normpath(join(dirname(abspath(__file__)), 'files/Horniman_updated_no_form_ident.csv'))
@@ -95,15 +98,16 @@ class SapelliProjectTest(TestCase):
         # Import records with unicode characters:
         path = normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.csv'))
         file = File(open(path, 'rb'))
-        imported, updated, ignored_dup, ignored_no_loc = sapelli_project.import_from_csv(
+        imported, imported_joined_locs, imported_no_loc, updated, ignored_dup = sapelli_project.import_from_csv(
             user,
             file,
             form.category_id
         )
         self.assertEqual(imported, 2)
+        self.assertEqual(imported_joined_locs, 0)
+        self.assertEqual(imported_no_loc, 0)
         self.assertEqual(updated, 0)
         self.assertEqual(ignored_dup, 0)
-        self.assertEqual(ignored_no_loc, 0)
         self.assertEqual(sapelli_project.geokey_project.observations.count(), 2)
 
         observation = sapelli_project.geokey_project.observations.get(

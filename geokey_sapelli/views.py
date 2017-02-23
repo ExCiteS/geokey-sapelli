@@ -301,15 +301,16 @@ class DataCSVUpload(SapelliProjectAbstractView):
             csv_file = request.FILES.get('csv_file')
             form_category_id = request.POST.get('form_category_id')
             try:
-                imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(request.user, csv_file, form_category_id)
+                imported, imported_joined_locations, imported_no_location, updated, ignored_duplicate = sapelli_project.import_from_csv(request.user, csv_file, form_category_id)
                 messages.success(
                     self.request,
                     "Result:\n"
                     " - %s records have been added as project contributions;\n"
+                    " - %s records have been added as project contributions with joined locations;\n"
+                    " - %s records have been added as project contributions without locations;\n"
                     " - %s have been updated;\n"
-                    " - %s have been ignored because they were identical to existing contributions;\n"
-                    " - %s where ignored because they lack location coordinates."
-                    % (imported, updated, ignored_duplicate, ignored_no_loc)
+                    " - %s have been ignored because they were identical to existing contributions;"
+                    % (imported, imported_joined_locations, imported_no_location, updated, ignored_duplicate)
                 )
             except SapelliCSVException, e:
                 messages.error(self.request, 'Failed to process CSV file, due to:\n\n' + str(e))
@@ -640,8 +641,8 @@ class DataCSVUploadAPI(APIView):
         else:
             try:
                 csv_file = request.FILES.get('csv_file')
-                imported, updated, ignored_duplicate, ignored_no_loc = sapelli_project.import_from_csv(user, csv_file)
-                return Response({'added': imported, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
+                imported, imported_joined_locations, imported_no_location, updated, ignored_duplicate = sapelli_project.import_from_csv(user, csv_file)
+                return Response({'added': imported, 'added_joined_loc': imported_joined_locations, 'added_no_loc': imported_no_location, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
             except BaseException, e:
                 return Response({'error': str(e)})
 

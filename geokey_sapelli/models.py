@@ -117,11 +117,13 @@ class SapelliProject(models.Model):
         int
             The number of contributions created
         int
+            The number of contributions created with joined locations
+        int
+            The number of contributions created without locations
+        int
             The number of contributions updated
         int
             The number of contributions ignored due to being duplicates
-        int
-            The number of contributions ignored due to lacking location coordinates
 
         Raises
         ------
@@ -185,26 +187,42 @@ class SapelliProject(models.Model):
             # No Form identification found in CSV header row, nor in request...
             raise SapelliCSVException('No Form identification found in CSV header row, please select appropriate form.')
 
-        # Note: only 1 (the first) location field supported:
-        location = form.location_fields.all()[0].sapelli_id
-
         imported = 0
+        imported_joined_locations = 0
+        imported_no_location = 0
         updated = 0
         ignored_duplicate = 0
-        ignored_no_loc = 0
 
         for row in reader:
-            if not row['%s.Longitude' % location]:
-                ignored_no_loc += 1
-                continue
+            joined_locations = False
+            dummy_location = False
+
+            coordinates = []
+            for sapelli_location_field in form.location_fields.all():
+                sapelli_id = sapelli_location_field.sapelli_id
+                longitute = row['%s.Longitude' % sapelli_id]
+                latitute = row['%s.Latitude' % sapelli_id]
+                if longitute and latitute:
+                    coordinates.append('[%s, %s]' % (
+                        float(longitute),
+                        float(latitute)))
+
+            if len(coordinates) > 1:
+                coordinates = ', '.join(coordinates)
+                geometry = '{ "type": "MultiPoint", "coordinates": [ %s ] }' % coordinates
+                joined_locations = True
+            else:
+                if len(coordinates) == 1:
+                    coordinates = coordinates[0]
+                else:
+                    coordinates = '[0.0, 0.0]'
+                    dummy_location = True
+
+                geometry = '{ "type": "Point", "coordinates": %s }' % coordinates
 
             feature = {
                 "location": {
-                    "geometry": '{ "type": "Point", "coordinates": '
-                                '[%s, %s] }' % (
-                                    float(row['%s.Longitude' % location]),
-                                    float(row['%s.Latitude' % location])
-                                )
+                    "geometry": geometry
                 },
                 "properties": {
                     "DeviceId": row['DeviceID'],
@@ -272,9 +290,14 @@ class SapelliProject(models.Model):
                 if serializer.is_valid(raise_exception=True):
                     serializer.save()
 
-                imported += 1
+                if joined_locations:
+                    imported_joined_locations += 1
+                elif dummy_location:
+                    imported_no_location += 1
+                else:
+                    imported += 1
 
-        return imported, updated, ignored_duplicate, ignored_no_loc
+        return imported, imported_joined_locations, imported_no_location, updated, ignored_duplicate
 
 
 @receiver(models.signals.post_save, sender=Project)
