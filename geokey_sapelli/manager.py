@@ -1,49 +1,55 @@
+"""Manager for the extension."""
+
 from django.db.models import Manager
 from django.core.exceptions import PermissionDenied
 
 
 class SapelliProjectManager(Manager):
-    """
-    Custom manager for geokey_sapelli.SapelliProject.
-    """
+    """Custom manager for geokey_sapelli.SapelliProject."""
+
     def get_list_for_administration(self, user):
         """
-        Returns all SapelliProjects the user can administrate.
+        Return all Sapelli projects the user can administrate.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         user : geokey.users.models.User
-            User projects are filtered for
+            User projects are filtered for.
 
         Returns
         -------
         django.db.models.query.QuerySet
-            List of geokey_sapelli.SapelliProject
+            List of Sapelli projects.
         """
+        if user.is_superuser:
+            return self.get_queryset()
+
         return self.get_queryset().filter(geokey_project__admins=user)
 
     def get_list_for_contribution(self, user):
         """
-        Returns all SapelliProjects the user can access and contribute to.
+        Return all Sapelli projects the user can access and contribute to.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         user : geokey.users.models.User
-            User projects are filtered for
+            User projects are filtered for.
 
         Returns
         -------
-        List of geokey_sapelli.SapelliProject
+        List of Sapelli projects.
         """
+        if user.is_superuser:
+            return self.get_queryset()
+
         return [sapelli_project for sapelli_project in self.get_queryset() if sapelli_project.geokey_project.can_contribute(user)]
 
     def exists_for_contribution_by_sapelli_info(self, sapelli_project_id, sapelli_project_fingerprint):
         """
-        Checks whether or not there is a Sapelli project with the given
-        sapelli_project_id and sapelli_project_fingerprint.
+        Check for Sapelli project with the given Sapelli info.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         sapelli_project_id : int
             Together with sapelli_project_fingerprint this uniquely identifies a SapelliProject
         sapelli_project_fingerprint : int
@@ -62,12 +68,12 @@ class SapelliProjectManager(Manager):
 
     def get_single_for_contribution_by_sapelli_info(self, user, sapelli_project_id, sapelli_project_fingerprint):
         """
-        Returns a single Sapelli project, identified by the given
+        Return a single Sapelli project, identified by the given
         sapelli_project_id and sapelli_project_fingerprint, that the user can
         access and contribute to (if user is provided).
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         user : geokey.users.models.User
             User projects are filtered for
         sapelli_project_id : int
@@ -89,34 +95,32 @@ class SapelliProjectManager(Manager):
 
     def get_single_for_administration(self, user, project_id):
         """
-        Returns a single Sapelli project the user can administrate.
+        Return a single Sapelli project the user can administrate.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         user : geokey.users.models.User
-            User projects are filtered for
+            User projects are filtered for.
         project_id : int
-            Identifies the GeoKey project in the data base
+            Identifies the GeoKey project in the database.
 
         Returns
         -------
         geokey_sapelli.SapelliProject
         """
-        for sapelli_project in self.get_list_for_administration(user):
-            if sapelli_project.geokey_project.id == int(project_id):
-                return sapelli_project
-        raise self.model.DoesNotExist
+        return self.get_list_for_administration(user).get(
+            geokey_project__id=project_id)
 
     def get_single_for_contribution(self, user, project_id):
         """
-        Returns a single Sapelli project the user can access and contribute to.
+        Return a single Sapelli project the user can access and contribute to.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         user : geokey.users.models.User
-            User projects are filtered for
+            User projects are filtered for.
         project_id : int
-            Identifies the GeoKey project in the data base
+            Identifies the GeoKey project in the database.
 
         Returns
         -------
