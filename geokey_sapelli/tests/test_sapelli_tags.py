@@ -11,13 +11,19 @@ class IsAdminTest(TestCase):
 
     def setUp(self):
         """Set up test."""
-        self.admin = UserFactory.create()
-        self.contributor = UserFactory.create()
-        self.regular_user = UserFactory.create()
+        self.superuser = UserFactory.create(**{'is_superuser': True})
+        self.admin = UserFactory.create(**{'is_superuser': False})
+        self.contributor = UserFactory.create(**{'is_superuser': False})
+        self.regular_user = UserFactory.create(**{'is_superuser': False})
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor],
             **{'isprivate': True})
+
+    def test_when_user_is_superuser(self):
+        """Test with superuser."""
+        self.assertTrue(
+            sapelli_tags.is_admin(self.project, self.superuser))
 
     def test_when_user_is_admin(self):
         """Test with admin."""
@@ -40,13 +46,19 @@ class CanContributeTest(TestCase):
 
     def setUp(self):
         """Set up test."""
-        self.admin = UserFactory.create()
-        self.contributor = UserFactory.create()
-        self.regular_user = UserFactory.create()
+        self.superuser = UserFactory.create(**{'is_superuser': True})
+        self.admin = UserFactory.create(**{'is_superuser': False})
+        self.contributor = UserFactory.create(**{'is_superuser': False})
+        self.regular_user = UserFactory.create(**{'is_superuser': False})
         self.project = ProjectFactory.create(
             add_admins=[self.admin],
             add_contributors=[self.contributor],
             **{'isprivate': True})
+
+    def test_when_user_is_superuser(self):
+        """Test with superuser."""
+        self.assertTrue(
+            sapelli_tags.can_contribute(self.project, self.superuser))
 
     def test_when_user_is_admin(self):
         """Test with admin."""
