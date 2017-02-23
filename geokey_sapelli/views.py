@@ -642,7 +642,7 @@ class DataCSVUploadAPI(APIView):
             try:
                 csv_file = request.FILES.get('csv_file')
                 imported, imported_joined_locations, imported_no_location, updated, ignored_duplicate = sapelli_project.import_from_csv(user, csv_file)
-                return Response({'added': imported, 'added_joined_loc': imported_joined_locations, 'added_no_loc': imported_no_location, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
+                return Response({'added': imported, 'added_joined_locs': imported_joined_locations, 'added_no_loc': imported_no_location, 'updated': updated, 'ignored_duplicates': ignored_duplicate, 'ignored_no_loc': ignored_no_loc})
             except BaseException, e:
                 return Response({'error': str(e)})
 
