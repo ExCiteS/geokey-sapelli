@@ -202,6 +202,133 @@ def create_horniman_sapelli_project(user):
     return sapelli_project
 
 
+def create_2locations_sapelli_project(user):
+
+    geokey_project = ProjectFactory.create(
+        add_admins=[user],
+        **{'name': 'Mapping Cultures 2 Locations (v1.0)'}
+    )
+    geokey_cat = CategoryFactory.create(**{
+        'name': 'Horniman Gardens',
+        'project': geokey_project
+    })
+    select_field = LookupFieldFactory.create(**{
+        'name': 'Garden_Feature',
+        'key': 'garden_feature',
+        'category': geokey_cat
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Red Flowers',
+        'symbol': 'red flowers.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Blue Flowers',
+        'symbol': 'blue flowers.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Yellow Flowers',
+        'symbol': 'yellow flowers.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Edible Plants',
+        'symbol': 'BeenTold.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Medicinal Plants',
+        'symbol': 'Medicine.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Two Legged Animal',
+        'symbol': 'Chicken.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Four Legged Animal',
+        'symbol': 'Sheep.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Old Bench With Memorial',
+        'symbol': 'memorial.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Old Bench with No Memorial',
+        'symbol': 'no memorial'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'New Bench With Memorial',
+        'symbol': 'memorial.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'New Bench with No Memorial',
+        'symbol': 'no memorial.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Covered Bin',
+        'symbol': 'covered bin.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Uncovered Bin',
+        'symbol': 'uncovered bin.png'
+    })
+    LookupValueFactory.create(**{
+        'field': select_field,
+        'name': 'Dog Bin',
+        'symbol': 'dog bin.png'
+    })
+
+    sapelli_project = SapelliProjectFactory.create(**{
+        'geokey_project': geokey_project,
+        'name': 'Mapping Cultures 2 Locations',
+        'variant': None,
+        'version': '1.0',
+        'sapelli_id': 1234,
+        'sapelli_fingerprint': 1859932064,
+        'sapelli_model_id': 31204481983055058,
+        'dir_path': None,
+        'sap_path': normpath(join(dirname(abspath(__file__)), 'files/2Locations.sap'))
+    })
+    form = SapelliFormFactory.create(**{
+        'category': geokey_cat,
+        'sapelli_project': sapelli_project,
+        'sapelli_id': 'Horniman Gardens',
+        'sapelli_model_schema_number': 1
+    })
+    SapelliLocationFactory.create(**{
+        'sapelli_form': form,
+        'sapelli_id': 'startPosition'
+    })
+    SapelliLocationFactory.create(**{
+        'sapelli_form': form,
+        'sapelli_id': 'endPosition'
+    })
+    choice_root = SapelliFieldFactory.create(**{
+        'sapelli_form': form,
+        'field': select_field,
+        'sapelli_id': 'Garden_Feature'
+    })
+
+    for idx, value in enumerate(select_field.lookupvalues.all()):
+        SapelliChoiceFactory.create(**{
+            'lookup_value': value,
+            'number': idx,
+            'sapelli_field': choice_root
+        })
+
+    return sapelli_project
+
+
 def create_textunicode_sapelli_project(user):
     geokey_project = ProjectFactory.create(
         add_admins=[user],

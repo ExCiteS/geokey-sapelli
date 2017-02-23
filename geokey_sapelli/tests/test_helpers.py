@@ -226,6 +226,23 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(form.fields.count(), 1)
         self.assertEqual(form.location_fields.count(), 0)
 
+    def test_load_from_sap_2_locations(self):
+        path = normpath(join(dirname(abspath(__file__)), 'files/2Locations.sap'))
+        file = File(open(path, 'rb'))
+        sapelli_project = with_stacktrace(load_from_sap, file, self.user)
+        self.assertEqual(sapelli_project.name, 'Mapping Cultures 2 Locations')
+        self.assertEqual(sapelli_project.variant, None)
+        self.assertEqual(sapelli_project.version, '1.0')
+        self.assertEqual(sapelli_project.sapelli_id, 1234)
+        self.assertEqual(sapelli_project.sapelli_fingerprint, 1859932064)
+        self.assertEqual(sapelli_project.sapelli_model_id, 31204481983055058)
+        self.assertEqual(sapelli_project.geokey_project.name, 'Mapping Cultures 2 Locations (v1.0)')
+        self.assertEqual(sapelli_project.forms.count(), 1)
+        self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
+        form = sapelli_project.forms.latest('pk')
+        self.assertEqual(form.fields.count(), 1)
+        self.assertEqual(form.location_fields.count(), 2)
+
 
 class TestProjectMapper(TestCase):
     def test_create_implicit_fields(self):

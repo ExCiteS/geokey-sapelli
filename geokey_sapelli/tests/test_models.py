@@ -7,8 +7,19 @@ from geokey.users.tests.model_factories import UserFactory
 from geokey.projects.models import Project
 from geokey.projects.tests.model_factories import ProjectFactory
 
-from ..models import SapelliProject, post_save_project, pre_delete_project, SAPDownloadQRLink
-from .model_factories import SapelliProjectFactory, create_horniman_sapelli_project, create_textunicode_sapelli_project, GeoKeySapelliApplicationFactory
+from ..models import (
+    SapelliProject,
+    post_save_project,
+    pre_delete_project,
+    SAPDownloadQRLink,
+)
+from .model_factories import (
+    SapelliProjectFactory,
+    create_horniman_sapelli_project,
+    create_2locations_sapelli_project,
+    create_textunicode_sapelli_project,
+    GeoKeySapelliApplicationFactory,
+)
 
 from ..helper.sapelli_exceptions import SapelliCSVException
 
@@ -114,6 +125,27 @@ class SapelliProjectTest(TestCase):
             category_id=form.category.id,
             properties__at_StartTime='2015-12-12T06:23:04.570-05:00')
         self.assertEqual(observation.properties['txttext'], u'\ud55c\uc790test')
+
+    def test_import_from_csv_2locations(self):
+        user = UserFactory.create()
+        sapelli_project = create_2locations_sapelli_project(user)
+
+        form = sapelli_project.forms.all()[0]
+
+        # Import records with two, one or no location:
+        path = normpath(join(dirname(abspath(__file__)), 'files/2Locations.csv'))
+        file = File(open(path, 'rb'))
+        imported, imported_joined_locs, imported_no_loc, updated, ignored_dup = sapelli_project.import_from_csv(
+            user,
+            file,
+            form.category_id
+        )
+        self.assertEqual(imported, 2)
+        self.assertEqual(imported_joined_locs, 1)
+        self.assertEqual(imported_no_loc, 1)
+        self.assertEqual(updated, 0)
+        self.assertEqual(ignored_dup, 0)
+        self.assertEqual(sapelli_project.geokey_project.observations.count(), 4)
 
 
 class ProjectSaveTest(TestCase):
