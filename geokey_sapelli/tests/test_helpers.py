@@ -208,7 +208,6 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(sapelli_project.sapelli_id, 1337)
         self.assertEqual(sapelli_project.sapelli_fingerprint, 1961882530)
         self.assertEqual(sapelli_project.sapelli_model_id, 32914926972437817)
-        self.assertEqual(sapelli_project.geokey_project.name, 'TextUnicode \\u6d4b\\u8bd5 (v0.23)')
         self.assertEqual(sapelli_project.forms.count(), 1)
         self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
         form = sapelli_project.forms.latest('pk')
