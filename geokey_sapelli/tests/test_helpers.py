@@ -116,7 +116,7 @@ class TestSapelliLoader(TestCase):
         # delete project(s):
         for sapelli_project in SapelliProject.objects.filter(sapelli_id__in=[horniman_sapelli_project_info['sapelli_id'], 1337]):
             try:
-                sapelli_project.geokey_project.delete() # will also delete sapelli_project
+                sapelli_project.geokey_project.delete()  # will also delete sapelli_project
             except BaseException, e:
                 pass
         # delete sapelli/user folder
@@ -172,11 +172,17 @@ class TestSapelliLoader(TestCase):
         file = File(open(path, 'rb'))
         sapelli_project = with_stacktrace(load_from_sap, file, self.user)
         self.assertEqual(sapelli_project.name, horniman_sapelli_project_info['name'])
+        self.assertEqual(sapelli_project.variant, horniman_sapelli_project_info['variant'])
         self.assertEqual(sapelli_project.version, horniman_sapelli_project_info['version'])
-        self.assertEqual(sapelli_project.geokey_project.name, horniman_sapelli_project_info['display_name'])
         self.assertEqual(sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])
         self.assertEqual(sapelli_project.sapelli_fingerprint, horniman_sapelli_project_info['sapelli_fingerprint'])
         self.assertEqual(sapelli_project.sapelli_model_id, horniman_sapelli_project_info['sapelli_model_id'])
+        self.assertEqual(sapelli_project.geokey_project.name, horniman_sapelli_project_info['display_name'])
+        self.assertEqual(sapelli_project.forms.count(), 1)
+        self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
+        form = sapelli_project.forms.latest('pk')
+        self.assertEqual(form.fields.count(), 1)
+        self.assertEqual(form.location_fields.count(), 1)
 
     def test_load_from_sap_complex(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/Complex.sap'))
@@ -187,7 +193,10 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(sapelli_project.version, '2.0')
         self.assertEqual(sapelli_project.sapelli_id, horniman_sapelli_project_info['sapelli_id'])
         self.assertEqual(sapelli_project.sapelli_fingerprint, -421056405)
+        self.assertEqual(sapelli_project.sapelli_model_id, 64993439783060567)
+        self.assertEqual(sapelli_project.geokey_project.name, '%s [Test] (v2.0)' % horniman_sapelli_project_info['name'])
         self.assertEqual(sapelli_project.forms.count(), 2)
+        self.assertEqual(sapelli_project.geokey_project.categories.count(), 2)
 
     def test_load_from_sap_unicode(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/TextUnicode.sap'))
@@ -199,21 +208,29 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(sapelli_project.sapelli_id, 1337)
         self.assertEqual(sapelli_project.sapelli_fingerprint, 1961882530)
         self.assertEqual(sapelli_project.sapelli_model_id, 32914926972437817)
+        self.assertEqual(sapelli_project.geokey_project.name, 'TextUnicode \\u6d4b\\u8bd5 (v0.23)')
+        self.assertEqual(sapelli_project.forms.count(), 1)
+        self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
+        form = sapelli_project.forms.latest('pk')
+        self.assertEqual(form.fields.count(), 2)
+        self.assertEqual(form.location_fields.count(), 0)
 
     def test_load_from_sap_no_location(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/NoLocation.sap'))
         file = File(open(path, 'rb'))
         sapelli_project = with_stacktrace(load_from_sap, file, self.user)
         self.assertEqual(sapelli_project.name, 'NoLocation')
+        self.assertEqual(sapelli_project.variant, None)
         self.assertEqual(sapelli_project.version, '1.0')
+        self.assertEqual(sapelli_project.sapelli_id, 2222)
+        self.assertEqual(sapelli_project.sapelli_fingerprint, -69960971)
+        self.assertEqual(sapelli_project.sapelli_model_id, 70883843715893422)
         self.assertEqual(sapelli_project.geokey_project.name, 'NoLocation (v1.0)')
-        self.assertEqual(sapelli_project.sapelli_id, '2222')
-        self.assertEqual(sapelli_project.sapelli_fingerprint, None)
-        self.assertEqual(sapelli_project.sapelli_model_id, None)
-        self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
         self.assertEqual(sapelli_project.forms.count(), 1)
-        self.assertEqual(sapelli_project.fields.count(), 2)
-        self.assertEqual(sapelli_project.localtion_fields.count(), 0)
+        self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
+        form = sapelli_project.forms.latest('pk')
+        self.assertEqual(form.fields.count(), 1)
+        self.assertEqual(form.location_fields.count(), 0)
 
 
 class TestProjectMapper(TestCase):
