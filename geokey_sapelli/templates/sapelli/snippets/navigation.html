@@ -1,15 +1,19 @@
-{% if sapelli_project %}
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h6 class="item-info">Sapelli project</h6>
-        <h4>{{ sapelli_project.geokey_project.name }}</h4>
-    </div>
+{% load sapelli_tags %}
 
-    <div class="list-group">
-        <a href="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'logs' %}active{% endif %}">Log files</a>
-        <a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'data_csv_upload' %}active{% endif %}">Data upload</a>
-        <a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="list-group-item" download>Download SAP</a>
-        <a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="list-group-item">Manage GeoKey project</a>
-    </div>
-</div>
+{% if sapelli_project %}
+    {% with is_admin=sapelli_project.geokey_project|is_admin:user can_contribute=sapelli_project.geokey_project|can_contribute:user %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h6 class="item-info">Sapelli project</h6>
+                <h4>{{ sapelli_project.geokey_project.name }}</h4>
+            </div>
+
+            <div class="list-group">
+                {% if is_admin %}<a href="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'logs' %}active{% endif %}">Log files</a>{% endif %}
+                <a href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="list-group-item {% if request.resolver_match.url_name == 'data_csv_upload' %}active{% endif %}">Data upload</a>
+                <a href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="list-group-item" download>Download SAP</a>
+                {% if is_admin %}<a href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}" class="list-group-item">Manage GeoKey project</a>{% endif %}
+            </div>
+        </div>
+    {% endwith %}
 {% endif %}

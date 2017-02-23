@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load sapelli_tags %}
 {% block title %} | Sapelli{% endblock %}
 
 {% block main %}
@@ -19,130 +20,132 @@
             </h2>
 
             {% for sapelli_project in sapelli_projects %}
-                {% if forloop.first %}
-                    <ul class="list-unstyled overview-list">
-                {% endif %}
+                {% with is_admin=sapelli_project.geokey_project|is_admin:user can_contribute=sapelli_project.geokey_project|can_contribute:user %}
+                    {% if forloop.first %}
+                        <ul class="list-unstyled overview-list">
+                    {% endif %}
 
-                <li>
-                    <h3><a href="#" data-toggle="modal" data-target="#info-dialog-{{ sapelli_project.geokey_project.id }}">{{ sapelli_project.geokey_project.name }}</a></h3>
+                    <li>
+                        <h3><a href="#" data-toggle="modal" data-target="#info-dialog-{{ sapelli_project.geokey_project.id }}">{{ sapelli_project.geokey_project.name }}</a></h3>
 
-                    <p>
-                        <a role="button" href="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Log files</a>
-                        <a role="button" href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Data upload</a>
-                        <a role="button" href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}"  class="btn btn-sm btn-default">Manage GeoKey project</a>
-                    </p>
+                        <p>
+                            {% if is_admin %}<a role="button" href="{% url 'geokey_sapelli:logs' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Log files</a>{% endif %}
+                            <a role="button" href="{% url 'geokey_sapelli:data_csv_upload' sapelli_project.geokey_project.id %}" class="btn btn-sm btn-default">Data upload</a>
+                            {% if is_admin %}<a role="button" href="{% url 'admin:project_overview' sapelli_project.geokey_project.id %}"  class="btn btn-sm btn-default">Manage GeoKey project</a>{% endif %}
+                        </p>
 
-                    <p class="meta">Uploaded by {{ sapelli_project.geokey_project.creator.display_name }} {{ sapelli_project.geokey_project.created_at|timesince }} ago</p>
+                        <p class="meta">Uploaded by {{ sapelli_project.geokey_project.creator.display_name }} {{ sapelli_project.geokey_project.created_at|timesince }} ago</p>
 
-                    {% if sapelli_project.sap_path %}
-                        <div role="dialog" class="modal fade" id="qr-dialog-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
-                            <div class="modal-dialog modal-sm">
+                        {% if sapelli_project.sap_path %}
+                            <div role="dialog" class="modal fade" id="qr-dialog-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide SAP QR code">&times;</button>
+                                            <h4 class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <p>To install the project on your Android device, simply scan the QR code below using the <a href="https://play.google.com/store/apps/details?id=uk.ac.ucl.excites.sapelli.collector" target="_blank">Sapelli Collector app</a>.</p>
+
+                                            <div class="text-center">
+                                                <a href="#" id="qr-a-{{ sapelli_project.geokey_project.id }}">
+                                                    <img id="qr-img-{{ sapelli_project.geokey_project.id }}" title="QR code to download SAP file" />
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <a role="button" href="#" onClick="revokeQR({{ sapelli_project.geokey_project.id }}); return false;" class="btn btn-md btn-default">Revoke</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div role="dialog" class="modal fade" id="info-dialog-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-md">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide SAP QR code">&times;</button>
+                                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide Sapelli project info">&times;</button>
                                         <h4 class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
                                     </div>
 
                                     <div class="modal-body">
-                                        <p>To install the project on your Android device, simply scan the QR code below using the <a href="https://play.google.com/store/apps/details?id=uk.ac.ucl.excites.sapelli.collector" target="_blank">Sapelli Collector app</a>.</p>
+                                        <table class="table">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="text-right"><strong>Name</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.name }}</td>
+                                                </tr>
 
-                                        <div class="text-center">
-                                            <a href="#" id="qr-a-{{ sapelli_project.geokey_project.id }}">
-                                                <img id="qr-img-{{ sapelli_project.geokey_project.id }}" title="QR code to download SAP file" />
-                                            </a>
+                                                <tr>
+                                                    <td class="text-right"><strong>Variant</strong></td>
+                                                    <td class="text-left">{% if sapelli_project.variant %}{{ sapelli_project.variant }}{% else %}<span class="text-muted">none</span>{% endif %}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>Version</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.version }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>GeoKey project ID</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.geokey_project.id }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>Sapelli project ID</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.sapelli_id }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>Fingerprint</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.sapelli_fingerprint }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>Model ID</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.sapelli_model_id }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>Forms</strong></td>
+                                                    <td class="text-left">
+                                                        <ul class="list-unstyled">
+                                                            {% for form in sapelli_project.forms.all %}
+                                                                <li><a href="{% url 'admin:category_overview' form.category.project.id form.category.id %}">{{ form.sapelli_id }}</a></li>
+                                                            {% endfor %}
+                                                        </ul>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>Uploaded at</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.geokey_project.created_at }}</td>
+                                                </tr>
+
+                                                <tr>
+                                                    <td class="text-right"><strong>Uploaded by</strong></td>
+                                                    <td class="text-left">{{ sapelli_project.geokey_project.creator.display_name }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <div class="modal-footer">
+                                            {% if sapelli_project.sap_path %}<a role="button" href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="btn btn-md btn-default" download>Download SAP</a>{% endif %}
+                                            <a role="button" href="#" data-dismiss="modal" data-toggle="modal" data-target="#qr-dialog-{{ sapelli_project.geokey_project.id }}" class="btn btn-md btn-default">SAP QR code</a>
                                         </div>
                                     </div>
-
-                                    <div class="modal-footer">
-                                        <a role="button" href="#" onClick="revokeQR({{ sapelli_project.geokey_project.id }}); return false;" class="btn btn-md btn-default">Revoke</a>
-                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </li>
+
+                    {% if forloop.last %}
+                        </ul>
                     {% endif %}
-
-                    <div role="dialog" class="modal fade" id="info-dialog-{{ sapelli_project.geokey_project.id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-md">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true" title="Hide Sapelli project info">&times;</button>
-                                    <h4 class="modal-title">{{ sapelli_project.geokey_project.name }}</h4>
-                                </div>
-
-                                <div class="modal-body">
-                                    <table class="table">
-                                        <tbody>
-                                            <tr>
-                                                <td class="text-right"><strong>Name</strong></td>
-                                                <td class="text-left">{{ sapelli_project.name }}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Variant</strong></td>
-                                                <td class="text-left">{% if sapelli_project.variant %}{{ sapelli_project.variant }}{% else %}<span class="text-muted">none</span>{% endif %}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Version</strong></td>
-                                                <td class="text-left">{{ sapelli_project.version }}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>GeoKey project ID</strong></td>
-                                                <td class="text-left">{{ sapelli_project.geokey_project.id }}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Sapelli project ID</strong></td>
-                                                <td class="text-left">{{ sapelli_project.sapelli_id }}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Fingerprint</strong></td>
-                                                <td class="text-left">{{ sapelli_project.sapelli_fingerprint }}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Model ID</strong></td>
-                                                <td class="text-left">{{ sapelli_project.sapelli_model_id }}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Forms</strong></td>
-                                                <td class="text-left">
-                                                    <ul class="list-unstyled">
-                                                        {% for form in sapelli_project.forms.all %}
-                                                            <li><a href="{% url 'admin:category_overview' form.category.project.id form.category.id %}">{{ form.sapelli_id }}</a></li>
-                                                        {% endfor %}
-                                                    </ul>
-                                                </td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Uploaded at</strong></td>
-                                                <td class="text-left">{{ sapelli_project.geokey_project.created_at }}</td>
-                                            </tr>
-
-                                            <tr>
-                                                <td class="text-right"><strong>Uploaded by</strong></td>
-                                                <td class="text-left">{{ sapelli_project.geokey_project.creator.display_name }}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <div class="modal-footer">
-                                        {% if sapelli_project.sap_path %}<a role="button" href="{% url 'geokey_sapelli:sap_download_api' sapelli_project.geokey_project.id %}" class="btn btn-md btn-default" download>Download SAP</a>{% endif %}
-                                        <a role="button" href="#" data-dismiss="modal" data-toggle="modal" data-target="#qr-dialog-{{ sapelli_project.geokey_project.id }}" class="btn btn-md btn-default">SAP QR code</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-
-                {% if forloop.last %}
-                    </ul>
-                {% endif %}
+                {% endwith %}
             {% empty %}
                 <div class="well empty-list">
                     <p class="lead">We couldn't find any Sapelli projects you are eligible to manage.</p>
