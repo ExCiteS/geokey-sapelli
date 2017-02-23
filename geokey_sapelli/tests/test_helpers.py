@@ -208,11 +208,6 @@ class TestSapelliLoader(TestCase):
         self.assertEqual(sapelli_project.sapelli_id, 1337)
         self.assertEqual(sapelli_project.sapelli_fingerprint, 1961882530)
         self.assertEqual(sapelli_project.sapelli_model_id, 32914926972437817)
-        self.assertEqual(sapelli_project.forms.count(), 1)
-        self.assertEqual(sapelli_project.geokey_project.categories.count(), 1)
-        form = sapelli_project.forms.latest('pk')
-        self.assertEqual(form.fields.count(), 2)
-        self.assertEqual(form.location_fields.count(), 0)
 
     def test_load_from_sap_no_location(self):
         path = normpath(join(dirname(abspath(__file__)), 'files/NoLocation.sap'))
