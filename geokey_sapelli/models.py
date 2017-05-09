@@ -151,11 +151,11 @@ class SapelliProject(models.Model):
             model_id = int(re.match(
                 r"modelID=(?P<model_id_str>[0-9]+)",
                 [fn for fn in reader.fieldnames if fn.startswith('modelID=')][0])
-                .group('model_id_str'))
+                           .group('model_id_str'))
             model_schema_number = int(re.match(
                 r"modelSchemaNumber=(?P<model_schema_number_str>[0-9]+)",
                 [fn for fn in reader.fieldnames if fn.startswith('modelSchemaNumber=')][0])
-                .group('model_schema_number_str'))
+                                      .group('model_schema_number_str'))
         except BaseException:
             pass
 
@@ -173,16 +173,19 @@ class SapelliProject(models.Model):
             try:
                 form = self.forms.get(sapelli_model_schema_number=model_schema_number)
             except SapelliForm.DoesNotExist:
-                raise SapelliCSVException('No Form with modelSchemaNumber %s found in Project "%s".' % (model_schema_number, self.geokey_project.name))
+                raise SapelliCSVException('No Form with modelSchemaNumber %s found in Project "%s".' % (
+                model_schema_number, self.geokey_project.name))
             # Check if form matches form_category_id given in request:
             if (form_category_id is not None) and form_category_id != form.category.id:
-                raise SapelliCSVException('The data in the CSV file was not created using selected form "%s".' % form.sapelli_id)
+                raise SapelliCSVException(
+                    'The data in the CSV file was not created using selected form "%s".' % form.sapelli_id)
         elif (form_category_id is not None):
             # No Form identification found in CSV header row, use form_category_id given in request...
             try:
                 form = self.forms.get(pk=form_category_id)
             except SapelliForm.DoesNotExist:
-                raise SapelliCSVException('No Form with category_id %s found in Project "%s".' % (form_category_id, self.geokey_project.name))
+                raise SapelliCSVException(
+                    'No Form with category_id %s found in Project "%s".' % (form_category_id, self.geokey_project.name))
         else:
             # No Form identification found in CSV header row, nor in request...
             raise SapelliCSVException('No Form identification found in CSV header row, please select appropriate form.')
@@ -241,11 +244,12 @@ class SapelliProject(models.Model):
                 if sapelli_field.truefalse:
                     value = 0 if value == 'false' else 1
 
-                if sapelli_field.items.count() > 0:
-                    leaf = sapelli_field.items.get(number=value)
-                    value = leaf.lookup_value.id
+                if value:
+                    if sapelli_field.items.count() > 0:
+                        leaf = sapelli_field.items.get(number=value)
+                        value = leaf.lookup_value.id
 
-                feature['properties'][key] = value
+                    feature['properties'][key] = value
 
             from geokey.contributions.serializers import ContributionSerializer
 
@@ -477,7 +481,8 @@ class SAPDownloadQRLink(models.Model):
                 token=generate_token(),
                 scope='read')
         except (AttributeError, Application.DoesNotExist) as e:
-            raise SapelliException('geokey-sapelli is not properly configured as an application on the server: ' + str(e))
+            raise SapelliException(
+                'geokey-sapelli is not properly configured as an application on the server: ' + str(e))
         qr_link = cls(access_token=a_t, sapelli_project=sapelli_project)
         qr_link.save()
         return qr_link
