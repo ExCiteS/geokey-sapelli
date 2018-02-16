@@ -482,12 +482,15 @@ class LoginAPI(TokenView, APIView):
             httpRequest.method = 'POST'
             httpRequest.POST = request.POST.copy()
 
-            # Add client_id & grant_type parameters:
+            # Keep for backwards compatibility
+            httpRequest.POST['grant_type'] = httpRequest.POST.get('grant_type', 'password')
+
+            # Add client_id parameter:
             try:
                 httpRequest.POST['client_id'] = settings.SAPELLI_CLIENT_ID
             except AttributeError, e:
-                raise SapelliException('geokey-sapelli is not properly configured as an application on the server: ' + str(e))
-            httpRequest.POST['grant_type'] = 'password'
+                raise SapelliException(
+                    'geokey-sapelli is not properly configured as an application on the server: ' + str(e))
 
             # Use super class to perform actual login:
             response = super(LoginAPI, self).post(httpRequest, *args, **kwargs)
@@ -754,13 +757,13 @@ class SAPDownloadQRLinkAPI(APIView):
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         try:
             qr_link = None
-            try: # Try getting previously generated link/token:
+            try:  # Try getting previously generated link/token:
                 qr_link = SAPDownloadQRLink.objects.filter(access_token__user=request.user, sapelli_project=sapelli_project).latest('access_token__expires')
             except BaseException, e:
                 pass
             if qr_link is None or qr_link.access_token.is_expired():
-                if(qr_link is not None):
-                    qr_link.access_token.delete() # qr_link will be deleted as well
+                if (qr_link is not None):
+                    qr_link.access_token.delete()  # qr_link will be deleted as well
                 # Generate new access token (valid for 1 day):
                 qr_link = SAPDownloadQRLink.create(user=request.user, sapelli_project=sapelli_project, days_valid=1)
             # Generate download url:
@@ -780,7 +783,7 @@ class SAPDownloadQRLinkAPI(APIView):
             # Grab img file from in-memory, make response with correct MIME-type
             response = HttpResponse(img_buffer.getvalue(), content_type='image/png')
             # ..and correct content-disposition
-            response['Content-Disposition'] = 'attachment; filename=%s' % request.path[request.path.rfind('/')+1:]
+            response['Content-Disposition'] = 'attachment; filename=%s' % request.path[request.path.rfind('/') + 1:]
             # Add additional info as response headers:
             response['X-QR-URL'] = sap_download_url
             response['X-QR-Access-Token'] = qr_link.access_token.token
