@@ -493,7 +493,7 @@ class SAPDownloadQRLinkAPITest(TestCase):
         self.request = HttpRequest()
         self.request.method = 'GET'
         # necessary for request.build_absolute_uri() to work:
-        self.request.META['SERVER_NAME'] = 'test-server'
+        self.request.META['SERVER_NAME'] = 'localhost'
         self.request.META['SERVER_PORT'] = '80'
 
     def tearDown(self):
