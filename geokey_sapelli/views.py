@@ -754,12 +754,14 @@ class SAPDownloadQRLinkAPI(APIView):
             try:  # Try getting previously generated link/token:
                 qr_link = SAPDownloadQRLink.objects.filter(access_token__user=request.user, sapelli_project=sapelli_project).latest('access_token__expires')
             except BaseException, e:
+                print 'No QA link', e
                 pass
             if qr_link is None or qr_link.access_token.is_expired():
                 if (qr_link is not None):
                     qr_link.access_token.delete()  # qr_link will be deleted as well
                 # Generate new access token (valid for 1 day):
                 qr_link = SAPDownloadQRLink.create(user=request.user, sapelli_project=sapelli_project, days_valid=1)
+                print 'QR Link', qr_link
             # Generate download url:
             sap_download_url = (
                 request.build_absolute_uri(reverse('geokey_sapelli:sap_download_api', kwargs={'project_id': project_id})) +
@@ -770,20 +772,25 @@ class SAPDownloadQRLinkAPI(APIView):
                 error_correction=qrcode.constants.ERROR_CORRECT_M,
                 box_size=5,
                 border=0)
+            print 'QR', qr
             qr.add_data(sap_download_url)
             qr.make(fit=True)
             img_buffer = StringIO()
             qr.make_image().save(img_buffer, "PNG")
+            print 'Made image'
             # Grab img file from in-memory, make response with correct MIME-type
             response = HttpResponse(img_buffer.getvalue(), content_type='image/png')
             # ..and correct content-disposition
+            print 'Have response'
             response['Content-Disposition'] = 'attachment; filename=%s' % request.path[request.path.rfind('/') + 1:]
             # Add additional info as response headers:
             response['X-QR-URL'] = sap_download_url
             response['X-QR-Access-Token'] = qr_link.access_token.token
             response['X-QR-Access-Token-Expires'] = qr_link.access_token.expires.isoformat()
+            print response
             return response
         except BaseException, e:
+            print e
             return Response({'error': str(e)})
 
     @handle_exceptions_for_ajax
