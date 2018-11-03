@@ -533,6 +533,7 @@ class SAPDownloadQRLinkAPITest(TestCase):
         qr_link = SAPDownloadQRLink.objects.filter(access_token__user=self.user, sapelli_project=sapelli_project).latest('access_token__expires')
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'image/png')
         self.assertEqual(response['X-QR-Access-Token'], qr_link.access_token.token)
         self.assertEqual(response['X-QR-Access-Token-Expires'], qr_link.access_token.expires.isoformat())
 
