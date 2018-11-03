@@ -292,8 +292,7 @@ class TestProjectMapper(TestCase):
         self.assertEqual(field.lookupvalues.count(), 14)
 
 
-def get_log_file():
-    file_name = 'Collector_2015-01-20T18.02.12.log'
+def get_test_file(file_name):
     log_file = File(open(
         normpath(join(
             dirname(abspath(__file__)),

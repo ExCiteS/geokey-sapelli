@@ -6,7 +6,6 @@ from pytz import utc
 from os.path import dirname, normpath, abspath, join
 
 from django.conf import settings
-from django.core.files import File
 from django.utils import timezone
 
 from geokey.applications.tests.model_factories import ApplicationFactory
@@ -20,6 +19,7 @@ from geokey.categories.tests.model_factories import (
 )
 from geokey.users.tests.model_factories import UserFactory, AccessTokenFactory
 
+from .test_helpers import get_test_file
 from ..models import (
     SapelliProject,
     SapelliForm,
@@ -373,14 +373,6 @@ def create_textunicode_sapelli_project(user):
     return sapelli_project
 
 
-def get_log_file():
-    """Get test log file."""
-    path = normpath(join(
-        dirname(abspath(__file__)),
-        'files/Collector_2015-01-20T18.02.12.log'))
-    return File(open(path, 'rb'))
-
-
 class SapelliLogFileFactory(factory.django.DjangoModelFactory):
     """An instance factory for SapelliLogFile model."""
 
@@ -388,7 +380,7 @@ class SapelliLogFileFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     created_at = datetime(2015, 01, 20, 18, 02, 12).replace(tzinfo=utc)
     sapelli_project = factory.SubFactory(SapelliProjectFactory)
-    file = get_log_file()
+    file = get_test_file('Collector_2015-01-20T18.02.12.log')
 
     class Meta:
         """Class meta information."""
