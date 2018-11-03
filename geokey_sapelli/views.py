@@ -20,6 +20,7 @@ from django.http import HttpRequest, HttpResponse
 from django.utils import timezone, dateformat
 
 from braces.views import LoginRequiredMixin
+from wsgiref.util import FileWrapper
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -47,13 +48,6 @@ from .helper.sapelli_exceptions import (
 from .helper.install_checks import check_extension
 
 from geokey_sapelli.serializers import SapelliLogFileSerializer
-
-try:
-    #  Django 1.9+
-    from wsgiref.util import FileWrapper
-except:
-    # Django 1.8
-    from django.core.servers.basehttp import FileWrapper
 
 
 # ############################################################################
