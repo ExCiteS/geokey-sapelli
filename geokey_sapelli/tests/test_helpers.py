@@ -5,6 +5,7 @@ from unittest import TestCase
 
 from django.core.files.storage import default_storage
 from django.core.files import File
+from django.core.files.base import ContentFile
 from django.template.defaultfilters import slugify
 
 from geokey.users.tests.model_factories import UserFactory
@@ -289,3 +290,16 @@ class TestProjectMapper(TestCase):
 
         field = category.fields.get(key='garden_feature')
         self.assertEqual(field.lookupvalues.count(), 14)
+
+
+def get_log_file():
+    file_name = 'Collector_2015-01-20T18.02.12.log'
+    log_file = File(open(
+        normpath(join(
+            dirname(abspath(__file__)),
+            'files/' + file_name
+        )),
+        'rb'
+    ))
+
+    return ContentFile(log_file.read(), file_name)

@@ -33,6 +33,7 @@ from .model_factories import (
     SapelliProjectFactory,
     create_horniman_sapelli_project, create_qr_link,
 )
+from .test_helpers import get_log_file
 from ..models import (
     SapelliProject,
     SAPDownloadQRLink,
@@ -564,12 +565,7 @@ class SapelliLogsViaPersonalInfoTest(TestCase):
         self.project = ProjectFactory(add_admins=[self.admin])
         self.sapelli_project = SapelliProjectFactory.create(
             **{'geokey_project': self.project})
-
-        self.file_name = 'Collector_2015-01-20T18.02.12.log'
-        path = normpath(join(
-            dirname(abspath(__file__)),
-            'files/%s' % self.file_name))
-        self.file = File(open(path, 'rb'))
+        self.file = get_log_file()
 
     def tearDown(self):
         """Tear down test."""
@@ -683,12 +679,7 @@ class SapelliLogsViaGeoKeyInfoTest(TestCase):
         self.project = ProjectFactory(add_admins=[self.admin])
         self.sapelli_project = SapelliProjectFactory.create(
             **{'geokey_project': self.project})
-
-        self.file_name = 'Collector_2015-01-20T18.02.12.log'
-        path = normpath(join(
-            dirname(abspath(__file__)),
-            'files/%s' % self.file_name))
-        self.file = File(open(path, 'rb'))
+        self.file = get_log_file()
 
     def tearDown(self):
         """Tear down test."""
