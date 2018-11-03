@@ -123,7 +123,7 @@ class SapelliProjectTest(TestCase):
 
         observation = sapelli_project.geokey_project.observations.get(
             category_id=form.category.id,
-            properties__at_StartTime='2015-12-12T06:23:04.570-05:00')
+            properties__StartTime='2015-12-12T06:23:04.570-05:00')
         self.assertEqual(observation.properties['txttext'], u'\ud55c\uc790test')
 
     def test_import_from_csv_2locations(self):
@@ -193,4 +193,3 @@ class SAPDownloadQRLinkTest(TestCase):
         self.assertEqual(self.sap_download_qr_link.access_token.user, self.user)
         self.assertEqual(self.sap_download_qr_link.access_token.application, self.app)
         self.assertEqual(self.sap_download_qr_link.sapelli_project, sapelli_project)
-

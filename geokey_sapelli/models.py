@@ -256,8 +256,8 @@ class SapelliProject(models.Model):
             try:
                 observation = self.geokey_project.observations.get(
                     category_id=form.category.id,
-                    properties__at_StartTime=row['StartTime'],
-                    properties__at_DeviceId=row['DeviceID']
+                    properties__StartTime=row['StartTime'],
+                    properties__DeviceId=row['DeviceID']
                 )
 
                 equal = True

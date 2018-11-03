@@ -679,8 +679,8 @@ class FindObservationAPI(APIView):
             sapelli_project = SapelliProject.objects.get_single_for_contribution(request.user, project_id)
             observation = sapelli_project.geokey_project.observations.get(
                 category_id=category_id,
-                properties__at_StartTime=sap_rec_start_time,
-                properties__at_DeviceId=sap_rec_device_id)
+                properties__StartTime=sap_rec_start_time,
+                properties__DeviceId=sap_rec_device_id)
         except Project.DoesNotExist:
             return Response({'error': 'No such project (id: %s)' % project_id}, status=404)
         except BaseException, e:
